@@ -245,25 +245,12 @@ export default async function ModuleDetailPage({ params }: Props) {
               const rowContent = (
                 <div
                   className={[
-                    "grid min-w-0 gap-4 px-4 py-4 transition-colors sm:grid-cols-[42px_minmax(0,1fr)_auto] sm:items-center sm:px-5",
+                    "grid min-w-0 gap-4 px-4 py-4 transition-colors sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5",
                     isCurrent
                       ? "bg-[color-mix(in_oklab,var(--accent)_8%,var(--card))]"
                       : "bg-transparent",
                   ].join(" ")}
                 >
-                  <div
-                    className={[
-                      "flex h-9 w-9 items-center justify-center rounded-md border text-xs font-bold",
-                      isCurrent
-                        ? "border-[color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_16%,var(--card))] text-[var(--foreground)]"
-                        : lesson.status === "completed"
-                          ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"
-                          : "border-[var(--border)] bg-white/[0.02] text-[var(--muted)]",
-                    ].join(" ")}
-                  >
-                    {lesson.status === "completed" ? "✓" : lesson.order_index}
-                  </div>
-
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <h3
@@ -320,27 +307,29 @@ export default async function ModuleDetailPage({ params }: Props) {
 
               return (
                 <li key={lesson.id} className="border-b border-[var(--border)] last:border-b-0">
-                  {isCurrent ? (
+                  {isLocked || intakeLocked ? (
+                    <div className="grid gap-0 sm:grid-cols-[176px_minmax(0,1fr)]">
+                      <CourseThumbnail
+                        src={lesson.thumbnail_url}
+                        title={lesson.title}
+                        eyebrow={`${lesson.order_index}`}
+                        className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[118px]"
+                        muted
+                      />
+                      {rowContent}
+                    </div>
+                  ) : (
                     <Link
                       href={`/lessons/${lesson.slug}`}
-                      className="group grid gap-0 transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)] sm:grid-cols-[190px_minmax(0,1fr)]"
+                      className="group grid gap-0 transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)] sm:grid-cols-[176px_minmax(0,1fr)]"
                     >
                       <CourseThumbnail
                         src={lesson.thumbnail_url}
                         title={lesson.title}
                         eyebrow={`${lesson.order_index}`}
-                        className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[134px]"
+                        className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[118px]"
                         imageClassName="group-hover:scale-[1.035]"
                       />
-                      {rowContent}
-                    </Link>
-                  ) : isLocked || intakeLocked ? (
-                    <div>{rowContent}</div>
-                  ) : (
-                    <Link
-                      href={`/lessons/${lesson.slug}`}
-                      className="block transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)]"
-                    >
                       {rowContent}
                     </Link>
                   )}
