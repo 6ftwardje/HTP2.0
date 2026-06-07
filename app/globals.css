@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0b0f17;
+  --foreground: #ededed;
+  --muted: #9aa4b2;
+  --border: #1e2638;
+  --card: #121826;
+  --accent: #7c99e3;
+  --accent-contrast: #05070c;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Typography system (semantic utility classes).
+   Keep the surface small so pages stay disciplined. */
+.cb-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.cb-display {
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  font-size: clamp(2rem, 4.2vw, 3.6rem);
+  color: var(--foreground);
+}
+
+.cb-h1 {
+  font-size: 1.75rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+/* Shell page titles: confident, editorial, not landing-page loud */
+.cb-page-title {
+  font-size: clamp(1.875rem, 3.2vw, 2.75rem);
+  line-height: 1.06;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--foreground);
+}
+
+.cb-section-title {
+  font-size: 1.2rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.cb-h2 {
+  font-size: 1.25rem;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.cb-body {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: color-mix(in oklab, var(--foreground) 85%, var(--muted));
+}
+
+.cb-caption {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Surfaces + buttons + badges */
+.cb-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem; /* ~xl */
+}
+
+.cb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.9rem; /* ~lg */
+  font-weight: 650;
+  font-size: 0.9rem;
+  padding: 0.625rem 1rem;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.cb-btn-primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.cb-btn-primary:hover {
+  background: color-mix(in oklab, var(--accent) 88%, #000);
+}
+
+@media (prefers-color-scheme: dark) {
+  .cb-btn-primary:hover {
+    background: color-mix(in oklab, var(--accent) 82%, #fff);
+  }
+}
+
+.cb-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+.cb-btn-secondary:hover {
+  background: color-mix(in oklab, var(--card) 65%, var(--background));
+  border-color: color-mix(in oklab, var(--border) 55%, var(--foreground));
+}
+
+.cb-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.22rem 0.6rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+}
+
+.cb-badge-locked {
+  background: color-mix(in oklab, var(--background) 88%, var(--foreground) 12%);
+  border: 1px solid color-mix(in oklab, var(--border) 70%, var(--foreground) 10%);
+  color: color-mix(in oklab, var(--foreground) 62%, var(--muted));
+}
+
+.cb-badge-available {
+  background: color-mix(in oklab, var(--background) 78%, var(--accent) 10%);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, var(--accent) 14%);
+  color: var(--foreground);
+}
+
+.cb-badge-completed {
+  /* More vibrant completed badge: readable + premium in both themes. */
+  background: color-mix(in oklab, #c8f1db 75%, var(--background) 25%);
+  border: 1px solid color-mix(in oklab, #34d399 60%, var(--border) 40%);
+  color: #0f3b20;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cb-badge-completed {
+    color: #ecfdf5;
+    background: color-mix(in oklab, #065f46 45%, var(--card) 55%);
+    border-color: color-mix(in oklab, #34d399 40%, var(--border) 60%);
+  }
+}
