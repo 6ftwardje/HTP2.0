@@ -11,29 +11,62 @@ export const BRAND = {
 export function BrandLogo({
   className = "",
   iconClassName = "h-9 w-9",
-  textClassName = "text-sm",
+  logoClassName = "h-auto w-[172px]",
+  variant = "full",
+  priority = true,
   style,
 }: {
   className?: string;
   iconClassName?: string;
-  textClassName?: string;
+  logoClassName?: string;
+  variant?: "full" | "icon";
+  priority?: boolean;
   style?: CSSProperties;
 }) {
-  return (
-    <div className={`inline-flex items-center gap-3 ${className}`} style={style}>
+  if (variant === "icon") {
+    return (
       <Image
         src={BRAND.logoIconSrc}
-        alt=""
-        width={48}
-        height={48}
-        className={`shrink-0 ${iconClassName}`}
-        priority
+        alt={BRAND.name}
+        width={3000}
+        height={3000}
+        className={`block shrink-0 ${iconClassName} ${className}`}
+        priority={priority}
+        style={style}
       />
-      <span
-        className={`font-extrabold uppercase tracking-[0.08em] text-[var(--foreground)] ${textClassName}`}
-      >
-        {BRAND.name}
-      </span>
-    </div>
+    );
+  }
+
+  return (
+    <Image
+      src={BRAND.logoWithTextSrc}
+      alt={BRAND.name}
+      width={1855}
+      height={315}
+      className={`block shrink-0 ${logoClassName} ${className}`}
+      priority={priority}
+      style={style}
+    />
+  );
+}
+
+export function BrandIcon({
+  className = "h-9 w-9",
+  priority = false,
+  decorative = true,
+}: {
+  className?: string;
+  priority?: boolean;
+  decorative?: boolean;
+}) {
+  return (
+    <Image
+      src={BRAND.logoIconSrc}
+      alt={decorative ? "" : BRAND.name}
+      width={3000}
+      height={3000}
+      className={`block shrink-0 ${className}`}
+      priority={priority}
+    />
   );
 }

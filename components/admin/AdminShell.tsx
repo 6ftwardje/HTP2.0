@@ -70,7 +70,7 @@ function SidebarContent({
           onClick={onNavigate}
           className="inline-flex items-center gap-2 rounded-lg outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_25%,transparent)]"
         >
-          <BrandLogo iconClassName="h-8 w-8" textClassName="text-[0.7rem]" />
+          <BrandLogo logoClassName="h-auto w-[188px]" />
         </Link>
       </div>
 

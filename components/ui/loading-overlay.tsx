@@ -58,9 +58,8 @@ export function LoadingOverlay({ onComplete, children }: LoadingOverlayProps) {
         aria-hidden={isClipping}
       >
         <BrandLogo
-          className="max-w-[min(70vw,320px)] select-none"
-          iconClassName="h-9 w-9"
-          textClassName="text-xs sm:text-sm"
+          className="select-none"
+          logoClassName="h-auto w-[min(72vw,320px)]"
           style={{ opacity: logoOpacity }}
         />
       </div>

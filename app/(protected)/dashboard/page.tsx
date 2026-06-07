@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { BRAND } from "@/components/ui/Brand";
+import { BRAND, BrandIcon } from "@/components/ui/Brand";
 import { asText } from "@/lib/as-text";
 import {
   getDashboardOverview,
@@ -390,22 +390,8 @@ export default async function DashboardPage({ searchParams }: Props) {
           >
             <div className="cb-eyebrow">Volgende stap</div>
             <div className="mt-7 grid gap-5 sm:grid-cols-[64px_minmax(0,1fr)] sm:items-start">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[var(--border)] bg-white/[0.035] text-[var(--foreground)]">
-                <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path
-                    d="M9 4.5h6l1 2H8l1-2ZM7 6.5h10v14H7v-14Z"
-                    stroke="currentColor"
-                    strokeWidth="1.55"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M10 11h4M10 15h4"
-                    stroke="currentColor"
-                    strokeWidth="1.55"
-                    strokeLinecap="round"
-                  />
-                </svg>
+              <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-[color-mix(in_oklab,var(--accent)_32%,var(--border))] bg-white/[0.035]">
+                <BrandIcon className="h-9 w-9" />
               </div>
               <div>
                 <h2 className="text-2xl font-extrabold leading-tight text-[var(--foreground)]">

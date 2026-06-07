@@ -100,7 +100,7 @@ function SidebarContent({
           onClick={onNavigate}
           className="inline-flex items-center gap-2 rounded-md outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_25%,transparent)]"
         >
-          <BrandLogo iconClassName="h-7 w-7" textClassName="text-[0.66rem]" />
+          <BrandLogo logoClassName="h-auto w-[176px]" />
         </Link>
       </div>
 
@@ -244,8 +244,7 @@ export function AppShell({
           </button>
           <Link href="/dashboard" className="inline-flex items-center">
             <BrandLogo
-              iconClassName="h-7 w-7"
-              textClassName="hidden text-[0.62rem] min-[390px]:inline"
+              logoClassName="h-auto w-[150px] min-[390px]:w-[166px]"
             />
           </Link>
           <div className="w-[72px]" aria-hidden />

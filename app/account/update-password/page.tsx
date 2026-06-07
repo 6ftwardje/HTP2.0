@@ -18,8 +18,7 @@ export default async function UpdatePasswordPage() {
       <section className="w-full max-w-md">
         <BrandLogo
           className="mb-10"
-          iconClassName="h-12 w-12"
-          textClassName="text-base"
+          logoClassName="h-auto w-[220px]"
         />
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-stone-400">
           Account herstellen
