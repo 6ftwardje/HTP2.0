@@ -194,7 +194,10 @@ export default async function ModuleDetailPage({ params }: Props) {
           src={moduleData.thumbnail_url}
           title={moduleData.title}
           eyebrow={`Module ${moduleData.order_index}`}
+          moduleNumber={moduleData.order_index}
+          priority
           className="aspect-[16/8] w-full sm:aspect-[21/9]"
+          sizes="(min-width: 1024px) 66vw, 100vw"
         />
         <div className="p-5 sm:p-6 lg:p-7">
           <div className="cb-eyebrow">Over deze module</div>
