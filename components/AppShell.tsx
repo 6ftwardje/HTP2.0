@@ -117,15 +117,6 @@ function SidebarContent({
   const pathname = usePathname();
   const nav = getNavItems(showAdminNav);
 
-  const initials = studentName
-    ? studentName
-        .split(" ")
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((p) => p[0]?.toUpperCase())
-        .join("")
-    : "";
-
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="px-1">
@@ -162,40 +153,7 @@ function SidebarContent({
         })}
       </nav>
 
-      <div className="mt-auto space-y-5 border-t border-[var(--border)] pt-5">
-        {studentName && (
-          <Link
-            href="/account"
-            onClick={onNavigate}
-            className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.04]"
-          >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_72%,var(--background)_28%)] text-sm font-bold text-[var(--foreground)]">
-              {initials || studentName[0]?.toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-semibold text-[var(--foreground)]">
-                {studentName}
-              </div>
-            </div>
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden
-              className="text-[var(--muted)]"
-            >
-              <path
-                d="m7 10 5 5 5-5"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Link>
-        )}
-
+      <div className="mt-auto border-t border-[var(--border)] pt-5">
         <div className="flex flex-col gap-1">
           <a
             href={`mailto:${BRAND.supportEmail}`}
