@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Next.js/Netlify can inline public env values and middleware metadata into
+  # generated build output. Keep secrets scanning enabled, but omit these known
+  # deployment keys that Netlify reported as expected build-time matches.
+  SECRETS_SCAN_OMIT_KEYS = "MUX_TOKEN_ID,MUX_TOKEN_SECRET,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_SUPABASE_URL,linked_ref"
