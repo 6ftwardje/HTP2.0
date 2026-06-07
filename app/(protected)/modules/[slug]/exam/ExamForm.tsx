@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { submitExam } from "@/app/actions/exam";
@@ -22,6 +22,7 @@ export function ExamForm({
   moduleTitle,
 }: Props) {
   const router = useRouter();
+  const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{
@@ -30,12 +31,38 @@ export function ExamForm({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const allAnswered = questions.every((q) => answers[q.id]?.trim() !== "");
+  const current = questions[index];
+  const currentAnswer = answers[current.id] ?? "";
+  const answeredCount = useMemo(
+    () => questions.filter((q) => answers[q.id]?.trim()).length,
+    [answers, questions]
+  );
+  const allAnswered = answeredCount === questions.length;
+  const canContinue = currentAnswer.trim().length > 0;
+  const isLast = index === questions.length - 1;
+  const progress = ((index + 1) / questions.length) * 100;
   const canSubmit = allAnswered && !submitting && !result;
+
+  function selectAnswer(value: string) {
+    setAnswers((prev) => ({ ...prev, [current.id]: value }));
+    setError(null);
+  }
+
+  function goNext() {
+    if (!canContinue) return;
+    setIndex((prev) => Math.min(questions.length - 1, prev + 1));
+  }
+
+  function goPrevious() {
+    setIndex((prev) => Math.max(0, prev - 1));
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit) {
+      setError("Beantwoord alle vragen voordat je de toets indient.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -58,111 +85,158 @@ export function ExamForm({
 
   if (result) {
     return (
-      <div className="cb-panel p-8">
-        <div className="cb-eyebrow">Resultaat</div>
-        <h2 className="mt-3 text-3xl font-semibold text-[var(--foreground)] tracking-tight">
-          Score: {result.score}%
-        </h2>
+      <section className="mx-auto flex min-h-[calc(100dvh-12rem)] w-full max-w-3xl flex-col justify-center">
+        <div className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-6 sm:p-9">
+          <div className="cb-eyebrow">Resultaat</div>
+          <h2 className="mt-4 text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[2.4rem]">
+            Score: {result.score}%
+          </h2>
+          <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-[var(--muted)]">
+            {result.passed
+              ? `Je bent geslaagd voor ${moduleTitle}. Je volgende module komt nu vrij.`
+              : `Je hebt ${passingScore}% nodig om te slagen. Neem de module rustig opnieuw door en probeer daarna opnieuw.`}
+          </p>
 
-        <div className="mt-3">
-          {result.passed ? (
-            <span className="cb-badge cb-badge-completed">Geslaagd</span>
-          ) : (
-            <span className="cb-badge cb-badge-locked">
-              Niet geslaagd (je hebt {passingScore}% nodig)
-            </span>
-          )}
-        </div>
+          <div className="mt-6">
+            {result.passed ? (
+              <span className="cb-badge cb-badge-completed">Geslaagd</span>
+            ) : (
+              <span className="cb-badge cb-badge-locked">Niet geslaagd</span>
+            )}
+          </div>
 
-        <div className="mt-7 flex flex-col sm:flex-row sm:flex-wrap gap-3">
-          <Link
-            href={`/modules/${moduleSlug}`}
-            className="cb-btn cb-btn-secondary"
-          >
-            Terug naar module
-          </Link>
-
-          {result.passed && (
-            <Link href="/modules" className="cb-btn cb-btn-primary">
-              Ga naar de volgende module
-            </Link>
-          )}
-
-          {!result.passed && (
-            <button
-              type="button"
-              onClick={() => {
-                setResult(null);
-                setAnswers({});
-              }}
-              className="cb-btn cb-btn-primary"
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href={`/modules/${moduleSlug}`}
+              className="cb-btn cb-btn-secondary"
             >
-              Toets opnieuw maken
-            </button>
-          )}
+              Terug naar module
+            </Link>
+
+            {result.passed ? (
+              <Link href="/modules" className="cb-btn cb-btn-primary">
+                Ga naar de volgende module
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setResult(null);
+                  setAnswers({});
+                  setIndex(0);
+                }}
+                className="cb-btn cb-btn-primary"
+              >
+                Toets opnieuw maken
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="space-y-6">
-        {questions.map((q, index) => (
-          <fieldset
-            key={q.id}
-            className="cb-panel p-5"
-          >
-            <legend className="cb-eyebrow">
-              Vraag {index + 1} van {questions.length}
-            </legend>
-            <p className="mt-2 text-lg font-semibold text-[var(--foreground)] leading-snug">
-              {q.question}
-            </p>
-            <div className="mt-4 space-y-2">
-              {q.options.map((option) => (
-                <label
-                  key={option}
-                  className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 transition-colors hover:bg-[color-mix(in_oklab,var(--card)_85%,var(--muted)_15%)] has-[:checked]:border-[var(--foreground)] has-[:checked]:bg-[color-mix(in_oklab,var(--card)_78%,var(--muted)_22%)]"
-                >
-                  <input
-                    type="radio"
-                    name={`q-${q.id}`}
-                    value={option}
-                    checked={answers[q.id] === option}
-                    onChange={() =>
-                      setAnswers((prev) => ({ ...prev, [q.id]: option }))
-                    }
-                    className="mt-0.5 h-4 w-4 border-[var(--border)] text-[var(--foreground)] focus:ring-[color-mix(in_oklab,var(--foreground)_35%,transparent)]"
-                  />
-                  <span className="font-medium text-[var(--foreground)]">
-                    {option}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        ))}
+    <form
+      onSubmit={handleSubmit}
+      className="mx-auto flex min-h-[calc(100dvh-12rem)] w-full max-w-3xl flex-col justify-center"
+    >
+      <div className="mb-10">
+        <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.13em] text-[var(--muted)]">
+          <span>
+            Vraag {index + 1} van {questions.length}
+          </span>
+          <span>{answeredCount}/{questions.length} beantwoord</span>
+        </div>
+        <div className="mt-4 h-1 overflow-hidden rounded-sm bg-white/[0.08]">
+          <div
+            className="h-full rounded-sm bg-[var(--accent)] transition-[width] duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
+      <fieldset className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-6 sm:p-9">
+        <legend className="cb-eyebrow text-[var(--accent)]">
+          Moduletoets
+        </legend>
+        <h1 className="mt-4 text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[2.25rem]">
+          {current.question}
+        </h1>
+        <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-[var(--muted)]">
+          Kies het antwoord dat volgens jou het beste klopt. Je kunt teruggaan
+          zolang je de toets nog niet hebt ingediend.
+        </p>
+
+        <div className="mt-8 space-y-3">
+          {current.options.map((option) => {
+            const selected = currentAnswer === option;
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => selectAnswer(option)}
+                className={[
+                  "flex w-full items-start justify-between gap-5 rounded-lg border px-4 py-4 text-left transition-colors",
+                  selected
+                    ? "border-[color-mix(in_oklab,var(--accent)_70%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_11%,var(--card))]"
+                    : "border-[var(--border)] bg-white/[0.018] hover:border-[color-mix(in_oklab,var(--foreground)_22%,var(--border))]",
+                ].join(" ")}
+              >
+                <span className="text-sm font-semibold leading-6 text-[var(--foreground)]">
+                  {option}
+                </span>
+                <span
+                  aria-hidden
+                  className={[
+                    "mt-1 h-4 w-4 shrink-0 rounded-full border",
+                    selected
+                      ? "border-[var(--accent)] bg-[var(--accent)]"
+                      : "border-[var(--border)]",
+                  ].join(" ")}
+                />
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
       {error && (
-        <p className="cb-caption text-red-600" role="alert">
+        <p
+          className="mt-5 rounded-lg border border-[color-mix(in_oklab,#fca5a5_38%,var(--border))] bg-red-500/[0.08] px-4 py-3 text-sm font-semibold text-red-100"
+          role="alert"
+        >
           {error}
         </p>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="mt-6 flex items-center justify-between gap-4">
         <button
-          type="submit"
-          disabled={!canSubmit}
-          className="cb-btn cb-btn-primary disabled:cursor-not-allowed disabled:opacity-60"
+          type="button"
+          onClick={goPrevious}
+          disabled={index === 0 || submitting}
+          className="cb-btn cb-btn-secondary disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {submitting ? "Indienen..." : "Toets indienen"}
+          Vorige
         </button>
-        {!allAnswered && (
-          <p className="self-center cb-caption">
-            Beantwoord alle vragen om in te dienen.
-          </p>
+
+        {isLast ? (
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className="cb-btn cb-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {submitting ? "Toets indienen..." : "Toets indienen"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={!canContinue || submitting}
+            className="cb-btn cb-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Verder
+          </button>
         )}
       </div>
     </form>

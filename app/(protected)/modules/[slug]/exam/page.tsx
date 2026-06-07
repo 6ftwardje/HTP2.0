@@ -10,8 +10,6 @@ import { getPublishedModules } from "@/lib/modules";
 import { ExamForm } from "./ExamForm";
 import { asText } from "@/lib/as-text";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { AppPageLayout } from "@/components/layout/AppPageLayout";
-import { RightRailCard } from "@/components/layout/RightRailCard";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -108,36 +106,6 @@ export default async function ModuleExamPage({ params }: Props) {
 
   const questions = await getExamQuestions(exam.id);
 
-  const rail = (
-    <>
-      <RightRailCard title="Afspraken">
-        <ul className="space-y-3 cb-caption">
-          <li>Beantwoord elke vraag voordat je indient.</li>
-          <li>
-            Vereiste score:{" "}
-            <span className="font-semibold text-[var(--foreground)]">
-              {exam.passing_score}%
-            </span>
-            .
-          </li>
-          <li>Neem rustig de tijd om elke vraag te lezen.</li>
-        </ul>
-      </RightRailCard>
-      <RightRailCard title="Module">
-        <p className="cb-caption leading-relaxed">
-          Module:{" "}
-          <span className="font-semibold text-[var(--foreground)]">{moduleData.title}</span>
-        </p>
-        <Link
-          href={`/modules/${moduleData.slug}`}
-          className="mt-3 inline-flex text-sm font-semibold text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-        >
-          ← Terug naar module
-        </Link>
-      </RightRailCard>
-    </>
-  );
-
   const main =
     questions.length === 0 ? (
       <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
@@ -174,7 +142,7 @@ export default async function ModuleExamPage({ params }: Props) {
           <span className="cb-caption">Slagen vanaf {exam.passing_score}%</span>
         }
       />
-      <AppPageLayout main={main} rail={rail} />
+      <div className="min-w-0">{main}</div>
     </div>
   );
 }
