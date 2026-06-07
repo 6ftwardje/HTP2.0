@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ensureCurrentStudent } from "@/lib/students";
 import { getPublishedModules } from "@/lib/modules";
 import { getLessonCountsByModuleIds } from "@/lib/lessons";
-import { getModuleAccessMap } from "@/lib/module-gate";
+import { buildModuleAccessMap } from "@/lib/module-gate";
 import { getExamsByModuleIds, getPassedExamIdsForStudent } from "@/lib/exams";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ModuleStateBadge } from "@/components/StatusBadge";
@@ -14,15 +14,14 @@ import {
 } from "@/lib/onboarding";
 
 export default async function ModulesPage() {
-  const { student } = await ensureCurrentStudent();
-  const modules = await getPublishedModules();
+  const [{ student }, modules] = await Promise.all([
+    ensureCurrentStudent(),
+    getPublishedModules(),
+  ]);
   const moduleIds = modules.map((module) => module.id);
 
-  const [lessonCountMap, moduleAccessMap, examMap, onboarding] = await Promise.all([
+  const [lessonCountMap, examMap, onboarding] = await Promise.all([
     getLessonCountsByModuleIds(moduleIds),
-    student
-      ? getModuleAccessMap(student.id, modules)
-      : Promise.resolve(new Map<number, boolean>()),
     getExamsByModuleIds(moduleIds),
     student ? getStudentOnboardingResponse(student.id) : Promise.resolve(null),
   ]);
@@ -34,6 +33,12 @@ export default async function ModulesPage() {
         [...examMap.values()].map((exam) => exam.id)
       )
     : new Set<number>();
+  const examIdByModuleId = new Map(
+    [...examMap.values()].map((exam) => [exam.module_id, exam.id])
+  );
+  const moduleAccessMap = student
+    ? buildModuleAccessMap(modules, onboarding, passedExamIds, examIdByModuleId)
+    : new Map<number, boolean>();
 
   const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
 

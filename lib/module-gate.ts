@@ -1,4 +1,5 @@
 import type { Module } from "@/lib/types";
+import type { StudentOnboardingResponse } from "@/lib/types";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
@@ -14,10 +15,9 @@ export async function getModuleAccessMap(
   studentId: string,
   modules: Module[]
 ): Promise<Map<number, boolean>> {
-  const map = new Map<number, boolean>();
-  if (modules.length === 0) return map;
-
   const ordered = [...modules].sort((a, b) => a.order_index - b.order_index);
+  const map = new Map(ordered.map((module) => [module.id, false]));
+  if (ordered.length === 0) return map;
 
   const supabase = await createClient();
   const [onboarding, resultsRes] = await Promise.all([
@@ -48,6 +48,21 @@ export async function getModuleAccessMap(
     examIdByModuleId.set(row.module_id, row.id);
   }
 
+  return buildModuleAccessMap(ordered, onboarding, passedExamIds, examIdByModuleId);
+}
+
+export function buildModuleAccessMap(
+  modules: Module[],
+  onboarding: StudentOnboardingResponse | null,
+  passedExamIds: Set<number>,
+  examIdByModuleId: Map<number, number>
+): Map<number, boolean> {
+  const map = new Map<number, boolean>();
+  if (modules.length === 0) return map;
+
+  const ordered = [...modules].sort((a, b) => a.order_index - b.order_index);
+  const hasCompletedIntake = onboardingIsComplete(onboarding);
+
   for (let i = 0; i < ordered.length; i++) {
     const mod = ordered[i];
     if (hasCompletedIntake && mod.order_index <= 6) {
@@ -61,6 +76,7 @@ export async function getModuleAccessMap(
       map.set(mod.id, prevPassed);
     }
   }
+
   return map;
 }
 

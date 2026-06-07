@@ -26,6 +26,29 @@ const SYSTEM_STEP_TYPES: StudentNextStep["step_type"][] = [
   "module",
 ];
 
+const STUDENT_NEXT_STEP_COLUMNS =
+  "id, student_id, step_key, step_type, status, title, description, href, cta_label, source_table, source_id, sort_order, metadata, due_at, completed_at, created_at, updated_at";
+
+function activeStepMatches(
+  current: StudentNextStep | null,
+  next: StepInput
+): current is StudentNextStep {
+  if (!current) return false;
+  return (
+    current.step_key === next.step_key &&
+    current.step_type === next.step_type &&
+    current.status === next.status &&
+    current.title === next.title &&
+    current.description === next.description &&
+    current.href === next.href &&
+    current.cta_label === next.cta_label &&
+    current.source_table === next.source_table &&
+    current.source_id === next.source_id &&
+    current.sort_order === next.sort_order &&
+    JSON.stringify(current.metadata ?? {}) === JSON.stringify(next.metadata ?? {})
+  );
+}
+
 function stepFromDashboardNextStep(
   studentId: string,
   nextStep: DashboardNextStep
@@ -171,7 +194,7 @@ export async function getActiveStudentNextStep(
   const db = await createClient();
   const { data, error } = await db
     .from("student_next_steps")
-    .select("*")
+    .select(STUDENT_NEXT_STEP_COLUMNS)
     .eq("student_id", studentId)
     .eq("status", "active")
     .order("sort_order", { ascending: true })
@@ -193,6 +216,22 @@ export async function syncStudentNextStep(params: {
     ? stepFromDashboardNextStep(params.studentId, params.dashboardNextStep)
     : intakeStep(params.studentId);
 
+  const { data: currentStep } = await db
+    .from("student_next_steps")
+    .select(STUDENT_NEXT_STEP_COLUMNS)
+    .eq("student_id", params.studentId)
+    .eq("status", "active")
+    .in("step_type", SYSTEM_STEP_TYPES)
+    .order("sort_order", { ascending: true })
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const current = (currentStep as StudentNextStep | null) ?? null;
+
+  if (activeStepMatches(current, next)) {
+    return current;
+  }
+
   await db
     .from("student_next_steps")
     .update({
@@ -207,7 +246,7 @@ export async function syncStudentNextStep(params: {
   const { data, error } = await db
     .from("student_next_steps")
     .upsert(next, { onConflict: "student_id,step_key" })
-    .select()
+    .select(STUDENT_NEXT_STEP_COLUMNS)
     .single();
 
   if (error || !data) return getActiveStudentNextStep(params.studentId);

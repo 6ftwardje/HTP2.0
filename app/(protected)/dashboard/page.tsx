@@ -11,7 +11,6 @@ import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
 } from "@/lib/onboarding";
-import { syncStudentNextStep } from "@/lib/next-steps";
 import { ensureCurrentStudent } from "@/lib/students";
 
 type Props = {
@@ -118,9 +117,11 @@ function ModuleRow({
 }
 
 export default async function DashboardPage({ searchParams }: Props) {
-  const { student } = await ensureCurrentStudent();
+  const [{ student }, params] = await Promise.all([
+    ensureCurrentStudent(),
+    searchParams ? searchParams : Promise.resolve({} as { intake?: string }),
+  ]);
   if (!student) return null;
-  const params = searchParams ? await searchParams : {};
 
   const [overview, onboarding] = await Promise.all([
     getDashboardOverview(student.id),
@@ -128,11 +129,6 @@ export default async function DashboardPage({ searchParams }: Props) {
   ]);
   const { nextStep, modules } = overview;
   const intakeComplete = onboardingIsComplete(onboarding);
-  const persistedNextStep = await syncStudentNextStep({
-    studentId: student.id,
-    intakeComplete,
-    dashboardNextStep: nextStep,
-  });
   const firstName = student.name?.split(" ")[0] ?? null;
   const title = firstName ? `Welkom terug, ${firstName}` : "Welkom terug";
   const activeIndex = modules.findIndex(
@@ -196,23 +192,59 @@ export default async function DashboardPage({ searchParams }: Props) {
         }
       : null;
 
-  const nextStepAction = persistedNextStep
+  const nextStepAction = !intakeComplete
     ? {
-        title: persistedNextStep.title,
-        copy: persistedNextStep.description ?? "Ga verder waar je was gebleven.",
-        href: persistedNextStep.href ?? "/dashboard",
-        label: persistedNextStep.cta_label ?? "Openen",
+        title: "Vul je intake in",
+        copy: "Rond je korte intake af zodat je videolessen openen en je mentor betere context heeft.",
+        href: "/onboarding",
+        label: "Intake invullen",
         external: false,
-        type: persistedNextStep.step_type,
+        type: "intake",
       }
-    : {
-        title: "Stel een vraag aan je mentor",
-        copy: "Loop je vast op deze module? Deel kort waar je naar kijkt en waar je twijfel zit.",
-        href: `mailto:${BRAND.supportEmail}?subject=Mentorvraag%20over%20mijn%20module`,
-        label: "Vraag stellen",
-        external: true,
-        type: "mentor_action",
-      };
+    : nextStep.type === "lesson" && actionSummary?.next
+      ? {
+          title: "Werk je eerstvolgende opdracht af",
+          copy: actionSummary.next,
+          href: nextStep.href,
+          label: "Naar de opdracht",
+          external: false,
+          type: "lesson_action",
+        }
+      : nextStep.type === "lesson"
+        ? {
+            title: nextStep.lesson.title,
+            copy: `Ga verder met Module ${nextStep.module.order_index}: ${nextStep.module.title}.`,
+            href: nextStep.href,
+            label: nextStep.label,
+            external: false,
+            type: "lesson",
+          }
+        : nextStep.type === "exam"
+          ? {
+              title: nextStep.exam.title,
+              copy: "Je lessen zijn afgerond. Maak de toets om verder te gaan.",
+              href: nextStep.href,
+              label: nextStep.label,
+              external: false,
+              type: "exam",
+            }
+          : nextStep.type === "module"
+            ? {
+                title: nextStep.module.title,
+                copy: "Open de module om verder te gaan met je traject.",
+                href: nextStep.href,
+                label: nextStep.label,
+                external: false,
+                type: "module",
+              }
+            : {
+                title: "Stel een vraag aan je mentor",
+                copy: "Loop je vast op deze module? Deel kort waar je naar kijkt en waar je twijfel zit.",
+                href: `mailto:${BRAND.supportEmail}?subject=Mentorvraag%20over%20mijn%20module`,
+                label: "Vraag stellen",
+                external: true,
+                type: "mentor_action",
+              };
   const primaryLabel =
     nextStep.type === "lesson" ? "Start met deze les" : nextStep.label;
   const heroHref = intakeComplete ? nextStep.href : "/onboarding";

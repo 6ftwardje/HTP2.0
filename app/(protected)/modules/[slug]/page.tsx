@@ -31,10 +31,11 @@ function lowercaseFirst(value: string) {
 
 export default async function ModuleDetailPage({ params }: Props) {
   const { slug } = await params;
-  const moduleData = await getModuleBySlug(slug);
+  const [moduleData, { student }] = await Promise.all([
+    getModuleBySlug(slug),
+    ensureCurrentStudent(),
+  ]);
   if (!moduleData) notFound();
-
-  const { student } = await ensureCurrentStudent();
   if (!student) notFound();
 
   const [lessons, allModules, exam, onboarding] = await Promise.all([
@@ -45,13 +46,13 @@ export default async function ModuleDetailPage({ params }: Props) {
   ]);
   const intakeComplete = onboardingIsComplete(onboarding);
 
-  const statusMap = await getLessonStatuses(student.id, lessons);
+  const [statusMap, moduleAccessMap, hasPassedThisExam] = await Promise.all([
+    getLessonStatuses(student.id, lessons),
+    getModuleAccessMap(student.id, allModules),
+    exam ? hasPassedExam(student.id, exam.id) : Promise.resolve(false),
+  ]);
   const lessonsWithStatusList = lessonsWithStatus(lessons, statusMap);
-  const moduleAccessMap = await getModuleAccessMap(student.id, allModules);
   const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
-  const hasPassedThisExam = exam
-    ? await hasPassedExam(student.id, exam.id)
-    : false;
   const allLessonsCompleted = lessons.every((l) => statusMap.get(l.id) === "completed");
   const examUnlocked = !!exam && allLessonsCompleted;
 

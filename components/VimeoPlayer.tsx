@@ -1,10 +1,22 @@
 "use client";
 
-import MuxPlayer from "@mux/mux-player-react";
+import dynamic from "next/dynamic";
 import { extractVimeoId, getVimeoEmbedUrl } from "@/lib/vimeo";
 import { useEffect, useMemo, useRef } from "react";
 
-const COACHEDBY_RED = "#f50101";
+const MuxLessonPlayer = dynamic(
+  () => import("@/components/MuxLessonPlayer").then((mod) => mod.MuxLessonPlayer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-stone-950">
+        <span className="text-sm font-semibold text-white/70">
+          Video laden...
+        </span>
+      </div>
+    ),
+  }
+);
 
 type Props = {
   videoUrl: string | null;
@@ -109,15 +121,10 @@ export function VimeoPlayer({
   if (muxId && muxPlaybackPolicy === "public") {
     return (
       <div className="aspect-video w-full overflow-hidden rounded-2xl border border-[color-mix(in_oklab,#f50101_34%,var(--border)_66%)] bg-stone-950 shadow-[0_0_0_1px_rgba(245,1,1,0.06),0_16px_42px_rgba(28,25,23,0.14)]">
-        <MuxPlayer
+        <MuxLessonPlayer
           playbackId={muxId}
-          videoTitle={title ?? "Lesvideo"}
-          className="h-full w-full"
-          primaryColor="#ffffff"
-          secondaryColor="#0c0a09"
-          accentColor={COACHEDBY_RED}
-          onEnded={onEnded ?? undefined}
-          streamType="on-demand"
+          title={title}
+          onEnded={onEnded}
         />
       </div>
     );
