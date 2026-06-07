@@ -21,5 +21,5 @@ export const getStudentOnboardingResponse = cache(
 export function onboardingIsComplete(
   response: StudentOnboardingResponse | null
 ) {
-  return !!response;
+  return !!response?.completed_at;
 }

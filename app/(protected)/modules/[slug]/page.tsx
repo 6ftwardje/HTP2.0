@@ -14,6 +14,10 @@ import { ContentSection } from "@/components/layout/ContentSection";
 import { LessonStatusBadge } from "@/components/StatusBadge";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { asText } from "@/lib/as-text";
+import {
+  getStudentOnboardingResponse,
+  onboardingIsComplete,
+} from "@/lib/onboarding";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -25,11 +29,13 @@ export default async function ModuleDetailPage({ params }: Props) {
   const { student } = await ensureCurrentStudent();
   if (!student) notFound();
 
-  const [lessons, allModules, exam] = await Promise.all([
+  const [lessons, allModules, exam, onboarding] = await Promise.all([
     getPublishedLessonsByModuleId(moduleData.id),
     getPublishedModules(),
     getExamByModuleId(moduleData.id),
+    getStudentOnboardingResponse(student.id),
   ]);
+  const intakeComplete = onboardingIsComplete(onboarding);
 
   const statusMap = await getLessonStatuses(student.id, lessons);
   const lessonsWithStatusList = lessonsWithStatus(lessons, statusMap);
@@ -99,7 +105,19 @@ export default async function ModuleDetailPage({ params }: Props) {
         </dl>
       </RightRailCard>
 
-      {exam && (
+      {!intakeComplete && (
+        <RightRailCard title="Intake vereist">
+          <p className="cb-caption leading-relaxed">
+            Vul je intake in om de videolessen te openen. Zo krijgt je mentor
+            context over je ervaring, doelen en huidige uitdaging.
+          </p>
+          <Link href="/onboarding" className="mt-5 inline-flex w-full cb-btn cb-btn-primary">
+            Intake invullen
+          </Link>
+        </RightRailCard>
+      )}
+
+      {exam && intakeComplete && (
         <RightRailCard title="Volgende mijlpaal">
           <p className="cb-caption leading-relaxed">
             {hasPassedThisExam
@@ -154,7 +172,11 @@ export default async function ModuleDetailPage({ params }: Props) {
       <ContentSection
         eyebrow="Lessen"
         title="Inhoud van deze module"
-        description="Werk in volgorde. Je voortgang wordt automatisch bijgewerkt."
+        description={
+          intakeComplete
+            ? "Werk in volgorde. Je voortgang wordt automatisch bijgewerkt."
+            : "Je kunt de inhoud bekijken. De videolessen openen zodra je intake is ingevuld."
+        }
       >
         {lessons.length === 0 ? (
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
@@ -164,10 +186,11 @@ export default async function ModuleDetailPage({ params }: Props) {
           <ul className="space-y-4">
             {lessonsWithStatusList.map((lesson) => {
               const isLocked = lesson.status === "locked";
+              const intakeLocked = !intakeComplete;
               const lessonDesc = asText(lesson.description);
               return (
                 <li key={lesson.id} className={isLocked ? "opacity-55" : ""}>
-                  {isLocked ? (
+                  {isLocked || intakeLocked ? (
                     <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--muted)_12%)]">
                       <div className="grid gap-0 sm:grid-cols-[220px_minmax(0,1fr)]">
                         <CourseThumbnail
@@ -185,7 +208,16 @@ export default async function ModuleDetailPage({ params }: Props) {
                               <p className="cb-caption mt-1 line-clamp-2">{lessonDesc}</p>
                             )}
                             <div className="mt-3">
-                              <LessonStatusBadge status={lesson.status} />
+                              {intakeLocked ? (
+                                <Link
+                                  href="/onboarding"
+                                  className="inline-flex text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline"
+                                >
+                                  Intake invullen om video te openen
+                                </Link>
+                              ) : (
+                                <LessonStatusBadge status={lesson.status} />
+                              )}
                             </div>
                           </div>
                       </div>
@@ -226,7 +258,7 @@ export default async function ModuleDetailPage({ params }: Props) {
         )}
       </ContentSection>
 
-      {exam && (
+      {exam && intakeComplete && (
         <section className="rounded-3xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_90%,var(--muted)_10%)] p-5 sm:p-6 lg:hidden">
           <div className="cb-eyebrow">Volgende mijlpaal</div>
           <h2 className="mt-2 cb-section-title">Moduletoets</h2>

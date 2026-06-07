@@ -23,29 +23,23 @@ export function SidebarNavItem({
       href={href}
       onClick={onNavigate}
       className={[
-        "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors",
+        "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors",
         active
           ? [
-              "bg-stone-900 text-white shadow-sm",
-              "dark:bg-white/10 dark:text-stone-50 dark:shadow-none dark:ring-1 dark:ring-white/10",
+              "bg-white/[0.055] text-[var(--foreground)]",
+              "before:absolute before:-left-5 before:top-0 before:h-full before:w-[3px] before:bg-[var(--accent)]",
             ].join(" ")
           : [
-              "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
-              "dark:text-stone-300 dark:hover:bg-white/5 dark:hover:text-stone-50",
+              "text-[var(--muted)] hover:bg-white/[0.035] hover:text-[var(--foreground)]",
             ].join(" "),
       ].join(" ")}
     >
       <span
         className={[
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
           active
-            ? "border-white/15 bg-white/10 text-white dark:border-white/20 dark:bg-white/10 dark:text-stone-50"
-            : [
-                "border-stone-200/80 bg-white text-stone-500",
-                "group-hover:border-stone-300 group-hover:text-stone-900",
-                "dark:border-stone-600 dark:bg-stone-900/40 dark:text-stone-400",
-                "dark:group-hover:border-stone-500 dark:group-hover:bg-white/5 dark:group-hover:text-stone-50",
-              ].join(" "),
+            ? "text-[var(--accent)]"
+            : "text-[var(--muted)] group-hover:text-[var(--foreground)]",
         ].join(" ")}
         aria-hidden
       >

@@ -53,6 +53,36 @@ const coreNav = [
     ),
   },
   {
+    href: "/dashboard#mentor",
+    label: "Mentor",
+    icon: (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M12 21a9 9 0 1 0-9-9 9 9 0 0 0 9 9Zm0-14v5l3 2"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/dashboard#progress",
+    label: "Progress",
+    icon: (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M5 19V9m7 10V5m7 14v-7M4 19h16"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
     href: "/account",
     label: "Profiel",
     icon: (
@@ -72,7 +102,7 @@ function getNavItems(showAdminNav: boolean) {
   if (!showAdminNav) {
     return [...coreNav];
   }
-  return [coreNav[0], coreNav[1], adminNavItem, coreNav[2]];
+  return [...coreNav.slice(0, 4), adminNavItem, coreNav[4]];
 }
 
 function SidebarContent({
@@ -102,38 +132,23 @@ function SidebarContent({
         <Link
           href="/dashboard"
           onClick={onNavigate}
-          className="inline-flex items-center gap-2 rounded-lg outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_25%,transparent)]"
+          className="inline-flex items-center gap-2 rounded-md outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_25%,transparent)]"
         >
-          <BrandLogo iconClassName="h-8 w-8" textClassName="text-[0.7rem]" />
+          <BrandLogo iconClassName="h-7 w-7" textClassName="text-[0.66rem]" />
         </Link>
       </div>
 
-      {studentName && (
-        <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-[0_1px_0_rgba(28,25,23,0.04)] dark:shadow-[0_1px_0_rgba(255,255,255,0.06)]">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_85%,var(--border)_15%)] text-sm font-bold text-[var(--foreground)]">
-              {initials || studentName[0]?.toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
-                Aangemeld
-              </div>
-              <div className="mt-0.5 truncate text-sm font-semibold text-[var(--foreground)]">
-                {studentName}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <nav
-        className="mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain"
+        className="mt-9 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain"
         aria-label="Hoofdnavigatie"
       >
         {nav.map((item) => {
+          const itemPath = item.href.split("#")[0];
           const isActive =
             pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            (item.href === "/dashboard"
+              ? pathname === "/dashboard"
+              : !item.href.includes("#") && pathname.startsWith(itemPath));
           return (
             <SidebarNavItem
               key={item.href}
@@ -147,18 +162,51 @@ function SidebarContent({
         })}
       </nav>
 
-      <div className="mt-auto border-t border-[var(--border)] pt-5">
+      <div className="mt-auto space-y-5 border-t border-[var(--border)] pt-5">
+        {studentName && (
+          <Link
+            href="/account"
+            onClick={onNavigate}
+            className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-white/[0.04]"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_72%,var(--background)_28%)] text-sm font-bold text-[var(--foreground)]">
+              {initials || studentName[0]?.toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-semibold text-[var(--foreground)]">
+                {studentName}
+              </div>
+            </div>
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden
+              className="text-[var(--muted)]"
+            >
+              <path
+                d="m7 10 5 5 5-5"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Link>
+        )}
+
         <div className="flex flex-col gap-1">
           <a
             href={`mailto:${BRAND.supportEmail}`}
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-stone-100 hover:text-[var(--foreground)] dark:hover:bg-white/5"
+            className="rounded-lg px-2 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/[0.04] hover:text-[var(--foreground)]"
           >
             Hulp nodig?
           </a>
           <form action="/auth/signout" method="post">
             <button
               type="submit"
-              className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-stone-100 hover:text-[var(--foreground)] dark:hover:bg-white/5"
+              className="w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/[0.04] hover:text-[var(--foreground)]"
             >
               Afmelden
             </button>
@@ -204,8 +252,8 @@ export function AppShell({
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       {/* Desktop sidebar: vaste viewporthoogte; alleen main rechts scrollt */}
-      <aside className="relative hidden h-full min-h-0 w-[272px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] md:flex">
-        <div className="flex h-full min-h-0 flex-col px-5 py-7">
+      <aside className="relative hidden h-full min-h-0 w-[252px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_96%,var(--card)_4%)] md:flex">
+        <div className="flex h-full min-h-0 flex-col px-5 py-8">
           <SidebarContent
             studentName={studentName}
             showAdminNav={showAdminNav}
@@ -230,7 +278,7 @@ export function AppShell({
               </span>
               <button
                 type="button"
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-stone-100 hover:text-[var(--foreground)] dark:hover:bg-white/5"
+                className="rounded-md px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-stone-100 hover:text-[var(--foreground)] dark:hover:bg-white/5"
                 onClick={() => setMobileOpen(false)}
               >
                 Sluiten
@@ -251,7 +299,7 @@ export function AppShell({
         <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,white)] px-4 py-3 backdrop-blur-md md:hidden dark:bg-[color-mix(in_oklab,var(--background)_92%,#0c0a09)]">
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
             onClick={() => setMobileOpen(true)}
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"
@@ -279,7 +327,7 @@ export function AppShell({
           id="mobile-nav"
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
         >
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+          <div className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
             <PageLoadOverlay>{children}</PageLoadOverlay>
           </div>
         </main>

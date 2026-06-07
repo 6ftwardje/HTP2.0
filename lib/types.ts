@@ -124,7 +124,39 @@ export type StudentOnboardingResponse = {
   goal_90_days: string | null;
   weekly_time_commitment: string | null;
   mentorship_interest: string | null;
+  confidence_score: number | null;
   tools: Record<string, boolean>;
+  completed_at: string | null;
+  intake_version: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudentNextStep = {
+  id: string;
+  student_id: string;
+  step_key: string;
+  step_type:
+    | "intake"
+    | "lesson"
+    | "lesson_action"
+    | "exam"
+    | "module"
+    | "mentor_action"
+    | "live_session"
+    | "physical_lesson"
+    | "custom";
+  status: "active" | "completed" | "dismissed";
+  title: string;
+  description: string | null;
+  href: string | null;
+  cta_label: string | null;
+  source_table: string | null;
+  source_id: string | null;
+  sort_order: number;
+  metadata: Record<string, unknown>;
+  due_at: string | null;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
 };

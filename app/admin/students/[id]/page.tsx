@@ -206,6 +206,18 @@ export default async function AdminStudentDetailPage({
                       {formatOnboardingValue(onboarding.mentorship_interest)}
                     </dd>
                   </div>
+                  <div>
+                    <dt className="cb-caption text-xs font-bold uppercase tracking-wider">Confidence</dt>
+                    <dd className="mt-1 font-semibold text-[var(--foreground)]">
+                      {onboarding.confidence_score ? `${onboarding.confidence_score}/5` : "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="cb-caption text-xs font-bold uppercase tracking-wider">Completed</dt>
+                    <dd className="mt-1 font-semibold text-[var(--foreground)]">
+                      {onboarding.completed_at ? "Yes" : "No"}
+                    </dd>
+                  </div>
                   <div className="sm:col-span-2">
                     <dt className="cb-caption text-xs font-bold uppercase tracking-wider">Main challenge</dt>
                     <dd className="mt-1 whitespace-pre-wrap text-[var(--foreground)]">

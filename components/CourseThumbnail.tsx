@@ -33,9 +33,9 @@ export function CourseThumbnail({
         />
       ) : (
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[color-mix(in_oklab,var(--card)_72%,#d6f4df_28%)] dark:bg-[color-mix(in_oklab,var(--card)_74%,#064e3b_26%)]" />
-          <div className="absolute inset-0 opacity-70 [background-image:linear-gradient(135deg,transparent_0%,transparent_42%,color-mix(in_oklab,var(--foreground)_10%,transparent)_42%,color-mix(in_oklab,var(--foreground)_10%,transparent)_43%,transparent_43%,transparent_100%),linear-gradient(90deg,color-mix(in_oklab,#34d399_18%,transparent),transparent_38%,color-mix(in_oklab,#f59e0b_12%,transparent)_100%)]" />
-          <div className="absolute bottom-4 left-4 flex h-14 w-14 items-center justify-center rounded-xl border border-white/35 bg-white/26 text-2xl font-black text-[var(--foreground)] shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/8">
+          <div className="absolute inset-0 bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)]" />
+          <div className="absolute inset-0 opacity-80 [background-image:linear-gradient(90deg,color-mix(in_oklab,var(--foreground)_7%,transparent)_1px,transparent_1px),linear-gradient(180deg,color-mix(in_oklab,var(--foreground)_7%,transparent)_1px,transparent_1px)] [background-size:48px_48px]" />
+          <div className="absolute bottom-4 left-4 flex h-12 w-12 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] text-xl font-black text-[var(--foreground)]">
             {initial}
           </div>
         </div>
@@ -46,7 +46,7 @@ export function CourseThumbnail({
       ) : null}
 
       {eyebrow ? (
-        <div className="absolute left-3 top-3 rounded-full border border-white/35 bg-stone-950/38 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white shadow-sm backdrop-blur-md">
+        <div className="absolute left-3 top-3 rounded-md border border-white/20 bg-stone-950/54 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
           {eyebrow}
         </div>
       ) : null}

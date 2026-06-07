@@ -19,6 +19,10 @@ import {
   normalizeLessonActions,
 } from "@/lib/lesson-actions";
 import type { LessonStatus } from "@/lib/types";
+import {
+  getStudentOnboardingResponse,
+  onboardingIsComplete,
+} from "@/lib/onboarding";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -121,11 +125,12 @@ export default async function LessonPage({ params }: Props) {
   if (!student) notFound();
 
   const allLessons = await getPublishedLessonsByModuleId(lesson.module_id);
-  const [moduleData, statusMap, progressMap, exam] = await Promise.all([
+  const [moduleData, statusMap, progressMap, exam, onboarding] = await Promise.all([
     getModuleById(lesson.module_id),
     getLessonStatuses(student.id, allLessons),
     getProgressByLessonIds(student.id, allLessons.map((l) => l.id)),
     getExamByModuleId(lesson.module_id),
+    getStudentOnboardingResponse(student.id),
   ]);
 
   if (!moduleData) notFound();
@@ -134,6 +139,7 @@ export default async function LessonPage({ params }: Props) {
   const status = statusMap.get(lesson.id) ?? "locked";
   const isCompleted = progressMap.get(lesson.id)?.watched === true;
   const canAccess = status === "available" || status === "completed";
+  const intakeComplete = onboardingIsComplete(onboarding);
 
   const prevLesson =
     currentIndex > 0 ? allLessons[currentIndex - 1] : null;
@@ -175,6 +181,37 @@ export default async function LessonPage({ params }: Props) {
             Terug naar module
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (!intakeComplete) {
+    return (
+      <div>
+        <PageHeader
+          breadcrumbs={[
+            { label: "Academy", href: "/modules" },
+            { label: moduleData.title, href: `/modules/${moduleData.slug}` },
+            { label: "Intake" },
+          ]}
+          eyebrow="Videocourse"
+          title="Vul eerst je intake in"
+          description="Je kunt rondkijken in de Academy, maar videolessen openen pas nadat je intake is afgerond. Zo krijgt je mentor de context die nodig is om je beter te begeleiden."
+        />
+        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-8">
+          <div className="max-w-2xl">
+            <div className="cb-eyebrow text-[var(--accent)]">Waarom dit nodig is</div>
+            <p className="mt-4 cb-body">
+              We gebruiken je antwoorden om je ervaring, doelen, beschikbare
+              tijd en huidige uitdaging te begrijpen. Die context helpt mentors
+              en toekomstige AI-coaching om relevanter te reageren op je
+              voortgang.
+            </p>
+            <Link href="/onboarding" className="mt-6 inline-flex cb-btn cb-btn-primary">
+              Intake invullen
+            </Link>
+          </div>
+        </section>
       </div>
     );
   }

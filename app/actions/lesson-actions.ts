@@ -2,10 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { getLessonById } from "@/lib/lessons";
+import { getDashboardOverview } from "@/lib/dashboard";
 import {
   normalizeLessonActions,
   upsertLessonActionProgress,
 } from "@/lib/lesson-actions";
+import {
+  getStudentOnboardingResponse,
+  onboardingIsComplete,
+} from "@/lib/onboarding";
+import { syncStudentNextStep } from "@/lib/next-steps";
 import { ensureCurrentStudent } from "@/lib/students";
 
 export async function toggleLessonAction(
@@ -34,6 +40,16 @@ export async function toggleLessonAction(
   if (error) {
     return { success: false, error: "Je opdracht kon niet worden bijgewerkt." };
   }
+
+  const [overview, onboarding] = await Promise.all([
+    getDashboardOverview(student.id),
+    getStudentOnboardingResponse(student.id),
+  ]);
+  await syncStudentNextStep({
+    studentId: student.id,
+    intakeComplete: onboardingIsComplete(onboarding),
+    dashboardNextStep: overview.nextStep,
+  });
 
   revalidatePath("/dashboard");
   revalidatePath(`/lessons/${lesson.slug}`);

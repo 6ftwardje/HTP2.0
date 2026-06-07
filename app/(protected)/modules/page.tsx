@@ -5,24 +5,28 @@ import { getLessonCountsByModuleIds } from "@/lib/lessons";
 import { getModuleAccessMap } from "@/lib/module-gate";
 import { getExamsByModuleIds, getPassedExamIdsForStudent } from "@/lib/exams";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { AppPageLayout } from "@/components/layout/AppPageLayout";
-import { RightRailCard } from "@/components/layout/RightRailCard";
 import { ModuleStateBadge } from "@/components/StatusBadge";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { asText } from "@/lib/as-text";
+import {
+  getStudentOnboardingResponse,
+  onboardingIsComplete,
+} from "@/lib/onboarding";
 
 export default async function ModulesPage() {
   const { student } = await ensureCurrentStudent();
   const modules = await getPublishedModules();
   const moduleIds = modules.map((module) => module.id);
 
-  const [lessonCountMap, moduleAccessMap, examMap] = await Promise.all([
+  const [lessonCountMap, moduleAccessMap, examMap, onboarding] = await Promise.all([
     getLessonCountsByModuleIds(moduleIds),
     student
       ? getModuleAccessMap(student.id, modules)
       : Promise.resolve(new Map<number, boolean>()),
     getExamsByModuleIds(moduleIds),
+    student ? getStudentOnboardingResponse(student.id) : Promise.resolve(null),
   ]);
+  const intakeComplete = onboardingIsComplete(onboarding);
 
   const passedExamIds = student
     ? await getPassedExamIdsForStudent(
@@ -48,28 +52,28 @@ export default async function ModulesPage() {
     );
   }
 
-  const rail = (
-    <>
-      <RightRailCard title="Zo werkt het">
-        <p className="cb-body text-sm leading-relaxed">
-          Elke module is een helder trainingsblok. Rond de lessen in volgorde af
-          en slaag voor de toets om het volgende blok vrij te spelen.
-        </p>
-      </RightRailCard>
-      <RightRailCard title="Focus">
-        <p className="cb-caption leading-relaxed">
-          Werk aan één blok tegelijk. Neem de tijd om de inhoud toe te passen.
-        </p>
-      </RightRailCard>
-    </>
-  );
-
   const main =
     orderedModules.length === 0 ? (
       <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-8 text-center">
         <p className="cb-caption">Er zijn nog geen modules beschikbaar.</p>
       </div>
     ) : (
+      <div className="space-y-5">
+        {!intakeComplete && (
+          <section className="rounded-xl border border-[color-mix(in_oklab,var(--accent)_28%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_8%,var(--card))] p-5 sm:p-6">
+            <div className="cb-eyebrow text-[var(--accent)]">Intake vereist</div>
+            <h2 className="mt-3 cb-section-title">
+              Vul je intake in om videolessen te starten
+            </h2>
+            <p className="mt-2 cb-caption max-w-2xl">
+              Je kunt de modules alvast bekijken. De videocourse opent zodra je
+              jouw ervaring, doelen en huidige uitdaging hebt ingevuld.
+            </p>
+            <Link href="/onboarding" className="mt-5 inline-flex cb-btn cb-btn-primary">
+              Intake invullen
+            </Link>
+          </section>
+        )}
       <ul className="grid gap-5 md:grid-cols-2">
           {orderedModules.map((mod) => {
             const state = moduleStateMap.get(mod.id) ?? "locked";
@@ -108,7 +112,7 @@ export default async function ModulesPage() {
                         )}
                       </div>
                       <div className="mt-5 text-sm font-semibold text-[var(--foreground)]">
-                        Openen
+                        {intakeComplete ? "Openen" : "Module bekijken"}
                       </div>
                   </div>
                 </Link>
@@ -148,6 +152,7 @@ export default async function ModulesPage() {
           );
         })}
       </ul>
+      </div>
     );
 
   return (
@@ -158,7 +163,7 @@ export default async function ModulesPage() {
         title="Modules"
         description="Werk in volgorde. Rond de lessen en toets af om het volgende blok vrij te spelen."
       />
-      <AppPageLayout main={main} rail={rail} />
+      <div className="min-w-0">{main}</div>
     </div>
   );
 }

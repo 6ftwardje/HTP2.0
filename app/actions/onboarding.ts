@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
+import { getDashboardOverview } from "@/lib/dashboard";
+import { syncStudentNextStep } from "@/lib/next-steps";
 
 function textValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -12,18 +14,36 @@ function textValue(formData: FormData, key: string) {
   return trimmed || null;
 }
 
-function checkboxTools(formData: FormData) {
-  return {
-    tradingview: formData.get("tool_tradingview") === "on",
-    tradezella: formData.get("tool_tradezella") === "on",
-    discord: formData.get("tool_discord") === "on",
-  };
+function numberValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+  if (typeof value !== "string") return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function hasRequiredIntake(formData: FormData) {
+  const confidenceScore = numberValue(formData, "confidence_score");
+  return [
+    "experience_level",
+    "primary_market",
+    "main_challenge",
+    "goal_90_days",
+    "weekly_time_commitment",
+    "mentorship_interest",
+  ].every((key) => textValue(formData, key)) &&
+    confidenceScore !== null &&
+    confidenceScore >= 1 &&
+    confidenceScore <= 5;
 }
 
 export async function saveOnboarding(formData: FormData) {
   const { student } = await ensureCurrentStudent();
   if (!student) {
     redirect("/");
+  }
+
+  if (!hasRequiredIntake(formData)) {
+    redirect("/onboarding?error=incomplete");
   }
 
   const db = await createClient();
@@ -36,7 +56,10 @@ export async function saveOnboarding(formData: FormData) {
       goal_90_days: textValue(formData, "goal_90_days"),
       weekly_time_commitment: textValue(formData, "weekly_time_commitment"),
       mentorship_interest: textValue(formData, "mentorship_interest"),
-      tools: checkboxTools(formData),
+      confidence_score: numberValue(formData, "confidence_score"),
+      tools: {},
+      completed_at: new Date().toISOString(),
+      intake_version: "v1",
     },
     { onConflict: "student_id" }
   );
@@ -46,9 +69,17 @@ export async function saveOnboarding(formData: FormData) {
     .update({ onboarding_skipped_at: null })
     .eq("id", student.id);
 
+  const overview = await getDashboardOverview(student.id);
+  await syncStudentNextStep({
+    studentId: student.id,
+    intakeComplete: true,
+    dashboardNextStep: overview.nextStep,
+  });
+
   revalidatePath("/dashboard");
   revalidatePath("/account");
-  redirect("/dashboard");
+  revalidatePath("/modules");
+  redirect("/dashboard?intake=completed");
 }
 
 export async function skipOnboarding() {

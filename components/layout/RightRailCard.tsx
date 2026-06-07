@@ -11,7 +11,7 @@ export function RightRailCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[0_1px_0_rgba(28,25,23,0.04)] sm:p-6 dark:shadow-[0_1px_0_rgba(255,255,255,0.06)] ${className}`}
+      className={`rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6 ${className}`}
     >
       {title ? (
         <>
