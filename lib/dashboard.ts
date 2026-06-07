@@ -190,7 +190,7 @@ export async function getDashboardOverview(
       nextStep: {
         type: "exam",
         href: `/modules/${currentModule.slug}/exam`,
-        label: "Maak de moduletoets",
+        label: "Maak de toets",
         module: currentModule,
         exam,
         completedLessons: currentSummary.completedLessons,

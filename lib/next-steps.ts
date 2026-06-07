@@ -90,7 +90,7 @@ function stepFromDashboardNextStep(
       step_type: "exam",
       status: "active",
       title: nextStep.exam.title,
-      description: "Je lessen zijn afgerond. Maak de moduletoets om verder te gaan.",
+      description: "Je lessen zijn afgerond. Maak de toets om verder te gaan.",
       href: nextStep.href,
       cta_label: nextStep.label,
       source_table: "exams",

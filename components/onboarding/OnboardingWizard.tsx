@@ -212,13 +212,13 @@ export function OnboardingWizard({
   }
 
   return (
-    <form action={saveOnboarding} className="min-h-[calc(100dvh-10rem)]">
+    <form action={saveOnboarding} className="h-full min-h-0">
       {Object.entries(values).map(([key, value]) => (
         <input key={key} type="hidden" name={key} value={value} />
       ))}
 
-      <div className="mx-auto flex min-h-[calc(100dvh-10rem)] w-full max-w-3xl flex-col justify-center">
-        <div className="mb-10">
+      <div className="flex h-full min-h-0 w-full flex-col justify-center">
+        <div className="mb-6">
           <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.13em] text-[var(--muted)]">
             <span>
               Vraag {index + 1} van {steps.length}
@@ -233,12 +233,12 @@ export function OnboardingWizard({
           </div>
         </div>
 
-        <section className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-6 sm:p-9">
+        <section className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-5 sm:p-7">
           <p className="cb-eyebrow text-[var(--accent)]">{current.eyebrow}</p>
-          <h1 className="mt-4 text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[2.4rem]">
+          <h1 className="mt-4 text-2xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[1.95rem]">
             {current.question}
           </h1>
-          <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-[var(--muted)]">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
             {current.reason}
           </p>
 
@@ -250,14 +250,14 @@ export function OnboardingWizard({
             </p>
           )}
 
-          <div className="mt-8">
+          <div className="mt-6">
             {current.type === "textarea" ? (
               <textarea
                 value={currentValue}
                 onChange={(event) => setValue(current.id, event.target.value)}
-                rows={6}
+                rows={4}
                 placeholder={current.placeholder}
-                className="w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-4 text-base leading-7 text-[var(--foreground)] outline-none transition placeholder:text-[color-mix(in_oklab,var(--muted)_68%,transparent)] focus:border-[color-mix(in_oklab,var(--accent)_58%,var(--border))]"
+                className="w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-base leading-7 text-[var(--foreground)] outline-none transition placeholder:text-[color-mix(in_oklab,var(--muted)_68%,transparent)] focus:border-[color-mix(in_oklab,var(--accent)_58%,var(--border))]"
               />
             ) : current.type === "scale" ? (
               <div className="grid grid-cols-5 gap-2 sm:gap-3">
@@ -269,7 +269,7 @@ export function OnboardingWizard({
                       type="button"
                       onClick={() => setValue(current.id, option.value)}
                       className={[
-                        "flex min-h-24 flex-col items-center justify-center rounded-lg border px-2 py-4 text-center transition-colors",
+                        "flex min-h-20 flex-col items-center justify-center rounded-lg border px-2 py-3 text-center transition-colors",
                         selected
                           ? "border-[color-mix(in_oklab,var(--accent)_70%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_13%,var(--card))] text-[var(--foreground)]"
                           : "border-[var(--border)] bg-white/[0.02] text-[var(--muted)] hover:border-[color-mix(in_oklab,var(--foreground)_22%,var(--border))] hover:text-[var(--foreground)]",
@@ -295,7 +295,7 @@ export function OnboardingWizard({
                       type="button"
                       onClick={() => setValue(current.id, option.value)}
                       className={[
-                        "flex w-full items-start justify-between gap-5 rounded-lg border px-4 py-4 text-left transition-colors",
+                        "flex w-full items-start justify-between gap-5 rounded-lg border px-4 py-3 text-left transition-colors",
                         selected
                           ? "border-[color-mix(in_oklab,var(--accent)_70%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_11%,var(--card))]"
                           : "border-[var(--border)] bg-white/[0.018] hover:border-[color-mix(in_oklab,var(--foreground)_22%,var(--border))]",
@@ -328,7 +328,7 @@ export function OnboardingWizard({
           </div>
         </section>
 
-        <div className="mt-6 flex items-center justify-between gap-4">
+        <div className="mt-5 flex items-center justify-between gap-4">
           <button
             type="button"
             onClick={() => setIndex((prev) => Math.max(0, prev - 1))}

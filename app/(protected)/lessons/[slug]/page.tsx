@@ -350,11 +350,11 @@ export default async function LessonPage({ params }: Props) {
               href={`/modules/${moduleData.slug}/exam`}
               className="cb-btn cb-btn-primary inline-flex"
             >
-              Start de moduletoets
+              Start de toets
             </Link>
           ) : isLastLesson ? (
             <p className="text-sm text-[var(--muted)]">
-              Rond deze les af om de moduletoets vrij te spelen.
+              Rond deze les af om de toets vrij te spelen.
             </p>
           ) : (
             <span className="text-sm text-[var(--muted)] opacity-80">Geen volgende les</span>

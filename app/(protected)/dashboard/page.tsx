@@ -157,7 +157,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         asText(nextStep.lesson.description) ??
         "Bekijk de les en werk daarna de opdrachten af."
       : nextStep.type === "exam"
-        ? "Je hebt alle lessen van deze module bekeken. Rond nu de moduletoets af."
+        ? "Je hebt alle lessen van deze module bekeken. Rond nu de toets af."
         : nextStep.type === "completed"
           ? "Mooi werk. Je hebt alle beschikbare modules doorlopen."
           : "Open de module om verder te gaan met je traject.";

@@ -85,13 +85,13 @@ export function ExamForm({
 
   if (result) {
     return (
-      <section className="mx-auto flex min-h-[calc(100dvh-12rem)] w-full max-w-3xl flex-col justify-center">
-        <div className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-6 sm:p-9">
+      <section className="flex h-full min-h-0 w-full flex-col justify-center">
+        <div className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-5 sm:p-7">
           <div className="cb-eyebrow">Resultaat</div>
-          <h2 className="mt-4 text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[2.4rem]">
+          <h2 className="mt-4 text-2xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[2rem]">
             Score: {result.score}%
           </h2>
-          <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-[var(--muted)]">
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">
             {result.passed
               ? `Je bent geslaagd voor ${moduleTitle}. Je volgende module komt nu vrij.`
               : `Je hebt ${passingScore}% nodig om te slagen. Neem de module rustig opnieuw door en probeer daarna opnieuw.`}
@@ -139,9 +139,9 @@ export function ExamForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto flex min-h-[calc(100dvh-12rem)] w-full max-w-3xl flex-col justify-center"
+      className="flex h-full min-h-0 w-full flex-col justify-center"
     >
-      <div className="mb-10">
+      <div className="mb-6">
         <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.13em] text-[var(--muted)]">
           <span>
             Vraag {index + 1} van {questions.length}
@@ -156,19 +156,17 @@ export function ExamForm({
         </div>
       </div>
 
-      <fieldset className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-6 sm:p-9">
-        <legend className="cb-eyebrow text-[var(--accent)]">
-          Moduletoets
-        </legend>
-        <h1 className="mt-4 text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[2.25rem]">
+      <fieldset className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-5 sm:p-7">
+        <legend className="sr-only">Vraag {index + 1}</legend>
+        <h1 className="text-2xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[1.95rem]">
           {current.question}
         </h1>
-        <p className="mt-4 max-w-2xl text-[0.98rem] leading-7 text-[var(--muted)]">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
           Kies het antwoord dat volgens jou het beste klopt. Je kunt teruggaan
           zolang je de toets nog niet hebt ingediend.
         </p>
 
-        <div className="mt-8 space-y-3">
+        <div className="mt-6 space-y-3">
           {current.options.map((option) => {
             const selected = currentAnswer === option;
             return (
@@ -177,7 +175,7 @@ export function ExamForm({
                 type="button"
                 onClick={() => selectAnswer(option)}
                 className={[
-                  "flex w-full items-start justify-between gap-5 rounded-lg border px-4 py-4 text-left transition-colors",
+                  "flex w-full items-start justify-between gap-5 rounded-lg border px-4 py-3 text-left transition-colors",
                   selected
                     ? "border-[color-mix(in_oklab,var(--accent)_70%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_11%,var(--card))]"
                     : "border-[var(--border)] bg-white/[0.018] hover:border-[color-mix(in_oklab,var(--foreground)_22%,var(--border))]",
@@ -210,7 +208,7 @@ export function ExamForm({
         </p>
       )}
 
-      <div className="mt-6 flex items-center justify-between gap-4">
+      <div className="mt-5 flex items-center justify-between gap-4">
         <button
           type="button"
           onClick={goPrevious}

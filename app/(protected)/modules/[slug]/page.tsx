@@ -261,7 +261,7 @@ export default async function ModuleDetailPage({ params }: Props) {
       {exam && intakeComplete && (
         <section className="rounded-3xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_90%,var(--muted)_10%)] p-5 sm:p-6 lg:hidden">
           <div className="cb-eyebrow">Volgende mijlpaal</div>
-          <h2 className="mt-2 cb-section-title">Moduletoets</h2>
+          <h2 className="mt-2 cb-section-title">Toets</h2>
           {hasPassedThisExam ? (
             <p className="mt-2 cb-body max-w-2xl">
               Je bent geslaagd voor deze toets. Je kunt ze altijd opnieuw maken.

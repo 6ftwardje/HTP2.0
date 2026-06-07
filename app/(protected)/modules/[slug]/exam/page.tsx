@@ -105,10 +105,12 @@ export default async function ModuleExamPage({ params }: Props) {
   }
 
   const questions = await getExamQuestions(exam.id);
+  const displayTitle = exam.title.replace(/\bmoduletoets\b/gi, "Toets");
+  const description = asText(exam.description);
 
   const main =
     questions.length === 0 ? (
-      <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
         <p className="cb-caption">Deze toets bevat nog geen vragen.</p>
         <Link
           href={`/modules/${moduleData.slug}`}
@@ -128,21 +130,42 @@ export default async function ModuleExamPage({ params }: Props) {
     );
 
   return (
-    <div>
-      <PageHeader
-        breadcrumbs={[
-          { label: "Academy", href: "/modules" },
-          { label: moduleData.title, href: `/modules/${moduleData.slug}` },
-          { label: "Toets" },
-        ]}
-        eyebrow="Moduletoets"
-        title={exam.title}
-        description={asText(exam.description) ?? undefined}
-        meta={
-          <span className="cb-caption">Slagen vanaf {exam.passing_score}%</span>
-        }
-      />
-      <div className="min-w-0">{main}</div>
-    </div>
+    <section className="grid h-auto min-h-0 gap-8 overflow-visible lg:h-[calc(100dvh-6rem)] lg:grid-cols-[minmax(0,0.85fr)_minmax(420px,1fr)] lg:overflow-hidden xl:gap-12">
+      <aside className="flex min-h-0 flex-col justify-center overflow-hidden">
+        <div className="cb-eyebrow">
+          Academy / Module {moduleData.order_index} / Toets
+        </div>
+        <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.02] text-[var(--foreground)] sm:text-5xl xl:text-[3.4rem]">
+          {displayTitle}
+        </h1>
+        {description && (
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--muted)]">
+            {description}
+          </p>
+        )}
+        <div className="mt-8 grid max-w-xl gap-4 border-t border-[var(--border)] pt-6 sm:grid-cols-2">
+          <div>
+            <p className="cb-caption">Module</p>
+            <p className="mt-1 font-semibold text-[var(--foreground)]">
+              {moduleData.title}
+            </p>
+          </div>
+          <div>
+            <p className="cb-caption">Norm</p>
+            <p className="mt-1 font-semibold text-[var(--foreground)]">
+              Slagen vanaf {exam.passing_score}%
+            </p>
+          </div>
+        </div>
+        <Link
+          href={`/modules/${moduleData.slug}`}
+          className="mt-8 inline-flex w-fit text-sm font-semibold text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+        >
+          Terug naar module
+        </Link>
+      </aside>
+
+      <div className="min-h-0 overflow-hidden">{main}</div>
+    </section>
   );
 }
