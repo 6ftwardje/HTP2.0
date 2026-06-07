@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
 import { AppShell } from "@/components/AppShell";
-import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 
 export default async function ProtectedLayout({
   children,
@@ -11,7 +10,7 @@ export default async function ProtectedLayout({
   if (process.env.NODE_ENV === "test") {
     // Test-mode: geen auth/redirects nodig; render gewoon de protected UI.
     return (
-      <AppShell studentName={null} showAdminNav={false}>
+      <AppShell studentName={null}>
         {children}
       </AppShell>
     );
@@ -28,10 +27,7 @@ export default async function ProtectedLayout({
   }
 
   return (
-    <AppShell
-      studentName={student.name ?? null}
-      showAdminNav={student.access_level === ADMIN_ACCESS_LEVEL}
-    >
+    <AppShell studentName={student.name ?? null}>
       {children}
     </AppShell>
   );

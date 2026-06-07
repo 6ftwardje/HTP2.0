@@ -10,8 +10,6 @@ import { getPublishedModules } from "@/lib/modules";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppPageLayout } from "@/components/layout/AppPageLayout";
 import { RightRailCard } from "@/components/layout/RightRailCard";
-import { ContentSection } from "@/components/layout/ContentSection";
-import { LessonStatusBadge } from "@/components/StatusBadge";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { asText } from "@/lib/as-text";
 import {
@@ -20,6 +18,16 @@ import {
 } from "@/lib/onboarding";
 
 type Props = { params: Promise<{ slug: string }> };
+
+function formatDuration(seconds: number | null) {
+  if (!seconds) return null;
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return `${minutes} min`;
+}
+
+function lowercaseFirst(value: string) {
+  return value ? value.charAt(0).toLowerCase() + value.slice(1) : value;
+}
 
 export default async function ModuleDetailPage({ params }: Props) {
   const { slug } = await params;
@@ -52,6 +60,47 @@ export default async function ModuleDetailPage({ params }: Props) {
   ).length;
 
   const moduleIntroText = asText(moduleData.description);
+  const moduleSubtitle =
+    asText(moduleData.short_description) ??
+    moduleIntroText ??
+    "Werk stap voor stap door deze module en pas de concepten direct toe in je tradingproces.";
+  const progressPercent =
+    lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
+  const nextAvailableLesson = lessonsWithStatusList.find(
+    (lesson) => lesson.status === "available"
+  );
+  const primaryHref = !intakeComplete
+    ? "/onboarding"
+    : nextAvailableLesson
+      ? `/lessons/${nextAvailableLesson.slug}`
+      : examUnlocked && exam
+        ? `/modules/${moduleData.slug}/exam`
+        : `#lessen`;
+  const primaryLabel = !intakeComplete
+    ? "Vul je intake in"
+    : nextAvailableLesson
+      ? `Ga verder met ${lowercaseFirst(nextAvailableLesson.title)}`
+      : examUnlocked && exam
+        ? hasPassedThisExam
+          ? "Toets opnieuw maken"
+          : "Start de toets"
+        : "Bekijk de lessen";
+  const nextStepCopy = !intakeComplete
+    ? "Vul je intake in om de videolessen te openen en je mentor context te geven."
+    : nextAvailableLesson
+      ? `Start met ${nextAvailableLesson.title}. Dit is je eerstvolgende stap in deze module.`
+      : examUnlocked && exam
+        ? hasPassedThisExam
+          ? "Je bent geslaagd. Je kunt de toets opnieuw maken of de lessen herhalen."
+          : "Alle lessen zijn afgerond. Maak de toets om deze module af te sluiten."
+        : "Werk de lessen in volgorde af. De volgende stap komt automatisch vrij.";
+  const examStatus = !exam
+    ? "Nog niet beschikbaar"
+    : hasPassedThisExam
+      ? "Geslaagd"
+      : examUnlocked
+        ? "Klaar om te starten"
+        : "Vrij na alle lessen";
 
   if (!canAccessModule) {
     return (
@@ -76,179 +125,223 @@ export default async function ModuleDetailPage({ params }: Props) {
 
   const rail = (
     <>
-      <RightRailCard title="Module">
-        <dl className="space-y-4">
+      <RightRailCard title="Voortgang">
+        <div className="space-y-5">
           <div>
-            <dt className="cb-caption">Positie</dt>
-            <dd className="mt-1 text-sm font-semibold text-[var(--foreground)]">
-              Blok {moduleData.order_index}
-            </dd>
-          </div>
-          <div>
-            <dt className="cb-caption">Lessen</dt>
-            <dd className="mt-1 text-sm font-semibold text-[var(--foreground)]">
-              {completedCount} / {lessons.length} afgerond
-            </dd>
-          </div>
-          {exam && (
-            <div>
-              <dt className="cb-caption">Toets</dt>
-              <dd className="mt-1 text-sm font-semibold text-[var(--foreground)]">
-                {hasPassedThisExam
-                  ? "Geslaagd"
-                  : examUnlocked
-                    ? "Klaar om te starten"
-                    : "Komt vrij na de lessen"}
-              </dd>
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="text-3xl font-extrabold leading-none text-[var(--foreground)]">
+                  {completedCount} van {lessons.length}
+                </div>
+                <p className="mt-2 cb-caption">lessen voltooid</p>
+              </div>
+              <div className="text-sm font-semibold text-[var(--muted)]">
+                {progressPercent}%
+              </div>
             </div>
-          )}
-        </dl>
+            <div className="mt-5 h-1 overflow-hidden rounded-sm bg-white/[0.08]">
+              <div
+                className="h-full rounded-sm bg-[var(--accent)]"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-[var(--border)] pt-5">
+            <p className="cb-caption">Toets</p>
+            <p className="mt-2 text-sm font-semibold text-[var(--foreground)]">
+              {examStatus}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+              {examUnlocked
+                ? "Je kunt de module afronden zodra je klaar bent."
+                : "Wordt beschikbaar nadat alle lessen zijn afgerond."}
+            </p>
+          </div>
+        </div>
       </RightRailCard>
 
-      {!intakeComplete && (
-        <RightRailCard title="Intake vereist">
-          <p className="cb-caption leading-relaxed">
-            Vul je intake in om de videolessen te openen. Zo krijgt je mentor
-            context over je ervaring, doelen en huidige uitdaging.
-          </p>
-          <Link href="/onboarding" className="mt-5 inline-flex w-full cb-btn cb-btn-primary">
-            Intake invullen
-          </Link>
-        </RightRailCard>
-      )}
+      <RightRailCard title="Volgende stap">
+        <p className="cb-caption leading-relaxed">{nextStepCopy}</p>
+        <Link
+          href={primaryHref}
+          className="mt-5 inline-flex w-full cb-btn cb-btn-primary justify-center"
+        >
+          {primaryLabel}
+        </Link>
+      </RightRailCard>
 
-      {exam && intakeComplete && (
-        <RightRailCard title="Volgende mijlpaal">
-          <p className="cb-caption leading-relaxed">
-            {hasPassedThisExam
-              ? "Je bent geslaagd. Je kunt de toets altijd opnieuw maken."
-              : examUnlocked
-                ? "Alle lessen zijn afgerond. Start de toets wanneer je klaar bent."
-                : "Rond elke les in dit blok af om de toets vrij te spelen."}
-          </p>
-          {examUnlocked ? (
-            <Link
-              href={`/modules/${moduleData.slug}/exam`}
-              className="mt-5 inline-flex cb-btn cb-btn-primary w-full justify-center"
-            >
-              {hasPassedThisExam ? "Toets opnieuw maken" : "Start de toets"}
-            </Link>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="mt-5 w-full cb-btn cb-btn-secondary cursor-not-allowed opacity-60"
-            >
-              Toets vergrendeld
-            </button>
-          )}
-        </RightRailCard>
-      )}
+      <RightRailCard title="Mentor ondersteuning">
+        <p className="cb-caption leading-relaxed">
+          Heb je een chart of vraag bij deze module? Deel je context zodat je
+          mentor gerichter kan meekijken.
+        </p>
+        <Link
+          href="/dashboard#mentor"
+          className="mt-5 inline-flex w-full cb-btn cb-btn-secondary justify-between"
+        >
+          Stel een vraag
+          <span aria-hidden>↗</span>
+        </Link>
+      </RightRailCard>
     </>
   );
 
   const main = (
     <>
-      <section className="overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--card)]">
+      <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_92%,var(--background)_8%)]">
         <CourseThumbnail
           src={moduleData.thumbnail_url}
           title={moduleData.title}
           eyebrow={`Module ${moduleData.order_index}`}
           className="aspect-[16/8] w-full sm:aspect-[21/9]"
         />
-        <div className="p-5 sm:p-6 lg:p-8">
+        <div className="p-5 sm:p-6 lg:p-7">
           <div className="cb-eyebrow">Over deze module</div>
-          {moduleIntroText ? (
-            <p className="mt-4 cb-body max-w-3xl">{moduleIntroText}</p>
-          ) : (
-            <p className="mt-4 cb-caption">
-              Werk de lessen hieronder in volgorde af. Daarna komt de volgende
-              stap vrij.
-            </p>
-          )}
+          <p className="mt-4 cb-body max-w-3xl">
+            {moduleIntroText ??
+              "Werk de lessen hieronder in volgorde af. Daarna komt de volgende stap vrij."}
+          </p>
         </div>
       </section>
 
-      <ContentSection
-        eyebrow="Lessen"
-        title="Inhoud van deze module"
-        description={
-          intakeComplete
-            ? "Werk in volgorde. Je voortgang wordt automatisch bijgewerkt."
-            : "Je kunt de inhoud bekijken. De videolessen openen zodra je intake is ingevuld."
-        }
-      >
+      <section id="lessen" className="scroll-mt-10 space-y-5">
+        <div className="space-y-2">
+          <div className="cb-eyebrow">Lessen</div>
+          <h2 className="cb-section-title">Inhoud van deze module</h2>
+          <p className="cb-caption max-w-2xl">
+            {intakeComplete
+              ? "Werk in volgorde. Je voortgang wordt automatisch bijgewerkt."
+              : "Je kunt de inhoud bekijken. De videolessen openen zodra je intake is ingevuld."}
+          </p>
+        </div>
+
         {lessons.length === 0 ? (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6">
             <p className="cb-caption">Deze module bevat nog geen lessen.</p>
           </div>
         ) : (
-          <ul className="space-y-4">
+          <ul className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)]">
             {lessonsWithStatusList.map((lesson) => {
               const isLocked = lesson.status === "locked";
               const intakeLocked = !intakeComplete;
+              const isCurrent =
+                intakeComplete && nextAvailableLesson?.id === lesson.id;
               const lessonDesc = asText(lesson.description);
-              return (
-                <li key={lesson.id} className={isLocked ? "opacity-55" : ""}>
-                  {isLocked || intakeLocked ? (
-                    <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--muted)_12%)]">
-                      <div className="grid gap-0 sm:grid-cols-[220px_minmax(0,1fr)]">
-                        <CourseThumbnail
-                          src={lesson.thumbnail_url}
-                          title={lesson.title}
-                          eyebrow={`${lesson.order_index}`}
-                          className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[150px]"
-                          muted
-                        />
-                        <div className="min-w-0 p-4 sm:p-5">
-                            <h3 className="font-semibold leading-snug text-[var(--muted)]">
-                              {lesson.title}
-                            </h3>
-                            {lessonDesc && (
-                              <p className="cb-caption mt-1 line-clamp-2">{lessonDesc}</p>
-                            )}
-                            <div className="mt-3">
-                              {intakeLocked ? (
-                                <Link
-                                  href="/onboarding"
-                                  className="inline-flex text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline"
-                                >
-                                  Intake invullen om video te openen
-                                </Link>
-                              ) : (
-                                <LessonStatusBadge status={lesson.status} />
-                              )}
-                            </div>
-                          </div>
-                      </div>
+              const duration = formatDuration(lesson.video_duration_seconds);
+              const statusLabel = intakeLocked
+                ? "Intake vereist"
+                : lesson.status === "completed"
+                  ? "Afgerond"
+                  : lesson.status === "available"
+                    ? "Beschikbaar"
+                    : "Vergrendeld";
+              const statusClass =
+                lesson.status === "completed"
+                  ? "text-emerald-300"
+                  : lesson.status === "available" && !intakeLocked
+                    ? "text-[var(--accent)]"
+                    : "text-[var(--muted)]";
+              const rowContent = (
+                <div
+                  className={[
+                    "grid min-w-0 gap-4 px-4 py-4 transition-colors sm:grid-cols-[42px_minmax(0,1fr)_auto] sm:items-center sm:px-5",
+                    isCurrent
+                      ? "bg-[color-mix(in_oklab,var(--accent)_8%,var(--card))]"
+                      : "bg-transparent",
+                  ].join(" ")}
+                >
+                  <div
+                    className={[
+                      "flex h-9 w-9 items-center justify-center rounded-md border text-xs font-bold",
+                      isCurrent
+                        ? "border-[color-mix(in_oklab,var(--accent)_58%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_16%,var(--card))] text-[var(--foreground)]"
+                        : lesson.status === "completed"
+                          ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-200"
+                          : "border-[var(--border)] bg-white/[0.02] text-[var(--muted)]",
+                    ].join(" ")}
+                  >
+                    {lesson.status === "completed" ? "✓" : lesson.order_index}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <h3
+                        className={[
+                          "font-semibold leading-snug",
+                          isLocked || intakeLocked
+                            ? "text-[color-mix(in_oklab,var(--foreground)_62%,var(--muted)_38%)]"
+                            : "text-[var(--foreground)]",
+                        ].join(" ")}
+                      >
+                        {lesson.title}
+                      </h3>
+                      <span className={`text-xs font-semibold ${statusClass}`}>
+                        {statusLabel}
+                      </span>
                     </div>
+                    {lessonDesc && (
+                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
+                        {lessonDesc}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 sm:justify-end">
+                    {duration && (
+                      <span className="text-xs font-semibold text-[var(--muted)]">
+                        {duration}
+                      </span>
+                    )}
+                    {(isLocked || intakeLocked) && (
+                      <span
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)]"
+                        aria-label="Vergrendeld"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden
+                        >
+                          <path
+                            d="M7 11V8a5 5 0 0 1 10 0v3m-11 0h12v9H6v-9Z"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+
+              return (
+                <li key={lesson.id} className="border-b border-[var(--border)] last:border-b-0">
+                  {isCurrent ? (
+                    <Link
+                      href={`/lessons/${lesson.slug}`}
+                      className="group grid gap-0 transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)] sm:grid-cols-[190px_minmax(0,1fr)]"
+                    >
+                      <CourseThumbnail
+                        src={lesson.thumbnail_url}
+                        title={lesson.title}
+                        eyebrow={`${lesson.order_index}`}
+                        className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[134px]"
+                        imageClassName="group-hover:scale-[1.035]"
+                      />
+                      {rowContent}
+                    </Link>
+                  ) : isLocked || intakeLocked ? (
+                    <div>{rowContent}</div>
                   ) : (
                     <Link
                       href={`/lessons/${lesson.slug}`}
-                      className="group block overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] transition-colors hover:border-[color-mix(in_oklab,var(--foreground)_28%,var(--border)_72%)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)]"
+                      className="block transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)]"
                     >
-                      <div className="grid gap-0 sm:grid-cols-[220px_minmax(0,1fr)]">
-                        <CourseThumbnail
-                          src={lesson.thumbnail_url}
-                          title={lesson.title}
-                          eyebrow={`${lesson.order_index}`}
-                          className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[150px]"
-                          imageClassName="group-hover:scale-[1.035]"
-                        />
-                        <div className="min-w-0 p-4 sm:p-5">
-                            <h3 className="font-semibold leading-snug text-[var(--foreground)]">
-                              {lesson.title}
-                            </h3>
-                            {lessonDesc && (
-                              <p className="cb-caption mt-1 line-clamp-2 transition-colors group-hover:text-[color-mix(in_oklab,var(--foreground)_78%,var(--muted)_22%)]">
-                                {lessonDesc}
-                              </p>
-                            )}
-                            <div className="mt-3">
-                              <LessonStatusBadge status={lesson.status} />
-                            </div>
-                          </div>
-                      </div>
+                      {rowContent}
                     </Link>
                   )}
                 </li>
@@ -256,58 +349,61 @@ export default async function ModuleDetailPage({ params }: Props) {
             })}
           </ul>
         )}
-      </ContentSection>
-
-      {exam && intakeComplete && (
-        <section className="rounded-3xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_90%,var(--muted)_10%)] p-5 sm:p-6 lg:hidden">
-          <div className="cb-eyebrow">Volgende mijlpaal</div>
-          <h2 className="mt-2 cb-section-title">Toets</h2>
-          {hasPassedThisExam ? (
-            <p className="mt-2 cb-body max-w-2xl">
-              Je bent geslaagd voor deze toets. Je kunt ze altijd opnieuw maken.
-            </p>
-          ) : !examUnlocked ? (
-            <p className="mt-2 cb-body max-w-2xl">
-              Rond alle lessen in deze module af om de toets vrij te spelen.
-            </p>
-          ) : null}
-          {examUnlocked ? (
-            <Link
-              href={`/modules/${moduleData.slug}/exam`}
-              className="mt-5 inline-flex cb-btn cb-btn-primary"
-            >
-              {hasPassedThisExam ? "Toets opnieuw maken" : "Start de toets"}
-            </Link>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="mt-5 cb-btn cb-btn-secondary cursor-not-allowed opacity-60"
-            >
-              Toets vergrendeld
-            </button>
-          )}
-        </section>
-      )}
+      </section>
     </>
   );
 
   return (
-    <div>
-      <PageHeader
-        breadcrumbs={[
-          { label: "Academy", href: "/modules" },
-          { label: moduleData.title },
-        ]}
-        eyebrow={`Module ${moduleData.order_index}`}
-        title={moduleData.title}
-        meta={
-          <span className="cb-caption">
-            {completedCount}/{lessons.length} lessen
-          </span>
-        }
-      />
-      <AppPageLayout main={main} rail={rail} />
+    <div className="space-y-10">
+      <header className="grid gap-8 border-b border-[var(--border)] pb-9 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] lg:items-end">
+        <div>
+          <nav className="cb-caption" aria-label="Breadcrumb">
+            <Link
+              href="/modules"
+              className="transition-colors hover:text-[var(--foreground)]"
+            >
+              Academy
+            </Link>
+            <span className="mx-2 text-[var(--muted)]">/</span>
+            <span>Module {moduleData.order_index}</span>
+          </nav>
+          <h1 className="mt-6 max-w-4xl text-4xl font-extrabold leading-[1.04] text-[var(--foreground)] sm:text-5xl">
+            Module {moduleData.order_index}: {moduleData.title}
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--muted)]">
+            {moduleSubtitle}
+          </p>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link href={primaryHref} className="cb-btn cb-btn-primary gap-2">
+              <span aria-hidden>▶</span>
+              {primaryLabel}
+            </Link>
+            <Link
+              href="#lessen"
+              className="cb-btn cb-btn-secondary border-transparent bg-transparent px-0 text-[var(--accent)] hover:bg-transparent hover:text-[var(--foreground)]"
+            >
+              Bekijk alle lessen
+            </Link>
+          </div>
+        </div>
+
+        <div className="hidden lg:block">
+          <div className="h-1 overflow-hidden rounded-sm bg-white/[0.08]">
+            <div
+              className="h-full rounded-sm bg-[var(--accent)]"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className="mt-4 text-sm font-semibold text-[var(--foreground)]">
+            {progressPercent}% voltooid
+          </p>
+          <p className="mt-1 cb-caption">
+            {completedCount} van {lessons.length} lessen
+          </p>
+        </div>
+      </header>
+
+      <AppPageLayout main={main} rail={rail} railClassName="lg:top-8" />
     </div>
   );
 }

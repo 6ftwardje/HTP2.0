@@ -7,22 +7,6 @@ import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
 import { BRAND, BrandLogo } from "@/components/ui/Brand";
 
-const adminNavItem = {
-  href: "/admin",
-  label: "Admin",
-  icon: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M12 3 3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-4Zm0 0v18"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-};
-
 const coreNav = [
   {
     href: "/dashboard",
@@ -98,24 +82,15 @@ const coreNav = [
   },
 ] as const;
 
-function getNavItems(showAdminNav: boolean) {
-  if (!showAdminNav) {
-    return [...coreNav];
-  }
-  return [...coreNav.slice(0, 4), adminNavItem, coreNav[4]];
-}
-
 function SidebarContent({
   studentName,
-  showAdminNav,
   onNavigate,
 }: {
   studentName: string | null;
-  showAdminNav: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const nav = getNavItems(showAdminNav);
+  const nav = coreNav;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -178,12 +153,9 @@ function SidebarContent({
 export function AppShell({
   children,
   studentName,
-  showAdminNav = false,
 }: {
   children: React.ReactNode;
   studentName: string | null;
-  /** When true, show Admin in the main nav (access level 3 — set by server layout). */
-  showAdminNav?: boolean;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -214,7 +186,6 @@ export function AppShell({
         <div className="flex h-full min-h-0 flex-col px-5 py-8">
           <SidebarContent
             studentName={studentName}
-            showAdminNav={showAdminNav}
             onNavigate={() => setMobileOpen(false)}
           />
         </div>
@@ -245,7 +216,6 @@ export function AppShell({
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-6">
               <SidebarContent
                 studentName={studentName}
-                showAdminNav={showAdminNav}
                 onNavigate={() => setMobileOpen(false)}
               />
             </div>
