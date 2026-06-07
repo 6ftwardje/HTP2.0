@@ -262,6 +262,13 @@ export default async function DashboardPage({ searchParams }: Props) {
               >
                 {nextStepAction.label}
               </Link>
+              <Link
+                href="/dashboard"
+                aria-label="Melding sluiten"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/[0.04] hover:text-[var(--foreground)]"
+              >
+                ×
+              </Link>
             </div>
           </section>
         )}

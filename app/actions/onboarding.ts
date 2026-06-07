@@ -47,22 +47,38 @@ export async function saveOnboarding(formData: FormData) {
   }
 
   const db = await createClient();
-  await db.from("student_onboarding_responses").upsert(
-    {
-      student_id: student.id,
-      experience_level: textValue(formData, "experience_level"),
-      primary_market: textValue(formData, "primary_market"),
-      main_challenge: textValue(formData, "main_challenge"),
-      goal_90_days: textValue(formData, "goal_90_days"),
-      weekly_time_commitment: textValue(formData, "weekly_time_commitment"),
-      mentorship_interest: textValue(formData, "mentorship_interest"),
+  const baseResponse = {
+    student_id: student.id,
+    experience_level: textValue(formData, "experience_level"),
+    primary_market: textValue(formData, "primary_market"),
+    main_challenge: textValue(formData, "main_challenge"),
+    goal_90_days: textValue(formData, "goal_90_days"),
+    weekly_time_commitment: textValue(formData, "weekly_time_commitment"),
+    mentorship_interest: textValue(formData, "mentorship_interest"),
+    tools: {},
+  };
+
+  const { data: savedResponse, error: saveError } = await db
+    .from("student_onboarding_responses")
+    .upsert(baseResponse, { onConflict: "student_id" })
+    .select("id")
+    .single();
+
+  if (saveError || !savedResponse) {
+    redirect("/onboarding?error=save_failed");
+  }
+
+  // These columns are introduced by the intake completion migration. Keep this
+  // as a separate best-effort update so the core intake still persists if a
+  // deployment temporarily runs before the migration is applied.
+  await db
+    .from("student_onboarding_responses")
+    .update({
       confidence_score: numberValue(formData, "confidence_score"),
-      tools: {},
       completed_at: new Date().toISOString(),
       intake_version: "v1",
-    },
-    { onConflict: "student_id" }
-  );
+    })
+    .eq("student_id", student.id);
 
   await db
     .from("students")

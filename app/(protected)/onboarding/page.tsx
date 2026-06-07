@@ -29,7 +29,11 @@ export default async function OnboardingPage({ searchParams }: Props) {
       />
       <OnboardingWizard
         response={response}
-        hasError={params?.error === "incomplete"}
+        error={
+          params?.error === "save_failed" || params?.error === "incomplete"
+            ? params.error
+            : undefined
+        }
       />
     </div>
   );

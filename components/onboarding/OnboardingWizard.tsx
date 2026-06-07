@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { saveOnboarding } from "@/app/actions/onboarding";
 import type { StudentOnboardingResponse } from "@/lib/types";
 
@@ -171,12 +172,26 @@ function initialValues(response: StudentOnboardingResponse | null): IntakeValues
   };
 }
 
+function SubmitButton({ disabled }: { disabled: boolean }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={disabled || pending}
+      className="cb-btn cb-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? "Intake opslaan..." : "Intake afronden"}
+    </button>
+  );
+}
+
 export function OnboardingWizard({
   response,
-  hasError = false,
+  error,
 }: {
   response: StudentOnboardingResponse | null;
-  hasError?: boolean;
+  error?: "incomplete" | "save_failed";
 }) {
   const [index, setIndex] = useState(0);
   const [values, setValues] = useState<IntakeValues>(() =>
@@ -227,9 +242,11 @@ export function OnboardingWizard({
             {current.reason}
           </p>
 
-          {hasError && (
+          {error && (
             <p className="mt-5 rounded-lg border border-[color-mix(in_oklab,#fca5a5_38%,var(--border))] bg-red-500/[0.08] px-4 py-3 text-sm font-semibold text-red-100">
-              Vul alle intakevragen in voordat je de videocourse opent.
+              {error === "save_failed"
+                ? "Je intake kon niet worden opgeslagen. Probeer het opnieuw of contacteer support als dit blijft gebeuren."
+                : "Vul alle intakevragen in voordat je de videocourse opent."}
             </p>
           )}
 
@@ -322,13 +339,7 @@ export function OnboardingWizard({
           </button>
 
           {isLast ? (
-            <button
-              type="submit"
-              disabled={!canContinue}
-              className="cb-btn cb-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Intake afronden
-            </button>
+            <SubmitButton disabled={!canContinue} />
           ) : (
             <button
               type="button"

@@ -1,4 +1,8 @@
 import type { Module } from "@/lib/types";
+import {
+  getStudentOnboardingResponse,
+  onboardingIsComplete,
+} from "@/lib/onboarding";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -16,14 +20,18 @@ export async function getModuleAccessMap(
   const ordered = [...modules].sort((a, b) => a.order_index - b.order_index);
 
   const supabase = await createClient();
-  const { data: results } = await supabase
-    .from("exam_results")
-    .select("exam_id, passed")
-    .eq("student_id", studentId)
-    .eq("passed", true);
+  const [onboarding, resultsRes] = await Promise.all([
+    getStudentOnboardingResponse(studentId),
+    supabase
+      .from("exam_results")
+      .select("exam_id, passed")
+      .eq("student_id", studentId)
+      .eq("passed", true),
+  ]);
+  const hasCompletedIntake = onboardingIsComplete(onboarding);
 
   const passedExamIds = new Set(
-    (results ?? []).map((r: { exam_id: number }) => r.exam_id)
+    (resultsRes.data ?? []).map((r: { exam_id: number }) => r.exam_id)
   );
 
   // We need "passed exam for module with order_index K" to unlock "module with order_index K+1"
@@ -42,7 +50,9 @@ export async function getModuleAccessMap(
 
   for (let i = 0; i < ordered.length; i++) {
     const mod = ordered[i];
-    if (i === 0) {
+    if (hasCompletedIntake && mod.order_index <= 6) {
+      map.set(mod.id, true);
+    } else if (i === 0) {
       map.set(mod.id, true);
     } else {
       const prevModule = ordered[i - 1];

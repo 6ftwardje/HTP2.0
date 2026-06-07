@@ -21,5 +21,15 @@ export const getStudentOnboardingResponse = cache(
 export function onboardingIsComplete(
   response: StudentOnboardingResponse | null
 ) {
-  return !!response?.completed_at;
+  if (!response) return false;
+  if (response.completed_at) return true;
+
+  return [
+    response.experience_level,
+    response.primary_market,
+    response.main_challenge,
+    response.goal_90_days,
+    response.weekly_time_commitment,
+    response.mentorship_interest,
+  ].every((value) => typeof value === "string" && value.trim().length > 0);
 }
