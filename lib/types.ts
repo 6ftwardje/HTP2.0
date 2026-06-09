@@ -170,3 +170,38 @@ export type StudentMentorNote = {
   created_at: string;
   updated_at: string;
 };
+
+/** Gestructureerde output van Mentor Copilot (feature 'mentor_summary'). */
+export type MentorSummary = {
+  status: string;
+  voortgang: string;
+  risicos: string[];
+  call_focus: string[];
+  open_vragen: string[];
+};
+
+/** Gecachte AI-samenvatting per student per feature (tabel ai_student_summaries). */
+export type AiStudentSummary = {
+  id: string;
+  student_id: string;
+  feature: string;
+  summary: MentorSummary;
+  model: string | null;
+  generated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Append-only logregel van een AI-call (tabel ai_interactions). */
+export type AiInteraction = {
+  id: string;
+  student_id: string | null;
+  actor_student_id: string | null;
+  feature: string;
+  model: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  status: "success" | "error";
+  error: string | null;
+  created_at: string;
+};

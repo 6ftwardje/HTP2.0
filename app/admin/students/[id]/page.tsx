@@ -7,7 +7,9 @@ import { StudentProgressPanel } from "@/components/admin/StudentProgressPanel";
 import { StudentExamOverview } from "@/components/admin/StudentExamOverview";
 import { AdminDangerZone } from "@/components/admin/AdminDangerZone";
 import { ExamAnalyticsPlaceholder } from "@/components/admin/ExamAnalyticsPlaceholder";
+import { MentorCopilotPanel } from "@/components/admin/MentorCopilotPanel";
 import { getAdminStudentDetail } from "@/lib/admin/students";
+import { getMentorSummaryAdmin } from "@/lib/ai/mentor-copilot";
 import { requireAdmin } from "@/lib/admin/access";
 import {
   adminCreateStudentMentorNote,
@@ -41,6 +43,8 @@ export default async function AdminStudentDetailPage({
   if (!detail) {
     notFound();
   }
+
+  const mentorSummary = await getMentorSummaryAdmin(id);
 
   const { student, progressOverview, modules, onboarding, mentorNotes } = detail;
   const label = student.name?.trim() || student.email;
@@ -237,6 +241,8 @@ export default async function AdminStudentDetailPage({
                 </p>
               )}
             </section>
+
+            <MentorCopilotPanel studentId={student.id} summary={mentorSummary} />
 
             <section className="cb-panel p-6" aria-labelledby="notes-heading">
               <h2 id="notes-heading" className="cb-section-title">
