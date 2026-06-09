@@ -1,11 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Lesson } from "@/lib/types";
 
+const LESSON_DETAIL_COLUMNS =
+  "id, module_id, title, slug, description, takeaway, action_items, video_url, video_provider, video_duration_seconds, thumbnail_url, mux_playback_id, mux_playback_policy, order_index, is_published";
+
+const LESSON_LIST_COLUMNS =
+  "id, module_id, title, slug, description, video_duration_seconds, thumbnail_url, order_index, is_published";
+
+const DASHBOARD_LESSON_COLUMNS =
+  "id, module_id, title, slug, description, takeaway, action_items, thumbnail_url, order_index, is_published";
+
 export async function getLessonBySlug(slug: string): Promise<Lesson | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lessons")
-    .select("*")
+    .select(LESSON_DETAIL_COLUMNS)
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
@@ -18,7 +27,7 @@ export async function getLessonById(lessonId: number): Promise<Lesson | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lessons")
-    .select("*")
+    .select(LESSON_DETAIL_COLUMNS)
     .eq("id", lessonId)
     .eq("is_published", true)
     .maybeSingle();
@@ -33,7 +42,7 @@ export async function getPublishedLessonsByModuleId(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lessons")
-    .select("*")
+    .select(LESSON_LIST_COLUMNS)
     .eq("module_id", moduleId)
     .eq("is_published", true)
     .order("order_index", { ascending: true });
@@ -48,7 +57,7 @@ export async function getLessonCountByModuleId(
   const supabase = await createClient();
   const { count, error } = await supabase
     .from("lessons")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("module_id", moduleId)
     .eq("is_published", true);
 
@@ -87,7 +96,7 @@ export async function getPublishedLessonsByModuleIds(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lessons")
-    .select("*")
+    .select(DASHBOARD_LESSON_COLUMNS)
     .in("module_id", moduleIds)
     .eq("is_published", true)
     .order("module_id", { ascending: true })

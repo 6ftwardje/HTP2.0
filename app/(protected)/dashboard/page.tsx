@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { BRAND } from "@/components/ui/Brand";
+import { BRAND, BrandIcon } from "@/components/ui/Brand";
 import { asText } from "@/lib/as-text";
 import {
   getDashboardOverview,
@@ -11,7 +11,6 @@ import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
 } from "@/lib/onboarding";
-import { syncStudentNextStep } from "@/lib/next-steps";
 import { ensureCurrentStudent } from "@/lib/students";
 
 type Props = {
@@ -118,9 +117,11 @@ function ModuleRow({
 }
 
 export default async function DashboardPage({ searchParams }: Props) {
-  const { student } = await ensureCurrentStudent();
+  const [{ student }, params] = await Promise.all([
+    ensureCurrentStudent(),
+    searchParams ? searchParams : Promise.resolve({} as { intake?: string }),
+  ]);
   if (!student) return null;
-  const params = searchParams ? await searchParams : {};
 
   const [overview, onboarding] = await Promise.all([
     getDashboardOverview(student.id),
@@ -128,11 +129,6 @@ export default async function DashboardPage({ searchParams }: Props) {
   ]);
   const { nextStep, modules } = overview;
   const intakeComplete = onboardingIsComplete(onboarding);
-  const persistedNextStep = await syncStudentNextStep({
-    studentId: student.id,
-    intakeComplete,
-    dashboardNextStep: nextStep,
-  });
   const firstName = student.name?.split(" ")[0] ?? null;
   const title = firstName ? `Welkom terug, ${firstName}` : "Welkom terug";
   const activeIndex = modules.findIndex(
@@ -196,23 +192,59 @@ export default async function DashboardPage({ searchParams }: Props) {
         }
       : null;
 
-  const nextStepAction = persistedNextStep
+  const nextStepAction = !intakeComplete
     ? {
-        title: persistedNextStep.title,
-        copy: persistedNextStep.description ?? "Ga verder waar je was gebleven.",
-        href: persistedNextStep.href ?? "/dashboard",
-        label: persistedNextStep.cta_label ?? "Openen",
+        title: "Vul je intake in",
+        copy: "Rond je korte intake af zodat je videolessen openen en je mentor betere context heeft.",
+        href: "/onboarding",
+        label: "Intake invullen",
         external: false,
-        type: persistedNextStep.step_type,
+        type: "intake",
       }
-    : {
-        title: "Stel een vraag aan je mentor",
-        copy: "Loop je vast op deze module? Deel kort waar je naar kijkt en waar je twijfel zit.",
-        href: `mailto:${BRAND.supportEmail}?subject=Mentorvraag%20over%20mijn%20module`,
-        label: "Vraag stellen",
-        external: true,
-        type: "mentor_action",
-      };
+    : nextStep.type === "lesson" && actionSummary?.next
+      ? {
+          title: "Werk je eerstvolgende opdracht af",
+          copy: actionSummary.next,
+          href: nextStep.href,
+          label: "Naar de opdracht",
+          external: false,
+          type: "lesson_action",
+        }
+      : nextStep.type === "lesson"
+        ? {
+            title: nextStep.lesson.title,
+            copy: `Ga verder met Module ${nextStep.module.order_index}: ${nextStep.module.title}.`,
+            href: nextStep.href,
+            label: nextStep.label,
+            external: false,
+            type: "lesson",
+          }
+        : nextStep.type === "exam"
+          ? {
+              title: nextStep.exam.title,
+              copy: "Je lessen zijn afgerond. Maak de toets om verder te gaan.",
+              href: nextStep.href,
+              label: nextStep.label,
+              external: false,
+              type: "exam",
+            }
+          : nextStep.type === "module"
+            ? {
+                title: nextStep.module.title,
+                copy: "Open de module om verder te gaan met je traject.",
+                href: nextStep.href,
+                label: nextStep.label,
+                external: false,
+                type: "module",
+              }
+            : {
+                title: "Stel een vraag aan je mentor",
+                copy: "Loop je vast op deze module? Deel kort waar je naar kijkt en waar je twijfel zit.",
+                href: `mailto:${BRAND.supportEmail}?subject=Mentorvraag%20over%20mijn%20module`,
+                label: "Vraag stellen",
+                external: true,
+                type: "mentor_action",
+              };
   const primaryLabel =
     nextStep.type === "lesson" ? "Start met deze les" : nextStep.label;
   const heroHref = intakeComplete ? nextStep.href : "/onboarding";
@@ -390,22 +422,8 @@ export default async function DashboardPage({ searchParams }: Props) {
           >
             <div className="cb-eyebrow">Volgende stap</div>
             <div className="mt-7 grid gap-5 sm:grid-cols-[64px_minmax(0,1fr)] sm:items-start">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[var(--border)] bg-white/[0.035] text-[var(--foreground)]">
-                <svg width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path
-                    d="M9 4.5h6l1 2H8l1-2ZM7 6.5h10v14H7v-14Z"
-                    stroke="currentColor"
-                    strokeWidth="1.55"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M10 11h4M10 15h4"
-                    stroke="currentColor"
-                    strokeWidth="1.55"
-                    strokeLinecap="round"
-                  />
-                </svg>
+              <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-[color-mix(in_oklab,var(--accent)_32%,var(--border))] bg-white/[0.035]">
+                <BrandIcon className="h-9 w-9" />
               </div>
               <div>
                 <h2 className="text-2xl font-extrabold leading-tight text-[var(--foreground)]">

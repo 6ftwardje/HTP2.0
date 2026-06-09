@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ensureCurrentStudent } from "@/lib/students";
 import { getPublishedModules } from "@/lib/modules";
 import { getLessonCountsByModuleIds } from "@/lib/lessons";
-import { getModuleAccessMap } from "@/lib/module-gate";
+import { buildModuleAccessMap } from "@/lib/module-gate";
 import { getExamsByModuleIds, getPassedExamIdsForStudent } from "@/lib/exams";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ModuleStateBadge } from "@/components/StatusBadge";
@@ -14,15 +14,14 @@ import {
 } from "@/lib/onboarding";
 
 export default async function ModulesPage() {
-  const { student } = await ensureCurrentStudent();
-  const modules = await getPublishedModules();
+  const [{ student }, modules] = await Promise.all([
+    ensureCurrentStudent(),
+    getPublishedModules(),
+  ]);
   const moduleIds = modules.map((module) => module.id);
 
-  const [lessonCountMap, moduleAccessMap, examMap, onboarding] = await Promise.all([
+  const [lessonCountMap, examMap, onboarding] = await Promise.all([
     getLessonCountsByModuleIds(moduleIds),
-    student
-      ? getModuleAccessMap(student.id, modules)
-      : Promise.resolve(new Map<number, boolean>()),
     getExamsByModuleIds(moduleIds),
     student ? getStudentOnboardingResponse(student.id) : Promise.resolve(null),
   ]);
@@ -34,6 +33,12 @@ export default async function ModulesPage() {
         [...examMap.values()].map((exam) => exam.id)
       )
     : new Set<number>();
+  const examIdByModuleId = new Map(
+    [...examMap.values()].map((exam) => [exam.module_id, exam.id])
+  );
+  const moduleAccessMap = student
+    ? buildModuleAccessMap(modules, onboarding, passedExamIds, examIdByModuleId)
+    : new Map<number, boolean>();
 
   const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
 
@@ -74,62 +79,68 @@ export default async function ModulesPage() {
             </Link>
           </section>
         )}
-      <ul className="grid gap-5 md:grid-cols-2">
-          {orderedModules.map((mod) => {
+        <ul className="grid gap-5 md:grid-cols-2">
+          {orderedModules.map((mod, index) => {
             const state = moduleStateMap.get(mod.id) ?? "locked";
             const canOpen = state === "available" || state === "completed";
             const lessonCount = lessonCountMap.get(mod.id) ?? 0;
             const shortDesc = asText(mod.short_description);
             return (
-            <li key={mod.id}>
-              {canOpen ? (
-                <Link
-                  href={`/modules/${mod.slug}`}
-                  className="group block h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] transition-colors hover:border-[color-mix(in_oklab,var(--foreground)_28%,var(--border)_72%)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)]"
-                >
-                  <CourseThumbnail
-                    src={mod.thumbnail_url}
-                    title={mod.title}
-                    eyebrow={`Module ${mod.order_index}`}
-                    className="aspect-[16/10] w-full"
-                    imageClassName="group-hover:scale-[1.035]"
-                  />
-                  <div className="flex min-h-[190px] flex-col p-5 sm:p-6">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <ModuleStateBadge state={state} />
-                        <span className="cb-caption">
+              <li key={mod.id}>
+                {canOpen ? (
+                  <Link
+                    href={`/modules/${mod.slug}`}
+                    className="group block h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] transition-colors hover:border-[color-mix(in_oklab,var(--foreground)_28%,var(--border)_72%)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)]"
+                  >
+                    <CourseThumbnail
+                      src={mod.thumbnail_url}
+                      title={mod.title}
+                      eyebrow={`Module ${mod.order_index}`}
+                      moduleNumber={mod.order_index}
+                      priority={index < 2}
+                      className="aspect-[16/10] w-full"
+                      imageClassName="group-hover:scale-[1.035]"
+                      sizes="(min-width: 768px) 50vw, 100vw"
+                    />
+                    <div className="flex min-h-[156px] flex-col p-5 sm:p-6">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <ModuleStateBadge state={state} />
+                          <span className="cb-caption">
                           {lessonCount} {lessonCount === 1 ? "les" : "lessen"}
                         </span>
                       </div>
                       <h2 className="mt-2 text-lg font-semibold leading-snug text-[var(--foreground)]">
                         {mod.title}
                       </h2>
-                        {shortDesc && (
-                          <p className="cb-caption mt-1 line-clamp-2">
-                            {shortDesc}
-                          </p>
-                        )}
+                      {shortDesc && (
+                        <p className="cb-caption mt-1 line-clamp-2">
+                          {shortDesc}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-5 text-sm font-semibold text-[var(--foreground)]">
+                      {intakeComplete ? "Openen" : "Module bekijken"}
                       </div>
-                      <div className="mt-5 text-sm font-semibold text-[var(--foreground)]">
-                        {intakeComplete ? "Openen" : "Module bekijken"}
-                      </div>
-                  </div>
-                </Link>
-              ) : (
-                <div className="h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,var(--muted)_8%)] opacity-70">
-                  <CourseThumbnail
-                    src={mod.thumbnail_url}
-                    title={mod.title}
-                    eyebrow={`Module ${mod.order_index}`}
-                    className="aspect-[16/10] w-full"
-                    muted
-                  />
-                  <div className="flex min-h-[190px] flex-col p-5 sm:p-6">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <ModuleStateBadge state={state} />
-                        <span className="cb-caption">
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,var(--muted)_8%)] opacity-70">
+                    <CourseThumbnail
+                      src={mod.thumbnail_url}
+                      title={mod.title}
+                      eyebrow={`Module ${mod.order_index}`}
+                      moduleNumber={mod.order_index}
+                      priority={index < 2}
+                      className="aspect-[16/10] w-full"
+                      muted
+                      sizes="(min-width: 768px) 50vw, 100vw"
+                    />
+                    <div className="flex min-h-[156px] flex-col p-5 sm:p-6">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <ModuleStateBadge state={state} />
+                          <span className="cb-caption">
                           {lessonCount} {lessonCount === 1 ? "les" : "lessen"}
                         </span>
                       </div>
@@ -144,14 +155,14 @@ export default async function ModulesPage() {
                     </div>
                     <div className="mt-5 text-sm">
                       <span className="cb-caption">Komt vrij na de vorige toets</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </div>
     );
 

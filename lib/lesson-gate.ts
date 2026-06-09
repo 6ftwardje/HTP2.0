@@ -8,13 +8,15 @@ import { getProgressByLessonIds } from "@/lib/progress";
  */
 export async function getLessonStatuses(
   studentId: string,
-  lessons: Lesson[]
+  lessons: Lesson[],
+  progressOverride?: Map<number, { watched: boolean; watched_at: string | null }>
 ): Promise<Map<number, LessonStatus>> {
   const map = new Map<number, LessonStatus>();
   if (lessons.length === 0) return map;
 
   const lessonIds = lessons.map((l) => l.id);
-  const progress = await getProgressByLessonIds(studentId, lessonIds);
+  const progress =
+    progressOverride ?? (await getProgressByLessonIds(studentId, lessonIds));
 
   for (let i = 0; i < lessons.length; i++) {
     const lesson = lessons[i];

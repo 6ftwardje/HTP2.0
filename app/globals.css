@@ -21,6 +21,15 @@ body {
   color: var(--foreground);
 }
 
+@keyframes thumbnail-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
 /* Typography system (semantic utility classes).
    Keep the surface small so pages stay disciplined. */
 .cb-eyebrow {

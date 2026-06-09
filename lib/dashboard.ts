@@ -2,8 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getExamsByModuleIds, getPassedExamIdsForStudent } from "@/lib/exams";
 import { getLessonActionProgress, normalizeLessonActions } from "@/lib/lesson-actions";
 import { getPublishedLessonsByModuleIds } from "@/lib/lessons";
-import { getModuleAccessMap } from "@/lib/module-gate";
+import { buildModuleAccessMap } from "@/lib/module-gate";
 import { getPublishedModules } from "@/lib/modules";
+import { getStudentOnboardingResponse } from "@/lib/onboarding";
 import { getProgressByLessonIds } from "@/lib/progress";
 import type { DashboardStats, Exam, Lesson, Module } from "@/lib/types";
 
@@ -85,10 +86,10 @@ export async function getDashboardOverview(
   const modules = await getPublishedModules();
   const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
   const moduleIds = orderedModules.map((module) => module.id);
-  const [accessMap, examMap, lessons] = await Promise.all([
-    getModuleAccessMap(studentId, orderedModules),
+  const [examMap, lessons, onboarding] = await Promise.all([
     getExamsByModuleIds(moduleIds),
     getPublishedLessonsByModuleIds(moduleIds),
+    getStudentOnboardingResponse(studentId),
   ]);
   const lessonIds = lessons.map((lesson) => lesson.id);
   const [passedExamIds, progressMap] = await Promise.all([
@@ -98,6 +99,15 @@ export async function getDashboardOverview(
     ),
     getProgressByLessonIds(studentId, lessonIds),
   ]);
+  const examIdByModuleId = new Map(
+    [...examMap.values()].map((exam) => [exam.module_id, exam.id])
+  );
+  const accessMap = buildModuleAccessMap(
+    orderedModules,
+    onboarding,
+    passedExamIds,
+    examIdByModuleId
+  );
 
   const lessonsByModule = new Map<number, Lesson[]>();
   for (const lesson of lessons) {

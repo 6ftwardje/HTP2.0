@@ -15,10 +15,11 @@ type Props = { params: Promise<{ slug: string }> };
 
 export default async function ModuleExamPage({ params }: Props) {
   const { slug } = await params;
-  const moduleData = await getModuleBySlug(slug);
+  const [moduleData, { student }] = await Promise.all([
+    getModuleBySlug(slug),
+    ensureCurrentStudent(),
+  ]);
   if (!moduleData) notFound();
-
-  const { student } = await ensureCurrentStudent();
   if (!student) notFound();
 
   const [exam, lessons, allModules] = await Promise.all([
@@ -27,10 +28,12 @@ export default async function ModuleExamPage({ params }: Props) {
     getPublishedModules(),
   ]);
 
-  const moduleAccessMap = await getModuleAccessMap(student.id, allModules);
-  const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
   const lessonIds = lessons.map((l) => l.id);
-  const allLessonsCompleted = await areAllLessonsCompleted(student.id, lessonIds);
+  const [moduleAccessMap, allLessonsCompleted] = await Promise.all([
+    getModuleAccessMap(student.id, allModules),
+    areAllLessonsCompleted(student.id, lessonIds),
+  ]);
+  const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
   const examUnlocked = !!exam && allLessonsCompleted;
 
   if (!canAccessModule) {

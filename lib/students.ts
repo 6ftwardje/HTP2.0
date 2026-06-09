@@ -2,6 +2,9 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Student } from "@/lib/types";
 
+const STUDENT_COLUMNS =
+  "id, email, name, auth_user_id, access_level, mentor_status, tags, onboarding_skipped_at, created_at, updated_at, last_seen, phone";
+
 export const getCurrentAuthUser = cache(async function getCurrentAuthUser() {
   const supabase = await createClient();
   const {
@@ -24,7 +27,7 @@ export const getCurrentStudent = cache(async function getCurrentStudent(): Promi
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("students")
-    .select("*")
+    .select(STUDENT_COLUMNS)
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
@@ -60,7 +63,7 @@ export const ensureCurrentStudent = cache(async function ensureCurrentStudent():
       email: user.email,
       name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
     })
-    .select()
+    .select(STUDENT_COLUMNS)
     .single();
 
   if (insertError) return { student: null, error: insertError };

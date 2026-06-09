@@ -118,20 +118,22 @@ function LessonRailRow({
 
 export default async function LessonPage({ params }: Props) {
   const { slug } = await params;
-  const lesson = await getLessonBySlug(slug);
+  const [lesson, { student }] = await Promise.all([
+    getLessonBySlug(slug),
+    ensureCurrentStudent(),
+  ]);
   if (!lesson) notFound();
-
-  const { student } = await ensureCurrentStudent();
   if (!student) notFound();
 
   const allLessons = await getPublishedLessonsByModuleId(lesson.module_id);
-  const [moduleData, statusMap, progressMap, exam, onboarding] = await Promise.all([
+  const lessonIds = allLessons.map((l) => l.id);
+  const [moduleData, progressMap, exam, onboarding] = await Promise.all([
     getModuleById(lesson.module_id),
-    getLessonStatuses(student.id, allLessons),
-    getProgressByLessonIds(student.id, allLessons.map((l) => l.id)),
+    getProgressByLessonIds(student.id, lessonIds),
     getExamByModuleId(lesson.module_id),
     getStudentOnboardingResponse(student.id),
   ]);
+  const statusMap = await getLessonStatuses(student.id, allLessons, progressMap);
 
   if (!moduleData) notFound();
 
