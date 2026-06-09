@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
 import { BRAND, BrandLogo } from "@/components/ui/Brand";
+import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 
 const coreNav = [
   {
@@ -82,15 +83,42 @@ const coreNav = [
   },
 ] as const;
 
+const adminNavItem = {
+  href: "/admin",
+  label: "Admin",
+  icon: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 3.5 19 6v5.25c0 4.15-2.7 7.75-7 9.25-4.3-1.5-7-5.1-7-9.25V6l7-2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.25 12.1 11 13.85l3.75-4.1"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+} as const;
+
 function SidebarContent({
   studentName,
+  accessLevel,
   onNavigate,
 }: {
   studentName: string | null;
+  accessLevel: number | null;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const nav = coreNav;
+  const nav =
+    accessLevel === ADMIN_ACCESS_LEVEL
+      ? [...coreNav.slice(0, -1), adminNavItem, coreNav[coreNav.length - 1]]
+      : coreNav;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -153,9 +181,11 @@ function SidebarContent({
 export function AppShell({
   children,
   studentName,
+  accessLevel,
 }: {
   children: React.ReactNode;
   studentName: string | null;
+  accessLevel: number | null;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -186,6 +216,7 @@ export function AppShell({
         <div className="flex h-full min-h-0 flex-col px-5 py-8">
           <SidebarContent
             studentName={studentName}
+            accessLevel={accessLevel}
             onNavigate={() => setMobileOpen(false)}
           />
         </div>
@@ -216,6 +247,7 @@ export function AppShell({
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-6">
               <SidebarContent
                 studentName={studentName}
+                accessLevel={accessLevel}
                 onNavigate={() => setMobileOpen(false)}
               />
             </div>
