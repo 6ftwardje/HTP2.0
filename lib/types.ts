@@ -51,6 +51,39 @@ export type Lesson = {
   updated_at: string;
 };
 
+export type WeeklyUpdateAccessTier =
+  | "free"
+  | "full_course"
+  | "premium"
+  | "mentor_membership";
+
+export type WeeklyUpdate = {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string | null;
+  key_takeaways: string[];
+  market: string | null;
+  week_start_date: string;
+  mentor_student_id: string | null;
+  created_by_student_id: string | null;
+  access_tier: WeeklyUpdateAccessTier;
+  video_provider: "mux" | "vimeo" | "youtube";
+  video_url: string | null;
+  video_duration_seconds: number | null;
+  thumbnail_url: string | null;
+  mux_asset_id: string | null;
+  mux_playback_id: string | null;
+  mux_playback_policy: "public" | "signed";
+  mux_status: "preparing" | "ready" | "errored" | null;
+  mux_upload_id: string | null;
+  mux_error_message: string | null;
+  is_published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DashboardStats = {
   totalModules: number;
   publishedModules: number;
@@ -61,6 +94,16 @@ export type Progress = {
   id: string;
   student_id: string;
   lesson_id: number;
+  watched: boolean;
+  watched_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WeeklyUpdateView = {
+  id: string;
+  student_id: string;
+  weekly_update_id: number;
   watched: boolean;
   watched_at: string | null;
   created_at: string;

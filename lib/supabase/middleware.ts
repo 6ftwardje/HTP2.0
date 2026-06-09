@@ -49,6 +49,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/modules") ||
     pathname.startsWith("/lessons") ||
+    pathname.startsWith("/weekly-updates") ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/admin") ||
     pathname === "/account";

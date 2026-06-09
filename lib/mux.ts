@@ -72,20 +72,26 @@ async function muxFetch<T>(
 
 export async function createMuxDirectUpload({
   lessonId,
+  passthrough,
   corsOrigin,
   playbackPolicy = "public",
 }: {
-  lessonId: number;
+  lessonId?: number;
+  passthrough?: Record<string, unknown>;
   corsOrigin: string;
   playbackPolicy?: MuxPlaybackPolicy;
 }): Promise<{ id: string; url: string }> {
+  const passthroughPayload = passthrough ?? (lessonId ? { lessonId } : null);
+
   const response = await muxFetch<MuxUpload>("/video/v1/uploads", {
     method: "POST",
     body: JSON.stringify({
       cors_origin: corsOrigin,
       new_asset_settings: {
         playback_policies: [playbackPolicy],
-        passthrough: JSON.stringify({ lessonId }),
+        ...(passthroughPayload
+          ? { passthrough: JSON.stringify(passthroughPayload) }
+          : {}),
       },
     }),
   });

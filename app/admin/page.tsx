@@ -39,6 +39,20 @@ export default function AdminHomePage() {
           </span>
         </Link>
 
+        <Link
+          href="/admin/weekly-updates"
+          className="cb-panel group block p-6 transition-shadow hover:shadow-md"
+        >
+          <div className="cb-eyebrow">{`Premium`}</div>
+          <h2 className="cb-h2 mt-4">Weekly updates</h2>
+          <p className="cb-body mt-2">
+            Upload mentor market analyses, publish weekly videos, and manage subscription-ready content.
+          </p>
+          <span className="mt-4 inline-flex items-center text-sm font-bold text-[var(--foreground)] group-hover:underline">
+            Open →
+          </span>
+        </Link>
+
         <div className="cb-panel p-6 opacity-90">
           <div className="cb-eyebrow">{`Progress`}</div>
           <h2 className="cb-h2 mt-4">Progress management</h2>

@@ -3,118 +3,17 @@ import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BRAND, BrandIcon } from "@/components/ui/Brand";
 import { asText } from "@/lib/as-text";
-import {
-  getDashboardOverview,
-  type DashboardModuleSummary,
-} from "@/lib/dashboard";
+import { getDashboardOverview } from "@/lib/dashboard";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
 } from "@/lib/onboarding";
 import { ensureCurrentStudent } from "@/lib/students";
+import { listPublishedWeeklyUpdates } from "@/lib/weekly-updates";
 
 type Props = {
   searchParams?: Promise<{ intake?: string }>;
 };
-
-function ModuleRow({
-  summary,
-  isCurrent,
-}: {
-  summary: DashboardModuleSummary;
-  isCurrent: boolean;
-}) {
-  const canOpen = summary.state !== "locked";
-  const stateLabel = isCurrent
-    ? "Bezig"
-    : summary.state === "completed"
-      ? "Afgerond"
-      : summary.state === "locked"
-        ? "Vergrendeld"
-        : "Beschikbaar";
-  const statusColor =
-    summary.state === "completed"
-      ? "text-emerald-300"
-      : isCurrent
-        ? "text-[var(--accent)]"
-        : "text-[var(--muted)]";
-  const icon =
-    summary.state === "completed" ? (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="m6 12.5 3.2 3.2L18 7.8"
-          stroke="currentColor"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ) : summary.state === "locked" ? (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a1 1 0 0 1 1 1v8H6v-8a1 1 0 0 1 1-1Z"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ) : (
-      <span className="h-3.5 w-3.5 rounded-full border-2 border-current" />
-    );
-
-  const content = (
-    <div
-      className={[
-        "grid gap-4 rounded-lg px-3 py-3 transition-colors sm:grid-cols-[40px_minmax(0,1fr)_auto] sm:items-center sm:px-4",
-        isCurrent
-          ? "border border-[var(--border)] bg-white/[0.025]"
-          : "border border-transparent",
-      ].join(" ")}
-    >
-      <div
-        className={[
-          "flex h-9 w-9 items-center justify-center rounded-full border",
-          summary.state === "completed"
-            ? "border-emerald-300/28 bg-emerald-300/[0.05] text-emerald-300"
-            : isCurrent
-              ? "border-[color-mix(in_oklab,var(--accent)_48%,transparent)] bg-[color-mix(in_oklab,var(--accent)_10%,transparent)] text-[var(--accent)]"
-              : "border-[var(--border)] text-[var(--muted)]",
-        ].join(" ")}
-      >
-        {icon}
-      </div>
-
-      <div className="min-w-0">
-        <p className="text-sm font-semibold leading-tight text-[var(--foreground)]">
-          Module {summary.module.order_index}
-        </p>
-        <p className="mt-1 truncate text-sm text-[var(--muted)]">
-          {summary.module.title}
-        </p>
-      </div>
-
-      <div className="flex items-center justify-end gap-4">
-        <span className={`text-sm font-semibold ${statusColor}`}>
-          {stateLabel}
-        </span>
-      </div>
-    </div>
-  );
-
-  if (!canOpen) return <li className="opacity-65">{content}</li>;
-
-  return (
-    <li>
-      <Link
-        href={`/modules/${summary.module.slug}`}
-        className="group block rounded-lg outline-none focus-visible:bg-white/[0.04]"
-      >
-        {content}
-      </Link>
-    </li>
-  );
-}
 
 export default async function DashboardPage({ searchParams }: Props) {
   const [{ student }, params] = await Promise.all([
@@ -123,21 +22,16 @@ export default async function DashboardPage({ searchParams }: Props) {
   ]);
   if (!student) return null;
 
-  const [overview, onboarding] = await Promise.all([
+  const [overview, onboarding, weeklyUpdates] = await Promise.all([
     getDashboardOverview(student.id),
     getStudentOnboardingResponse(student.id),
+    listPublishedWeeklyUpdates(3),
   ]);
-  const { nextStep, modules } = overview;
+  const { nextStep } = overview;
   const intakeComplete = onboardingIsComplete(onboarding);
   const firstName = student.name?.split(" ")[0] ?? null;
   const title = firstName ? `Welkom terug, ${firstName}` : "Welkom terug";
-  const activeIndex = modules.findIndex(
-    (summary) => summary.state === "available"
-  );
-  const visibleModules =
-    activeIndex >= 0
-      ? modules.slice(Math.max(0, activeIndex - 1), activeIndex + 2)
-      : modules.slice(-3);
+  const latestWeeklyUpdate = weeklyUpdates[0] ?? null;
 
   const stepTitle =
     nextStep.type === "lesson"
@@ -385,36 +279,79 @@ export default async function DashboardPage({ searchParams }: Props) {
         </section>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
-          {visibleModules.length > 0 && (
-            <section
-              id="progress"
-              className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6"
-            >
-              <div className="cb-eyebrow">Jouw traject</div>
-              <ol className="mt-5 space-y-1">
-                {visibleModules.map((summary, index) => {
-                  const absoluteIndex =
-                    activeIndex >= 0 ? Math.max(0, activeIndex - 1) + index : index;
-                  return (
-                    <ModuleRow
-                      key={summary.module.id}
-                      summary={summary}
-                      isCurrent={absoluteIndex === activeIndex}
-                    />
-                  );
-                })}
-              </ol>
-              <div className="mt-5">
-                <Link
-                  href="/modules"
-                  className="inline-flex items-center gap-3 text-sm font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-                >
-                  Bekijk volledig traject
-                  <span aria-hidden>→</span>
-                </Link>
+          <section
+            id="weekly-updates"
+            className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="cb-eyebrow">Weekly Updates</div>
+                <h2 className="mt-2 text-2xl font-extrabold leading-tight text-[var(--foreground)]">
+                  Marktanalyse van de week
+                </h2>
               </div>
-            </section>
-          )}
+              <Link
+                href="/weekly-updates"
+                className="shrink-0 text-sm font-semibold text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+              >
+                Archief →
+              </Link>
+            </div>
+
+            {latestWeeklyUpdate ? (
+              <div className="mt-6 grid gap-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
+                <Link
+                  href={`/weekly-updates/${latestWeeklyUpdate.slug}`}
+                  className="relative block overflow-hidden rounded-lg bg-black"
+                >
+                  <CourseThumbnail
+                    src={latestWeeklyUpdate.thumbnail_url}
+                    title={latestWeeklyUpdate.title}
+                    eyebrow={latestWeeklyUpdate.market ?? "Market"}
+                    className="aspect-[16/10] w-full"
+                  />
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-black/24 text-white backdrop-blur-sm">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden className="ml-0.5">
+                        <path d="M8 5v14l11-7-11-7Z" fill="currentColor" />
+                      </svg>
+                    </div>
+                  </div>
+                </Link>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[var(--muted)]">
+                    Week van{" "}
+                    {new Intl.DateTimeFormat("nl-NL", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    }).format(new Date(latestWeeklyUpdate.week_start_date))}
+                  </p>
+                  <h3 className="mt-2 line-clamp-2 text-lg font-bold text-[var(--foreground)]">
+                    {latestWeeklyUpdate.title}
+                  </h3>
+                  {latestWeeklyUpdate.summary ? (
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
+                      {latestWeeklyUpdate.summary}
+                    </p>
+                  ) : null}
+                  <Link
+                    href={`/weekly-updates/${latestWeeklyUpdate.slug}`}
+                    className="mt-4 inline-flex cb-btn cb-btn-secondary px-4 py-2 text-sm"
+                  >
+                    Bekijk analyse
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 rounded-lg border border-dashed border-[var(--border)] p-5">
+                <p className="cb-body">
+                  Er staat nog geen weekly update klaar. Zodra een mentor publiceert,
+                  verschijnt de nieuwste analyse hier.
+                </p>
+              </div>
+            )}
+          </section>
 
           <section
             id="mentor"

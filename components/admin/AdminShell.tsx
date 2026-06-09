@@ -51,6 +51,21 @@ const adminNav = [
       </svg>
     ),
   },
+  {
+    href: "/admin/weekly-updates",
+    label: "Weekly Updates",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M4 6.5h16M4 12h10M4 17.5h16M17 10l3 2-3 2v-4Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
 ];
 
 function SidebarContent({

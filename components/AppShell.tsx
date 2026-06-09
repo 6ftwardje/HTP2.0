@@ -53,12 +53,12 @@ const coreNav = [
     ),
   },
   {
-    href: "/dashboard#progress",
-    label: "Progress",
+    href: "/weekly-updates",
+    label: "Weekly Updates",
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
-          d="M5 19V9m7 10V5m7 14v-7M4 19h16"
+          d="M4 6.5h16M4 12h10M4 17.5h16M17 10l3 2-3 2v-4Z"
           stroke="currentColor"
           strokeWidth="1.6"
           strokeLinecap="round"
