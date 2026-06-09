@@ -9,7 +9,7 @@ import { loadKnowledge } from "@/lib/ai/knowledge";
 import { getFeatureConfig } from "@/lib/ai/registry";
 
 const FEATURE = "mentor_summary" as const;
-const MAX_TOKENS = 1200;
+const MAX_TOKENS = 700;
 
 function formatDate(value: string | null): string {
   if (!value) return "onbekend";
@@ -101,33 +101,33 @@ const SUMMARY_TOOL: Anthropic.Tool = {
     properties: {
       status: {
         type: "string",
-        description: "Een korte statuszin (1 zin) over waar de student nu staat.",
+        description: "Eén korte statuszin over waar de student nu staat. Maximaal één zin.",
       },
       voortgang: {
         type: "string",
-        description: "Korte beschrijving van de voortgang (2 tot 3 zinnen), met concrete datapunten.",
+        description: "Bondige beschrijving van de voortgang, maximaal twee korte zinnen, met concrete datapunten.",
       },
       risicos: {
         type: "array",
         items: { type: "string" },
-        description: "Belangrijkste risico's of aandachtspunten als observatie, met onderbouwing.",
+        description: "Maximaal 3 risico's of aandachtspunten als observatie. Elk item één korte regel.",
       },
       call_focus: {
         type: "array",
         items: { type: "string" },
-        description: "Een tot drie concrete onderwerpen voor het volgende gesprek.",
+        description: "Maximaal 3 concrete onderwerpen voor het volgende gesprek. Elk item één korte regel.",
       },
       open_vragen: {
         type: "array",
         items: { type: "string" },
-        description: "Open vragen die de mentor aan de student kan stellen.",
+        description: "Maximaal 3 open vragen voor de student. Elk item één korte regel.",
       },
     },
     required: ["status", "voortgang", "risicos", "call_focus", "open_vragen"],
   },
 };
 
-const TASK_INSTRUCTION = `Je krijgt de context van een student. Maak een mentor-samenvatting die een mentor in dertig seconden leest ter voorbereiding van een 1-op-1 gesprek. Baseer je uitsluitend op de aangereikte context; verzin niets. Volg de regels en stijl uit de knowledge hierboven. Geef de output via de tool mentor_summary.`;
+const TASK_INSTRUCTION = `Je krijgt de context van een student. Maak een korte mentor-samenvatting die een mentor in dertig seconden leest ter voorbereiding van een 1-op-1 gesprek. Houd het strak en bondig: liever weinig sterke punten dan veel halve. Baseer je uitsluitend op de aangereikte context; verzin niets. Volg de regels en stijl uit de knowledge hierboven. Geef de output via de tool mentor_summary.`;
 
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
