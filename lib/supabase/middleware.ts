@@ -1,6 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const SUPABASE_COOKIE_PREFIX = "sb-";
+
+function clearSupabaseCookies(response: NextResponse, request: NextRequest) {
+  request.cookies
+    .getAll()
+    .filter((cookie) => cookie.name.startsWith(SUPABASE_COOKIE_PREFIX))
+    .forEach((cookie) => {
+      response.cookies.set(cookie.name, "", {
+        path: "/",
+        maxAge: 0,
+      });
+    });
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -58,7 +72,9 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.searchParams.set("redirectedFrom", pathname);
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(url);
+    clearSupabaseCookies(response, request);
+    return response;
   }
 
   return supabaseResponse;

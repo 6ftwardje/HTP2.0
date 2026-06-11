@@ -21,6 +21,62 @@ body {
   color: var(--foreground);
 }
 
+.top-loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 3px;
+  pointer-events: none;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--accent) 62%, white),
+    #f7d47c 52%,
+    color-mix(in oklab, var(--accent) 82%, #ffffff)
+  );
+  box-shadow: 0 0 18px color-mix(in oklab, var(--accent) 42%, transparent);
+}
+
+.top-loading-bar--visible {
+  opacity: 1;
+  animation: top-loading-bar-run 10s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.top-loading-bar--finishing {
+  transform: scaleX(1);
+  opacity: 0;
+  animation: none;
+  transition: transform 180ms ease, opacity 220ms ease;
+}
+
+@keyframes top-loading-bar-run {
+  0% {
+    transform: scaleX(0.04);
+  }
+  18% {
+    transform: scaleX(0.32);
+  }
+  48% {
+    transform: scaleX(0.68);
+  }
+  82% {
+    transform: scaleX(0.9);
+  }
+  100% {
+    transform: scaleX(0.94);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-loading-bar--visible {
+    animation-duration: 1ms;
+  }
+}
+
 @keyframes thumbnail-shimmer {
   0% {
     background-position: 120% 0;

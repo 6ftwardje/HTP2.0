@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
+import { TopLoadingBar } from "@/components/TopLoadingBar";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -25,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <body className={`${manrope.variable} font-sans antialiased`}>
+        <TopLoadingBar />
         {children}
       </body>
     </html>
