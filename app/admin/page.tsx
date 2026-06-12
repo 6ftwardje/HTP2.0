@@ -40,6 +40,20 @@ export default function AdminHomePage() {
         </Link>
 
         <Link
+          href="/admin/exams"
+          className="cb-panel group block p-6 transition-shadow hover:shadow-md"
+        >
+          <div className="cb-eyebrow">{`Exams`}</div>
+          <h2 className="cb-h2 mt-4">Exam management</h2>
+          <p className="cb-body mt-2">
+            Manage module question banks, answer options, and readiness before students start.
+          </p>
+          <span className="mt-4 inline-flex items-center text-sm font-bold text-[var(--foreground)] group-hover:underline">
+            Open →
+          </span>
+        </Link>
+
+        <Link
           href="/admin/weekly-updates"
           className="cb-panel group block p-6 transition-shadow hover:shadow-md"
         >

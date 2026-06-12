@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Exam, ExamQuestion, ExamResult } from "@/lib/types";
+import type {
+  Exam,
+  ExamQuestion,
+  ExamResult,
+  PublicExamAttempt,
+} from "@/lib/types";
 
 const EXAM_COLUMNS =
   "id, module_id, title, description, passing_score, is_published";
@@ -148,4 +153,97 @@ export async function insertExamResult(params: {
 
   if (error) return { error };
   return { error: null };
+}
+
+type StartExamRpcResult = {
+  success?: boolean;
+  attempt?: PublicExamAttempt;
+  error?: string;
+  activeQuestionCount?: number;
+  validQuestionCount?: number;
+};
+
+export async function getOrStartExamAttemptForModule(
+  moduleId: number
+): Promise<{
+  success: boolean;
+  attempt?: PublicExamAttempt;
+  error?: string;
+  activeQuestionCount?: number;
+  validQuestionCount?: number;
+}> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("start_module_exam", {
+    p_module_id: moduleId,
+  });
+
+  if (error) {
+    return {
+      success: false,
+      error: "De toets kon niet worden gestart. Controleer of de exam migration is toegepast.",
+    };
+  }
+
+  const result = data as StartExamRpcResult | null;
+  if (!result?.success || !result.attempt) {
+    return {
+      success: false,
+      error: result?.error ?? "De toets kon niet worden gestart.",
+      activeQuestionCount: result?.activeQuestionCount,
+      validQuestionCount: result?.validQuestionCount,
+    };
+  }
+
+  return { success: true, attempt: result.attempt };
+}
+
+export async function submitExamAttempt(params: {
+  attemptId: string;
+  answers: { questionId: number; selectedOptionId: number }[];
+}): Promise<{
+  success: boolean;
+  score?: number;
+  passed?: boolean;
+  correctCount?: number;
+  totalQuestions?: number;
+  error?: string;
+}> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("submit_module_exam", {
+    p_attempt_id: params.attemptId,
+    p_answers: params.answers,
+  });
+
+  if (error) {
+    return {
+      success: false,
+      error: "Je resultaat kon niet worden opgeslagen.",
+    };
+  }
+
+  const result = data as
+    | {
+        success?: boolean;
+        score?: number;
+        passed?: boolean;
+        correctCount?: number;
+        totalQuestions?: number;
+        error?: string;
+      }
+    | null;
+
+  if (!result?.success) {
+    return {
+      success: false,
+      error: result?.error ?? "Je resultaat kon niet worden opgeslagen.",
+    };
+  }
+
+  return {
+    success: true,
+    score: result.score,
+    passed: result.passed,
+    correctCount: result.correctCount,
+    totalQuestions: result.totalQuestions,
+  };
 }

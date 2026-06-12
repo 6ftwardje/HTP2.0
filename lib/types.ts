@@ -135,12 +135,49 @@ export type Exam = {
 export type ExamQuestion = {
   id: number;
   exam_id: number;
+  module_id?: number;
   question: string;
+  question_text?: string;
+  explanation?: string | null;
+  is_active?: boolean;
   options: string[];
   correct_answer: string;
   order_index: number;
   created_at: string;
   updated_at: string;
+};
+
+export type ExamAnswerOption = {
+  id: number;
+  question_id: number;
+  option_text: string;
+  is_correct: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PublicExamOption = {
+  id: number;
+  optionText: string;
+};
+
+export type PublicExamQuestion = {
+  id: number;
+  questionText: string;
+  explanation: string | null;
+  options: PublicExamOption[];
+};
+
+export type PublicExamAttempt = {
+  attemptId: string;
+  examId: number;
+  moduleId: number;
+  status: "in_progress" | "submitted";
+  score: number | null;
+  passed: boolean | null;
+  totalQuestions: number;
+  questions: PublicExamQuestion[];
 };
 
 export type ExamResult = {

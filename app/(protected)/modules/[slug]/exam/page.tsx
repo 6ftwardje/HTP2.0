@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
 import { getModuleBySlug } from "@/lib/modules";
 import { getPublishedLessonsByModuleId } from "@/lib/lessons";
-import { getExamByModuleId, getExamQuestions } from "@/lib/exams";
+import { getExamByModuleId, getOrStartExamAttemptForModule } from "@/lib/exams";
 import { areAllLessonsCompleted } from "@/lib/progress";
 import { getModuleAccessMap } from "@/lib/module-gate";
 import { getPublishedModules } from "@/lib/modules";
@@ -107,14 +107,26 @@ export default async function ModuleExamPage({ params }: Props) {
     );
   }
 
-  const questions = await getExamQuestions(exam.id);
+  const attemptResult = await getOrStartExamAttemptForModule(moduleData.id);
   const displayTitle = exam.title.replace(/\bmoduletoets\b/gi, "Toets");
   const description = asText(exam.description);
 
   const main =
-    questions.length === 0 ? (
+    !attemptResult.success || !attemptResult.attempt ? (
       <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
-        <p className="cb-caption">Deze toets bevat nog geen vragen.</p>
+        <p className="text-base font-semibold text-[var(--foreground)]">
+          De toets is nog niet klaar om te starten.
+        </p>
+        <p className="cb-caption mt-3">
+          {attemptResult.error ??
+            "Deze module heeft nog niet genoeg geldige actieve vragen."}
+        </p>
+        {typeof attemptResult.activeQuestionCount === "number" && (
+          <p className="cb-caption mt-2">
+            Actieve vragen: {attemptResult.activeQuestionCount}. Geldige vragen:{" "}
+            {attemptResult.validQuestionCount ?? attemptResult.activeQuestionCount}. Vereist: 10.
+          </p>
+        )}
         <Link
           href={`/modules/${moduleData.slug}`}
           className="mt-6 inline-flex text-sm font-semibold text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
@@ -124,8 +136,7 @@ export default async function ModuleExamPage({ params }: Props) {
       </div>
     ) : (
       <ExamForm
-        examId={exam.id}
-        questions={questions}
+        attempt={attemptResult.attempt}
         passingScore={exam.passing_score}
         moduleSlug={moduleData.slug}
         moduleTitle={moduleData.title}

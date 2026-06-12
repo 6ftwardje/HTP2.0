@@ -37,6 +37,21 @@ const adminNav = [
     ),
   },
   {
+    href: "/admin/exams",
+    label: "Exams",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M7 5h10M7 9h10M7 13h6M5 3h14v18l-3-2-3 2-3-2-3 2-2-1.3V3Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/videos",
     label: "Videos",
     icon: (

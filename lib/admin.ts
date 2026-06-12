@@ -19,7 +19,21 @@ export {
   resetStudentAllLessonProgress,
   markStudentAcademyLessonsComplete,
 } from "@/lib/admin/progress";
-export { getExamSummariesByModuleForStudent } from "@/lib/admin/exams";
+export {
+  archiveExamQuestionAdmin,
+  getExamSummariesByModuleForStudent,
+  listExamManagementAdmin,
+  saveExamQuestionAdmin,
+  setExamQuestionActiveAdmin,
+  validateAdminExamQuestionInput,
+} from "@/lib/admin/exams";
+export type {
+  AdminExamManagementData,
+  AdminExamModuleSummary,
+  AdminExamOption,
+  AdminExamQuestion,
+  AdminExamQuestionInput,
+} from "@/lib/admin/exams";
 export {
   createLessonAdmin,
   createModuleAdmin,

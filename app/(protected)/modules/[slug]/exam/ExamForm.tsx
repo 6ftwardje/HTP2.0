@@ -4,26 +4,25 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { submitExam } from "@/app/actions/exam";
-import type { ExamQuestion } from "@/lib/types";
+import type { PublicExamAttempt } from "@/lib/types";
 
 type Props = {
-  examId: number;
-  questions: ExamQuestion[];
+  attempt: PublicExamAttempt;
   passingScore: number;
   moduleSlug: string;
   moduleTitle: string;
 };
 
 export function ExamForm({
-  examId,
-  questions,
+  attempt,
   passingScore,
   moduleSlug,
   moduleTitle,
 }: Props) {
   const router = useRouter();
+  const questions = attempt.questions;
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{
     score: number;
@@ -32,19 +31,19 @@ export function ExamForm({
   const [error, setError] = useState<string | null>(null);
 
   const current = questions[index];
-  const currentAnswer = answers[current.id] ?? "";
+  const currentAnswer = answers[current.id] ?? null;
   const answeredCount = useMemo(
-    () => questions.filter((q) => answers[q.id]?.trim()).length,
+    () => questions.filter((q) => Number.isInteger(answers[q.id])).length,
     [answers, questions]
   );
   const allAnswered = answeredCount === questions.length;
-  const canContinue = currentAnswer.trim().length > 0;
+  const canContinue = currentAnswer != null;
   const isLast = index === questions.length - 1;
   const progress = ((index + 1) / questions.length) * 100;
   const canSubmit = allAnswered && !submitting && !result;
 
-  function selectAnswer(value: string) {
-    setAnswers((prev) => ({ ...prev, [current.id]: value }));
+  function selectAnswer(optionId: number) {
+    setAnswers((prev) => ({ ...prev, [current.id]: optionId }));
     setError(null);
   }
 
@@ -69,10 +68,10 @@ export function ExamForm({
 
     const answersList = questions.map((q) => ({
       questionId: q.id,
-      selectedAnswer: answers[q.id] ?? "",
+      selectedOptionId: answers[q.id] ?? 0,
     }));
 
-    submitExam(examId, answersList).then((res) => {
+    submitExam(attempt.attemptId, answersList).then((res) => {
       setSubmitting(false);
       if (res.success && res.score != null && res.passed != null) {
         setResult({ score: res.score, passed: res.passed });
@@ -121,9 +120,7 @@ export function ExamForm({
               <button
                 type="button"
                 onClick={() => {
-                  setResult(null);
-                  setAnswers({});
-                  setIndex(0);
+                  router.refresh();
                 }}
                 className="cb-btn cb-btn-primary"
               >
@@ -159,7 +156,7 @@ export function ExamForm({
       <fieldset className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-5 sm:p-7">
         <legend className="sr-only">Vraag {index + 1}</legend>
         <h1 className="text-2xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[1.95rem]">
-          {current.question}
+          {current.questionText}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
           Kies het antwoord dat volgens jou het beste klopt. Je kunt teruggaan
@@ -168,12 +165,12 @@ export function ExamForm({
 
         <div className="mt-6 space-y-3">
           {current.options.map((option) => {
-            const selected = currentAnswer === option;
+            const selected = currentAnswer === option.id;
             return (
               <button
-                key={option}
+                key={option.id}
                 type="button"
-                onClick={() => selectAnswer(option)}
+                onClick={() => selectAnswer(option.id)}
                 className={[
                   "flex w-full items-start justify-between gap-5 rounded-lg border px-4 py-3 text-left transition-colors",
                   selected
@@ -182,7 +179,7 @@ export function ExamForm({
                 ].join(" ")}
               >
                 <span className="text-sm font-semibold leading-6 text-[var(--foreground)]">
-                  {option}
+                  {option.optionText}
                 </span>
                 <span
                   aria-hidden
