@@ -6,6 +6,10 @@ import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
 import { BRAND, BrandLogo } from "@/components/ui/Brand";
+import {
+  NotificationPopover,
+  type FloatingNotification,
+} from "@/components/ui/notification-popover";
 import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 import { useNotificationsRealtime } from "@/lib/realtime-hooks";
 
@@ -211,14 +215,18 @@ export function AppShell({
   accessLevel,
   currentStudentId = null,
   unreadNotificationCount = 0,
+  floatingNotifications = [],
 }: {
   children: React.ReactNode;
   studentName: string | null;
   accessLevel: number | null;
   currentStudentId?: string | null;
   unreadNotificationCount?: number;
+  floatingNotifications?: FloatingNotification[];
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const showFloatingNotifications = pathname !== "/notifications";
 
   useNotificationsRealtime(currentStudentId);
 
@@ -326,6 +334,13 @@ export function AppShell({
           </div>
         </main>
       </div>
+
+      {showFloatingNotifications && (
+        <NotificationPopover
+          notifications={floatingNotifications}
+          unreadCount={unreadNotificationCount}
+        />
+      )}
     </div>
   );
 }
