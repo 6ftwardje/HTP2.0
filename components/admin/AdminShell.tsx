@@ -37,6 +37,26 @@ const adminNav = [
     ),
   },
   {
+    href: "/admin/mentor-inbox",
+    label: "Mentor Inbox",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M4 5.5h16v10H8l-4 4v-14Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8 9h8M8 12.5h5"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/exams",
     label: "Exams",
     icon: (

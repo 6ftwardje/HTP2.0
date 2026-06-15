@@ -7,6 +7,7 @@ import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
 import { BRAND, BrandLogo } from "@/components/ui/Brand";
 import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
+import { useNotificationsRealtime } from "@/lib/realtime-hooks";
 
 const coreNav = [
   {
@@ -38,7 +39,7 @@ const coreNav = [
     ),
   },
   {
-    href: "/dashboard#mentor",
+    href: "/mentor",
     label: "Mentor",
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -63,6 +64,26 @@ const coreNav = [
           strokeWidth="1.6"
           strokeLinecap="round"
           strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/notifications",
+    label: "Meldingen",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M6 9a6 6 0 1 1 12 0c0 6 2 6 2 8H4c0-2 2-2 2-8Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M9.5 20a3 3 0 0 0 5 0"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
         />
       </svg>
     ),
@@ -108,10 +129,12 @@ const adminNavItem = {
 function SidebarContent({
   studentName,
   accessLevel,
+  unreadNotificationCount,
   onNavigate,
 }: {
   studentName: string | null;
   accessLevel: number | null;
+  unreadNotificationCount: number;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -147,7 +170,11 @@ function SidebarContent({
             <SidebarNavItem
               key={item.href}
               href={item.href}
-              label={item.label}
+              label={
+                item.href === "/notifications" && unreadNotificationCount > 0
+                  ? `${item.label} (${Math.min(unreadNotificationCount, 99)})`
+                  : item.label
+              }
               active={isActive}
               icon={item.icon}
               onNavigate={onNavigate}
@@ -182,12 +209,18 @@ export function AppShell({
   children,
   studentName,
   accessLevel,
+  currentStudentId = null,
+  unreadNotificationCount = 0,
 }: {
   children: React.ReactNode;
   studentName: string | null;
   accessLevel: number | null;
+  currentStudentId?: string | null;
+  unreadNotificationCount?: number;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useNotificationsRealtime(currentStudentId);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -217,6 +250,7 @@ export function AppShell({
           <SidebarContent
             studentName={studentName}
             accessLevel={accessLevel}
+            unreadNotificationCount={unreadNotificationCount}
             onNavigate={() => setMobileOpen(false)}
           />
         </div>
@@ -248,6 +282,7 @@ export function AppShell({
               <SidebarContent
                 studentName={studentName}
                 accessLevel={accessLevel}
+                unreadNotificationCount={unreadNotificationCount}
                 onNavigate={() => setMobileOpen(false)}
               />
             </div>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { BRAND, BrandIcon } from "@/components/ui/Brand";
+import { BrandIcon } from "@/components/ui/Brand";
 import { asText } from "@/lib/as-text";
 import { getDashboardOverview } from "@/lib/dashboard";
 import {
@@ -134,9 +134,9 @@ export default async function DashboardPage({ searchParams }: Props) {
             : {
                 title: "Stel een vraag aan je mentor",
                 copy: "Loop je vast op deze module? Deel kort waar je naar kijkt en waar je twijfel zit.",
-                href: `mailto:${BRAND.supportEmail}?subject=Mentorvraag%20over%20mijn%20module`,
+                href: "/mentor",
                 label: "Vraag stellen",
-                external: true,
+                external: false,
                 type: "mentor_action",
               };
   const primaryLabel =

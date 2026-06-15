@@ -285,3 +285,84 @@ export type AiInteraction = {
   error: string | null;
   created_at: string;
 };
+
+export type ConversationThreadStatus =
+  | "open"
+  | "pending_mentor"
+  | "pending_student"
+  | "snoozed"
+  | "closed";
+
+export type ConversationThreadPriority = "normal" | "high" | "urgent";
+
+export type ConversationThread = {
+  id: string;
+  student_id: string;
+  assigned_to_student_id: string | null;
+  status: ConversationThreadStatus;
+  priority: ConversationThreadPriority;
+  category: string | null;
+  source_type: string;
+  source_id: string | null;
+  subject: string | null;
+  last_message_at: string | null;
+  last_student_message_at: string | null;
+  last_mentor_message_at: string | null;
+  unread_for_student_count: number;
+  unread_for_mentor_count: number;
+  first_response_at: string | null;
+  closed_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConversationMessageSenderRole =
+  | "student"
+  | "mentor"
+  | "admin"
+  | "ai"
+  | "system";
+
+export type ConversationMessage = {
+  id: string;
+  thread_id: string;
+  sender_student_id: string | null;
+  sender_role: ConversationMessageSenderRole;
+  body: string;
+  body_format: "plain" | "markdown";
+  client_message_id: string | null;
+  status: "sent" | "delivered" | "read" | "failed" | "deleted";
+  is_internal: boolean;
+  parent_message_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  edited_at: string | null;
+  deleted_at: string | null;
+};
+
+export type NotificationEvent = {
+  id: string;
+  type: string;
+  actor_student_id: string | null;
+  target_table: string | null;
+  target_id: string | null;
+  title: string;
+  body: string | null;
+  href: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type NotificationRecipient = {
+  id: string;
+  event_id: string;
+  student_id: string;
+  read_at: string | null;
+  archived_at: string | null;
+  created_at: string;
+};
+
+export type NotificationWithEvent = NotificationRecipient & {
+  event: NotificationEvent | null;
+};

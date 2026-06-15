@@ -40,6 +40,20 @@ export default function AdminHomePage() {
         </Link>
 
         <Link
+          href="/admin/mentor-inbox"
+          className="cb-panel group block p-6 transition-shadow hover:shadow-md"
+        >
+          <div className="cb-eyebrow">{`Mentor`}</div>
+          <h2 className="cb-h2 mt-4">Mentor inbox</h2>
+          <p className="cb-body mt-2">
+            Read and answer student questions, manage triage, and keep mentor context in one place.
+          </p>
+          <span className="mt-4 inline-flex items-center text-sm font-bold text-[var(--foreground)] group-hover:underline">
+            Open →
+          </span>
+        </Link>
+
+        <Link
           href="/admin/exams"
           className="cb-panel group block p-6 transition-shadow hover:shadow-md"
         >
