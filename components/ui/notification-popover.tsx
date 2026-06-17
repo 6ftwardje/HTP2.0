@@ -54,22 +54,64 @@ export function NotificationPopover({
 }) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
+  const handledUnreadAtRef = useRef(0);
+  const handledFallbackSignalRef = useRef<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const dedupedNotifications = Array.from(
+    new Map(
+      notifications.map((notification) => [notification.id, notification])
+    ).values()
+  );
+  const latestUnreadNotification = dedupedNotifications.find(
+    (notification) => !notification.read
+  );
+  const latestUnreadAt = latestUnreadNotification
+    ? Date.parse(latestUnreadNotification.timestamp)
+    : 0;
+  const unreadFallbackSignal =
+    unreadCount > 0 && !latestUnreadNotification ? `count:${unreadCount}` : null;
+
+  function closePopover() {
+    setIsOpen(false);
+  }
+
+  useEffect(() => {
+    if (unreadCount <= 0) {
+      handledFallbackSignalRef.current = null;
+      return;
+    }
+
+    if (latestUnreadAt > 0) {
+      if (latestUnreadAt > handledUnreadAtRef.current) {
+        handledUnreadAtRef.current = latestUnreadAt;
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    if (
+      unreadFallbackSignal &&
+      unreadFallbackSignal !== handledFallbackSignalRef.current
+    ) {
+      handledFallbackSignalRef.current = unreadFallbackSignal;
+      setIsOpen(true);
+    }
+  }, [latestUnreadAt, unreadCount, unreadFallbackSignal]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     function onPointerDown(event: PointerEvent) {
       if (!rootRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
+        closePopover();
       }
     }
 
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key === "Escape") closePopover();
     }
 
     document.addEventListener("pointerdown", onPointerDown);
@@ -85,6 +127,7 @@ export function NotificationPopover({
     startTransition(async () => {
       try {
         await markNotificationsRead();
+        closePopover();
         router.refresh();
       } catch {
         setError("Meldingen bijwerken mislukt.");
@@ -100,7 +143,7 @@ export function NotificationPopover({
         if (!notification.read) {
           await markOneNotificationRead(notification.id);
         }
-        setIsOpen(false);
+        closePopover();
         if (notification.href) {
           router.push(notification.href);
         } else {
@@ -119,12 +162,12 @@ export function NotificationPopover({
   return (
     <div
       ref={rootRef}
-      className="pointer-events-none fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-6 md:right-6"
+      className="pointer-events-none fixed right-4 top-[calc(4.75rem+env(safe-area-inset-top))] z-40 md:right-6 md:top-20"
     >
       <div className="relative pointer-events-auto">
         <button
           type="button"
-          onClick={() => setIsOpen((open) => !open)}
+          onClick={() => (isOpen ? closePopover() : setIsOpen(true))}
           aria-label={
             unreadCount > 0
               ? `${unreadCount} ongelezen meldingen`
@@ -146,7 +189,7 @@ export function NotificationPopover({
           <section
             role="dialog"
             aria-label="Meldingen"
-            className="absolute bottom-14 right-0 w-[min(340px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_88%,var(--card)_12%)] text-[var(--foreground)] shadow-2xl backdrop-blur-md"
+            className="absolute right-0 top-14 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_88%,var(--card)_12%)] text-[var(--foreground)] shadow-2xl backdrop-blur-md"
           >
             <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
               <div>
@@ -171,9 +214,9 @@ export function NotificationPopover({
               </p>
             )}
 
-            {notifications.length > 0 ? (
+            {dedupedNotifications.length > 0 ? (
               <div className="max-h-[min(420px,calc(100dvh-170px))] divide-y divide-[var(--border)] overflow-y-auto">
-                {notifications.map((notification) => (
+                {dedupedNotifications.map((notification) => (
                   <button
                     key={notification.id}
                     type="button"
@@ -199,6 +242,9 @@ export function NotificationPopover({
                         {formatDate(notification.timestamp)}
                       </time>
                     </div>
+                    <span className="mt-2 inline-flex text-xs font-bold text-[var(--accent)]">
+                      {pendingId === notification.id ? "Openen..." : "Openen"}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -211,10 +257,10 @@ export function NotificationPopover({
             <div className="border-t border-[var(--border)] px-4 py-3">
               <Link
                 href="/notifications"
-                onClick={() => setIsOpen(false)}
+                onClick={closePopover}
                 className="inline-flex text-sm font-bold text-[var(--foreground)] underline-offset-4 hover:underline"
               >
-                Open notification center
+                Alle meldingen
               </Link>
             </div>
           </section>
