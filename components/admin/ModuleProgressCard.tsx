@@ -4,6 +4,7 @@ import {
 } from "@/app/actions/admin/progress";
 import type { AdminModuleProgressBlock } from "@/lib/admin/types";
 import { ConfirmForm } from "@/components/admin/ConfirmForm";
+import { stripModulePrefix } from "@/lib/module-title";
 
 export function ModuleProgressCard({
   block,
@@ -13,6 +14,7 @@ export function ModuleProgressCard({
   studentId: string;
 }) {
   const { module, lessons, completedCount, totalLessons, examSummary } = block;
+  const moduleTitle = stripModulePrefix(module.title, module.order_index);
   const pct =
     totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
@@ -25,7 +27,7 @@ export function ModuleProgressCard({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 id={`module-${module.id}-title`} className="cb-h2">
-              {module.title}
+              {moduleTitle}
             </h3>
             <p className="cb-caption mt-1">
               Lessons {completedCount}/{totalLessons} complete ({pct}%)
@@ -101,7 +103,7 @@ export function ModuleProgressCard({
         </form>
         <ConfirmForm
           action={adminResetStudentModuleProgress.bind(null, studentId, module.id)}
-          confirmMessage={`Reset lesson progress for “${module.title}”? Exam results are not changed.`}
+          confirmMessage={`Reset lesson progress for “${moduleTitle}”? Exam results are not changed.`}
         >
           <button type="submit" className="cb-btn cb-btn-secondary text-sm">
             Reset module progress

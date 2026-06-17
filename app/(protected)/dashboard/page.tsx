@@ -8,6 +8,7 @@ import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
 } from "@/lib/onboarding";
+import { stripModulePrefix } from "@/lib/module-title";
 import { ensureCurrentStudent } from "@/lib/students";
 import { listPublishedWeeklyUpdates } from "@/lib/weekly-updates";
 
@@ -40,7 +41,10 @@ export default async function DashboardPage({ searchParams }: Props) {
         ? nextStep.exam.title
         : nextStep.type === "completed"
           ? "Je traject is afgerond"
-          : nextStep.module.title;
+          : stripModulePrefix(
+              nextStep.module.title,
+              nextStep.module.order_index
+            );
   const stepCopy =
     nextStep.type === "lesson"
       ? asText(nextStep.lesson.takeaway) ??
@@ -55,7 +59,9 @@ export default async function DashboardPage({ searchParams }: Props) {
     nextStep.type === "lesson"
       ? nextStep.lesson.thumbnail_url ?? nextStep.module.thumbnail_url
       : nextStep.module?.thumbnail_url;
-  const moduleTitle = nextStep.module?.title ?? "Academy";
+  const moduleTitle = nextStep.module
+    ? stripModulePrefix(nextStep.module.title, nextStep.module.order_index)
+    : "Academy";
   const moduleOrder = nextStep.module?.order_index;
   const headerDescription =
     nextStep.type === "completed"
@@ -107,7 +113,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       : nextStep.type === "lesson"
         ? {
             title: nextStep.lesson.title,
-            copy: `Ga verder met Module ${nextStep.module.order_index}: ${nextStep.module.title}.`,
+            copy: `Ga verder met Module ${nextStep.module.order_index}: ${stripModulePrefix(nextStep.module.title, nextStep.module.order_index)}.`,
             href: nextStep.href,
             label: nextStep.label,
             external: false,
@@ -124,7 +130,10 @@ export default async function DashboardPage({ searchParams }: Props) {
             }
           : nextStep.type === "module"
             ? {
-                title: nextStep.module.title,
+                title: stripModulePrefix(
+                  nextStep.module.title,
+                  nextStep.module.order_index
+                ),
                 copy: "Open de module om verder te gaan met je traject.",
                 href: nextStep.href,
                 label: nextStep.label,

@@ -19,6 +19,10 @@ import {
 } from "@/app/actions/admin/videos";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
+import {
+  formatModuleOptionLabel,
+  stripModulePrefix,
+} from "@/lib/module-title";
 import type { AdminLessonVideoRow, AdminModuleVideoBlock } from "@/lib/admin/videos";
 import type { Module } from "@/lib/types";
 
@@ -213,7 +217,7 @@ function LessonFields({
             <option value="">Choose module</option>
             {modules.map((module) => (
               <option key={module.id} value={module.id}>
-                {module.order_index}. {module.title}
+                {formatModuleOptionLabel(module.order_index, module.title)}
               </option>
             ))}
           </select>
@@ -385,8 +389,8 @@ function DeleteConfirmModal({
               {confirm.type === "delete-lesson"
                 ? `This will delete "${confirm.lesson.title}" and remove progress rows for this lesson.`
                 : confirm.lessonCount > 0
-                  ? `Module "${confirm.module.title}" still contains ${confirm.lessonCount} lesson${confirm.lessonCount === 1 ? "" : "s"}. Delete or move those lessons first.`
-                  : `This will permanently delete module "${confirm.module.title}".`}
+                  ? `Module "${stripModulePrefix(confirm.module.title, confirm.module.order_index)}" still contains ${confirm.lessonCount} lesson${confirm.lessonCount === 1 ? "" : "s"}. Delete or move those lessons first.`
+                  : `This will permanently delete module "${stripModulePrefix(confirm.module.title, confirm.module.order_index)}".`}
             </p>
           </div>
         </div>
@@ -710,9 +714,10 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
   }
 
   function deleteModule(module: Module, lessonCount: number) {
+    const moduleTitle = stripModulePrefix(module.title, module.order_index);
     if (lessonCount > 0) {
       setError(
-        `Module "${module.title}" still has lessons. Delete or move those lessons first.`
+        `Module "${moduleTitle}" still has lessons. Delete or move those lessons first.`
       );
       return;
     }
@@ -798,7 +803,13 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
               <p className="cb-body">No modules yet. Create the first module to start building the curriculum.</p>
             </div>
           ) : (
-            visibleBlocks.map(({ module, lessons: moduleLessons }) => (
+            visibleBlocks.map(({ module, lessons: moduleLessons }) => {
+              const moduleTitle = stripModulePrefix(
+                module.title,
+                module.order_index
+              );
+
+              return (
               <div key={module.id} className="p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <button
@@ -810,7 +821,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                   >
                     <CourseThumbnail
                       src={module.thumbnail_url}
-                      title={module.title}
+                      title={moduleTitle}
                       eyebrow={`M${module.order_index}`}
                       className="aspect-[16/10] rounded-xl"
                       muted={!module.is_published}
@@ -818,7 +829,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="truncate text-base font-semibold text-[var(--foreground)]">
-                          {module.title}
+                          {moduleTitle}
                         </h3>
                         <span className={module.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                           {module.is_published ? "Published" : "Draft"}
@@ -833,7 +844,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     <button
                       type="button"
                       className={iconButtonClass()}
-                      aria-label={`Add lesson to ${module.title}`}
+                      aria-label={`Add lesson to ${moduleTitle}`}
                       title="Add lesson"
                       onClick={() => {
                         resetPanel({ type: "create-lesson", moduleId: module.id });
@@ -844,7 +855,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     <button
                       type="button"
                       className={iconButtonClass()}
-                      aria-label={`Edit ${module.title}`}
+                      aria-label={`Edit ${moduleTitle}`}
                       title="Edit module"
                       onClick={() => {
                         resetPanel({ type: "edit-module", module });
@@ -855,7 +866,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     <button
                       type="button"
                       className={iconButtonClass("danger")}
-                      aria-label={`Delete ${module.title}`}
+                      aria-label={`Delete ${moduleTitle}`}
                       title={moduleLessons.length > 0 ? "Delete lessons first" : "Delete module"}
                       onClick={() => {
                         resetFeedback();
@@ -962,7 +973,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                   )}
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </section>

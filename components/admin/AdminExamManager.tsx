@@ -12,6 +12,10 @@ import type {
   AdminExamModuleSummary,
   AdminExamQuestion,
 } from "@/lib/admin/exams";
+import {
+  formatModuleOptionLabel,
+  stripModulePrefix,
+} from "@/lib/module-title";
 
 type DraftOption = {
   key: string;
@@ -343,7 +347,10 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             >
               {data.modules.map((summary) => (
                 <option key={summary.module.id} value={summary.module.id}>
-                  {summary.module.order_index}. {summary.module.title}
+                  {formatModuleOptionLabel(
+                    summary.module.order_index,
+                    summary.module.title
+                  )}
                 </option>
               ))}
             </select>
@@ -352,7 +359,10 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
           <div className="mt-5 border-t border-[var(--border)] pt-5">
             <div className="cb-eyebrow">Question bank</div>
             <h2 className="mt-2 text-xl font-extrabold text-[var(--foreground)]">
-              {selectedModule.module.title}
+              {stripModulePrefix(
+                selectedModule.module.title,
+                selectedModule.module.order_index
+              )}
             </h2>
             <ModuleStatus summary={selectedModule} />
             {validWarning && (

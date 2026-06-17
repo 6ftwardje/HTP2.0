@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { ModuleStateBadge } from "@/components/StatusBadge";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { asText } from "@/lib/as-text";
+import { stripModulePrefix } from "@/lib/module-title";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
@@ -85,6 +86,7 @@ export default async function ModulesPage() {
             const canOpen = state === "available" || state === "completed";
             const lessonCount = lessonCountMap.get(mod.id) ?? 0;
             const shortDesc = asText(mod.short_description);
+            const moduleTitle = stripModulePrefix(mod.title, mod.order_index);
             return (
               <li key={mod.id}>
                 {canOpen ? (
@@ -94,7 +96,7 @@ export default async function ModulesPage() {
                   >
                     <CourseThumbnail
                       src={mod.thumbnail_url}
-                      title={mod.title}
+                      title={moduleTitle}
                       eyebrow={`Module ${mod.order_index}`}
                       moduleNumber={mod.order_index}
                       priority={index < 2}
@@ -111,7 +113,7 @@ export default async function ModulesPage() {
                         </span>
                       </div>
                       <h2 className="mt-2 text-lg font-semibold leading-snug text-[var(--foreground)]">
-                        {mod.title}
+                        {moduleTitle}
                       </h2>
                       {shortDesc && (
                         <p className="cb-caption mt-1 line-clamp-2">
@@ -128,7 +130,7 @@ export default async function ModulesPage() {
                   <div className="h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,var(--muted)_8%)] opacity-70">
                     <CourseThumbnail
                       src={mod.thumbnail_url}
-                      title={mod.title}
+                      title={moduleTitle}
                       eyebrow={`Module ${mod.order_index}`}
                       moduleNumber={mod.order_index}
                       priority={index < 2}
@@ -145,7 +147,7 @@ export default async function ModulesPage() {
                         </span>
                       </div>
                       <h2 className="mt-2 text-lg font-semibold leading-snug text-[var(--foreground)]">
-                        {mod.title}
+                        {moduleTitle}
                       </h2>
                       {shortDesc && (
                         <p className="cb-caption mt-1 line-clamp-2">

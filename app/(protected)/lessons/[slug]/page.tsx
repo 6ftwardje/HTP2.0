@@ -14,6 +14,7 @@ import { AppPageLayout } from "@/components/layout/AppPageLayout";
 import { RightRailCard } from "@/components/layout/RightRailCard";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { LessonActionList } from "@/components/LessonActionList";
+import { stripModulePrefix } from "@/lib/module-title";
 import {
   getLessonActionProgress,
   normalizeLessonActions,
@@ -136,6 +137,7 @@ export default async function LessonPage({ params }: Props) {
   const statusMap = await getLessonStatuses(student.id, allLessons, progressMap);
 
   if (!moduleData) notFound();
+  const moduleTitle = stripModulePrefix(moduleData.title, moduleData.order_index);
 
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
   const status = statusMap.get(lesson.id) ?? "locked";
@@ -168,7 +170,7 @@ export default async function LessonPage({ params }: Props) {
         <PageHeader
           breadcrumbs={[
             { label: "Academy", href: "/modules" },
-            { label: moduleData.title, href: `/modules/${moduleData.slug}` },
+            { label: moduleTitle, href: `/modules/${moduleData.slug}` },
             { label: "Les" },
           ]}
           eyebrow="Toegang"
@@ -193,7 +195,7 @@ export default async function LessonPage({ params }: Props) {
         <PageHeader
           breadcrumbs={[
             { label: "Academy", href: "/modules" },
-            { label: moduleData.title, href: `/modules/${moduleData.slug}` },
+            { label: moduleTitle, href: `/modules/${moduleData.slug}` },
             { label: "Intake" },
           ]}
           eyebrow="Videocourse"
@@ -225,7 +227,7 @@ export default async function LessonPage({ params }: Props) {
           href={`/modules/${moduleData.slug}`}
           className="text-sm font-semibold text-[var(--foreground)] underline-offset-2 hover:underline"
         >
-          {moduleData.title}
+          {moduleTitle}
         </Link>
         <p className="mt-2 cb-caption">
           Module {moduleData.order_index} · Les {lesson.order_index} van{" "}
@@ -371,7 +373,7 @@ export default async function LessonPage({ params }: Props) {
       <PageHeader
         breadcrumbs={[
           { label: "Academy", href: "/modules" },
-          { label: moduleData.title, href: `/modules/${moduleData.slug}` },
+          { label: moduleTitle, href: `/modules/${moduleData.slug}` },
           { label: lesson.title },
         ]}
         eyebrow={`Module ${moduleData.order_index} · Les ${lesson.order_index}`}

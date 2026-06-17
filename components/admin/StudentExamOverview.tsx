@@ -1,4 +1,5 @@
 import type { AdminModuleProgressBlock } from "@/lib/admin/types";
+import { stripModulePrefix } from "@/lib/module-title";
 
 export function StudentExamOverview({ modules }: { modules: AdminModuleProgressBlock[] }) {
   const rows = modules.filter((m) => m.examSummary);
@@ -36,9 +37,13 @@ export function StudentExamOverview({ modules }: { modules: AdminModuleProgressB
             {rows.map(({ module, examSummary }) => {
               if (!examSummary) return null;
               const latest = examSummary.latestResult;
+              const moduleTitle = stripModulePrefix(
+                module.title,
+                module.order_index
+              );
               return (
                 <tr key={module.id} className="border-b border-[var(--border)]">
-                  <td className="px-5 py-3 font-semibold text-[var(--foreground)]">{module.title}</td>
+                  <td className="px-5 py-3 font-semibold text-[var(--foreground)]">{moduleTitle}</td>
                   <td className="px-5 py-3 text-[var(--muted)]">{examSummary.exam.title}</td>
                   <td className="px-5 py-3">
                     {examSummary.hasPassed ? (

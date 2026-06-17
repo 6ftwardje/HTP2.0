@@ -9,6 +9,7 @@ import { getModuleAccessMap } from "@/lib/module-gate";
 import { getPublishedModules } from "@/lib/modules";
 import { ExamForm } from "./ExamForm";
 import { asText } from "@/lib/as-text";
+import { stripModulePrefix } from "@/lib/module-title";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -21,6 +22,7 @@ export default async function ModuleExamPage({ params }: Props) {
   ]);
   if (!moduleData) notFound();
   if (!student) notFound();
+  const moduleTitle = stripModulePrefix(moduleData.title, moduleData.order_index);
 
   const [exam, lessons, allModules] = await Promise.all([
     getExamByModuleId(moduleData.id),
@@ -63,7 +65,7 @@ export default async function ModuleExamPage({ params }: Props) {
         <PageHeader
           breadcrumbs={[
             { label: "Academy", href: "/modules" },
-            { label: moduleData.title, href: `/modules/${moduleData.slug}` },
+            { label: moduleTitle, href: `/modules/${moduleData.slug}` },
             { label: "Toets" },
           ]}
           eyebrow="Toets"
@@ -88,7 +90,7 @@ export default async function ModuleExamPage({ params }: Props) {
         <PageHeader
           breadcrumbs={[
             { label: "Academy", href: "/modules" },
-            { label: moduleData.title, href: `/modules/${moduleData.slug}` },
+            { label: moduleTitle, href: `/modules/${moduleData.slug}` },
             { label: "Toets" },
           ]}
           eyebrow="Toets"
@@ -139,7 +141,7 @@ export default async function ModuleExamPage({ params }: Props) {
         attempt={attemptResult.attempt}
         passingScore={exam.passing_score}
         moduleSlug={moduleData.slug}
-        moduleTitle={moduleData.title}
+        moduleTitle={moduleTitle}
       />
     );
 
@@ -161,7 +163,7 @@ export default async function ModuleExamPage({ params }: Props) {
           <div>
             <p className="cb-caption">Module</p>
             <p className="mt-1 font-semibold text-[var(--foreground)]">
-              {moduleData.title}
+              {moduleTitle}
             </p>
           </div>
           <div>

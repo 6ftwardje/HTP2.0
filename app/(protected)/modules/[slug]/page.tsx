@@ -12,6 +12,7 @@ import { AppPageLayout } from "@/components/layout/AppPageLayout";
 import { RightRailCard } from "@/components/layout/RightRailCard";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { asText } from "@/lib/as-text";
+import { formatModuleTitle, stripModulePrefix } from "@/lib/module-title";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
@@ -61,6 +62,7 @@ export default async function ModuleDetailPage({ params }: Props) {
   ).length;
 
   const moduleIntroText = asText(moduleData.description);
+  const moduleTitle = stripModulePrefix(moduleData.title, moduleData.order_index);
   const moduleSubtitle =
     asText(moduleData.short_description) ??
     moduleIntroText ??
@@ -193,7 +195,7 @@ export default async function ModuleDetailPage({ params }: Props) {
       <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_92%,var(--background)_8%)]">
         <CourseThumbnail
           src={moduleData.thumbnail_url}
-          title={moduleData.title}
+          title={moduleTitle}
           eyebrow={`Module ${moduleData.order_index}`}
           moduleNumber={moduleData.order_index}
           priority
@@ -361,7 +363,7 @@ export default async function ModuleDetailPage({ params }: Props) {
             <span>Module {moduleData.order_index}</span>
           </nav>
           <h1 className="mt-6 max-w-4xl text-4xl font-extrabold leading-[1.04] text-[var(--foreground)] sm:text-5xl">
-            Module {moduleData.order_index}: {moduleData.title}
+            {formatModuleTitle(moduleData.order_index, moduleData.title)}
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--muted)]">
             {moduleSubtitle}
