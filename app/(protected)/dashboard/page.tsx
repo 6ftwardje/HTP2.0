@@ -175,7 +175,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           <section className="rounded-xl border border-[color-mix(in_oklab,#34d399_32%,var(--border))] bg-emerald-400/[0.06] p-5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-semibold text-emerald-100">
+                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-100">
                   Intake correct opgeslagen
                 </p>
                 <p className="mt-1 cb-caption">
@@ -191,7 +191,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               <Link
                 href="/dashboard"
                 aria-label="Melding sluiten"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/[0.04] hover:text-[var(--foreground)]"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
               >
                 ×
               </Link>
@@ -199,7 +199,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </section>
         )}
 
-        <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_92%,var(--background)_8%)] p-5 sm:p-7">
+        <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-7">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.86fr)] lg:items-center">
             <div className="relative overflow-hidden rounded-lg border border-[var(--border)] bg-black">
               <CourseThumbnail
@@ -281,7 +281,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
           <section
             id="weekly-updates"
-            className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6"
+            className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -355,11 +355,11 @@ export default async function DashboardPage({ searchParams }: Props) {
 
           <section
             id="mentor"
-            className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6"
+            className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-6"
           >
             <div className="cb-eyebrow">Volgende stap</div>
             <div className="mt-7 grid gap-5 sm:grid-cols-[64px_minmax(0,1fr)] sm:items-start">
-              <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-[color-mix(in_oklab,var(--accent)_32%,var(--border))] bg-white/[0.035]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-[color-mix(in_oklab,var(--accent)_32%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_10%,var(--card))]">
                 <BrandIcon className="h-9 w-9" />
               </div>
               <div>

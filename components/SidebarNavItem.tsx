@@ -26,11 +26,11 @@ export function SidebarNavItem({
         "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors",
         active
           ? [
-              "bg-white/[0.055] text-[var(--foreground)]",
+              "bg-[var(--surface-hover)] text-[var(--foreground)]",
               "before:absolute before:-left-5 before:top-0 before:h-full before:w-[3px] before:bg-[var(--accent)]",
             ].join(" ")
           : [
-              "text-[var(--muted)] hover:bg-white/[0.035] hover:text-[var(--foreground)]",
+              "text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
             ].join(" "),
       ].join(" ")}
     >

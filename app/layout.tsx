@@ -8,6 +8,20 @@ const manrope = Manrope({
   variable: "--font-sans",
 });
 
+const themeScript = `
+(function () {
+  try {
+    var stored = window.localStorage.getItem("htp-theme");
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var theme = stored === "light" || stored === "dark" ? stored : prefersDark ? "dark" : "light";
+    var root = document.documentElement;
+    root.dataset.theme = theme;
+    root.classList.toggle("dark", theme === "dark");
+    root.style.colorScheme = theme;
+  } catch (_) {}
+})();
+`;
+
 export const metadata: Metadata = {
   title: "Het Trade Platform",
   description: "Leer traden via de academy van Het Trade Platform",
@@ -24,7 +38,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="nl">
+    <html lang="nl" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={`${manrope.variable} font-sans antialiased`}>
         <TopLoadingBar />
         {children}

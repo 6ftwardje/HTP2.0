@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/ui/Brand";
 
 const adminNav = [
@@ -166,14 +167,14 @@ function SidebarContent({
         <Link
           href="/dashboard"
           onClick={onNavigate}
-          className="mb-2 block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-stone-100 hover:text-[var(--foreground)] dark:hover:bg-white/5"
+          className="mb-2 block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
         >
           ← Back to Academy
         </Link>
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-stone-100 hover:text-[var(--foreground)] dark:hover:bg-white/5"
+            className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
           >
             Sign out
           </button>
@@ -214,7 +215,7 @@ export function AdminShell({
 
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
-      <aside className="relative hidden h-full min-h-0 w-[272px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] md:flex">
+      <aside className="relative hidden h-full min-h-0 w-[272px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] md:flex">
         <div className="flex h-full min-h-0 flex-col px-5 py-7">
           <SidebarContent
             studentName={studentName}
@@ -238,7 +239,7 @@ export function AdminShell({
               </span>
               <button
                 type="button"
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-stone-100 hover:text-[var(--foreground)] dark:hover:bg-white/5"
+                className="rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
                 onClick={() => setMobileOpen(false)}
               >
                 Close
@@ -255,7 +256,11 @@ export function AdminShell({
       )}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,white)] px-4 py-3 backdrop-blur-md md:hidden dark:bg-[color-mix(in_oklab,var(--background)_92%,#0c0a09)]">
+        <div className="pointer-events-none fixed right-6 top-5 z-30 hidden md:block">
+          <ThemeToggle className="pointer-events-auto" />
+        </div>
+
+        <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_82%,var(--card)_18%)] px-4 py-3 backdrop-blur-md md:hidden">
           <button
             type="button"
             className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
@@ -277,7 +282,7 @@ export function AdminShell({
               Admin
             </span>
           </Link>
-          <div className="w-[72px]" aria-hidden />
+          <ThemeToggle />
         </div>
 
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">

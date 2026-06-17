@@ -159,7 +159,7 @@ export function NotificationPopover({
                 type="button"
                 onClick={markAll}
                 disabled={isPending || unreadCount === 0}
-                className="rounded-md px-2 py-1 text-xs font-bold text-[var(--muted)] transition hover:bg-white/[0.04] hover:text-[var(--foreground)] disabled:pointer-events-none disabled:opacity-40"
+                className="rounded-md px-2 py-1 text-xs font-bold text-[var(--muted)] transition hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] disabled:pointer-events-none disabled:opacity-40"
               >
                 Alles gelezen
               </button>
@@ -179,7 +179,7 @@ export function NotificationPopover({
                     type="button"
                     onClick={() => openNotification(notification)}
                     disabled={pendingId === notification.id}
-                    className="block w-full px-4 py-3 text-left transition hover:bg-white/[0.04] disabled:opacity-60"
+                    className="block w-full px-4 py-3 text-left transition hover:bg-[var(--surface-hover)] disabled:opacity-60"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { BRAND, BrandLogo } from "@/components/ui/Brand";
 import {
   NotificationPopover,
@@ -191,14 +192,14 @@ function SidebarContent({
         <div className="flex flex-col gap-1">
           <a
             href={`mailto:${BRAND.supportEmail}`}
-            className="rounded-lg px-2 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/[0.04] hover:text-[var(--foreground)]"
+            className="rounded-lg px-2 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
           >
             Hulp nodig?
           </a>
           <form action="/auth/signout" method="post">
             <button
               type="submit"
-              className="w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/[0.04] hover:text-[var(--foreground)]"
+              className="w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
             >
               Afmelden
             </button>
@@ -253,7 +254,7 @@ export function AppShell({
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       {/* Desktop sidebar: vaste viewporthoogte; alleen main rechts scrollt */}
-      <aside className="relative hidden h-full min-h-0 w-[252px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_96%,var(--card)_4%)] md:flex">
+      <aside className="relative hidden h-full min-h-0 w-[252px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] md:flex">
         <div className="flex h-full min-h-0 flex-col px-5 py-8">
           <SidebarContent
             studentName={studentName}
@@ -280,7 +281,7 @@ export function AppShell({
               </span>
               <button
                 type="button"
-                className="rounded-md px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-stone-100 hover:text-[var(--foreground)] dark:hover:bg-white/5"
+                className="rounded-md px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
                 onClick={() => setMobileOpen(false)}
               >
                 Sluiten
@@ -299,7 +300,11 @@ export function AppShell({
       )}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,white)] px-4 py-3 backdrop-blur-md md:hidden dark:bg-[color-mix(in_oklab,var(--background)_92%,#0c0a09)]">
+        <div className="pointer-events-none fixed right-6 top-5 z-30 hidden md:block">
+          <ThemeToggle className="pointer-events-auto" />
+        </div>
+
+        <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_82%,var(--card)_18%)] px-4 py-3 backdrop-blur-md md:hidden">
           <button
             type="button"
             className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
@@ -322,7 +327,7 @@ export function AppShell({
               logoClassName="h-auto w-[150px] min-[390px]:w-[166px]"
             />
           </Link>
-          <div className="w-[72px]" aria-hidden />
+          <ThemeToggle />
         </div>
 
         <main

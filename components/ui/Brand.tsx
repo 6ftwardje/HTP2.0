@@ -5,6 +5,8 @@ export const BRAND = {
   name: "Het Trade Platform",
   logoIconSrc: "/assets/brand/logo-icon.png",
   logoWithTextSrc: "/assets/brand/logo-text.png",
+  logoWithTextLightSrc:
+    "https://trogwrgxxhsvixzglzpn.supabase.co/storage/v1/object/public/HTP/The%20Trade%20Platform.webp",
   supportEmail: "info@hettradeplatform.be",
 } as const;
 
@@ -38,15 +40,26 @@ export function BrandLogo({
   }
 
   return (
-    <Image
-      src={BRAND.logoWithTextSrc}
-      alt={BRAND.name}
-      width={1855}
-      height={315}
-      className={`block shrink-0 ${logoClassName} ${className}`}
-      priority={priority}
-      style={style}
-    />
+    <>
+      <Image
+        src={BRAND.logoWithTextLightSrc}
+        alt={BRAND.name}
+        width={1855}
+        height={315}
+        className={`block shrink-0 dark:hidden ${logoClassName} ${className}`}
+        priority={priority}
+        style={style}
+      />
+      <Image
+        src={BRAND.logoWithTextSrc}
+        alt={BRAND.name}
+        width={1855}
+        height={315}
+        className={`hidden shrink-0 dark:block ${logoClassName} ${className}`}
+        priority={priority}
+        style={style}
+      />
+    </>
   );
 }
 
