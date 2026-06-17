@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeConfidenceScore } from "@/lib/intake";
 import type { StudentOnboardingResponse } from "@/lib/types";
 
 export const getStudentOnboardingResponse = cache(
@@ -24,6 +25,12 @@ export function onboardingIsComplete(
   if (!response) return false;
   if (response.completed_at) return true;
 
+  return hasRequiredIntake(response);
+}
+
+export function hasRequiredIntake(response: StudentOnboardingResponse | null) {
+  if (!response) return false;
+
   return [
     response.experience_level,
     response.primary_market,
@@ -31,5 +38,6 @@ export function onboardingIsComplete(
     response.goal_90_days,
     response.weekly_time_commitment,
     response.mentorship_interest,
-  ].every((value) => typeof value === "string" && value.trim().length > 0);
+  ].every((value) => typeof value === "string" && value.trim().length > 0) &&
+    normalizeConfidenceScore(response.confidence_score) !== null;
 }

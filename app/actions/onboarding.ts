@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardOverview } from "@/lib/dashboard";
+import { normalizeConfidenceScore } from "@/lib/intake";
 import { syncStudentNextStep } from "@/lib/next-steps";
 
 function textValue(formData: FormData, key: string) {
@@ -16,9 +17,7 @@ function textValue(formData: FormData, key: string) {
 
 function numberValue(formData: FormData, key: string) {
   const value = formData.get(key);
-  if (typeof value !== "string") return null;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : null;
+  return normalizeConfidenceScore(value);
 }
 
 function hasRequiredIntake(formData: FormData) {
@@ -31,9 +30,21 @@ function hasRequiredIntake(formData: FormData) {
     "weekly_time_commitment",
     "mentorship_interest",
   ].every((key) => textValue(formData, key)) &&
-    confidenceScore !== null &&
-    confidenceScore >= 1 &&
-    confidenceScore <= 5;
+    confidenceScore !== null;
+}
+
+function isMissingIntakeCompletionColumnError(error: {
+  code?: string;
+  message?: string;
+  details?: string;
+}) {
+  const text = `${error.message ?? ""} ${error.details ?? ""}`;
+  return (
+    error.code === "PGRST204" ||
+    error.code === "42703" ||
+    (/(confidence_score|completed_at|intake_version)/i.test(text) &&
+      /(schema cache|column|does not exist|not found)/i.test(text))
+  );
 }
 
 export async function saveOnboarding(formData: FormData) {
@@ -46,6 +57,7 @@ export async function saveOnboarding(formData: FormData) {
     redirect("/onboarding?error=incomplete");
   }
 
+  const confidenceScore = numberValue(formData, "confidence_score");
   const db = await createClient();
   const baseResponse = {
     student_id: student.id,
@@ -71,14 +83,38 @@ export async function saveOnboarding(formData: FormData) {
   // These columns are introduced by the intake completion migration. Keep this
   // as a separate best-effort update so the core intake still persists if a
   // deployment temporarily runs before the migration is applied.
-  await db
+  const { data: completionFields, error: completionError } = await db
     .from("student_onboarding_responses")
     .update({
-      confidence_score: numberValue(formData, "confidence_score"),
+      confidence_score: confidenceScore,
       completed_at: new Date().toISOString(),
       intake_version: "v1",
     })
-    .eq("student_id", student.id);
+    .eq("student_id", student.id)
+    .select("confidence_score, completed_at")
+    .single();
+
+  if (completionError) {
+    if (isMissingIntakeCompletionColumnError(completionError)) {
+      console.warn(
+        "saveOnboarding intake completion columns unavailable",
+        completionError.message
+      );
+    } else {
+      console.error(
+        "saveOnboarding intake completion fields",
+        completionError.message
+      );
+      redirect("/onboarding?error=save_failed");
+    }
+  } else if (
+    normalizeConfidenceScore(completionFields?.confidence_score) !==
+      confidenceScore ||
+    !completionFields?.completed_at
+  ) {
+    console.error("saveOnboarding intake completion fields were not persisted");
+    redirect("/onboarding?error=save_failed");
+  }
 
   await db
     .from("students")

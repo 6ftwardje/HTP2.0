@@ -15,6 +15,11 @@ import {
   adminCreateStudentMentorNote,
   adminUpdateStudentMentorMeta,
 } from "@/app/actions/admin/students";
+import {
+  formatConfidenceScore,
+  formatIntakeChoice,
+  formatWeeklyTimeCommitment,
+} from "@/lib/intake";
 
 function fieldClass() {
   return "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition focus:border-[color-mix(in_oklab,var(--foreground)_35%,var(--border))]";
@@ -24,11 +29,6 @@ function mentorStatusLabel(status: string) {
   if (status === "needs_attention") return "Needs attention";
   if (status === "watch") return "Watch";
   return "Active";
-}
-
-function formatOnboardingValue(value: string | null | undefined) {
-  if (!value) return "—";
-  return value.replace(/_/g, " ");
 }
 
 export default async function AdminStudentDetailPage({
@@ -189,31 +189,31 @@ export default async function AdminStudentDetailPage({
                   <div>
                     <dt className="cb-caption text-xs font-bold uppercase tracking-wider">Experience</dt>
                     <dd className="mt-1 font-semibold capitalize text-[var(--foreground)]">
-                      {formatOnboardingValue(onboarding.experience_level)}
+                      {formatIntakeChoice(onboarding.experience_level, "—")}
                     </dd>
                   </div>
                   <div>
                     <dt className="cb-caption text-xs font-bold uppercase tracking-wider">Market</dt>
                     <dd className="mt-1 font-semibold capitalize text-[var(--foreground)]">
-                      {formatOnboardingValue(onboarding.primary_market)}
+                      {formatIntakeChoice(onboarding.primary_market, "—")}
                     </dd>
                   </div>
                   <div>
                     <dt className="cb-caption text-xs font-bold uppercase tracking-wider">Time per week</dt>
                     <dd className="mt-1 font-semibold text-[var(--foreground)]">
-                      {formatOnboardingValue(onboarding.weekly_time_commitment)}
+                      {formatWeeklyTimeCommitment(onboarding.weekly_time_commitment, "—")}
                     </dd>
                   </div>
                   <div>
                     <dt className="cb-caption text-xs font-bold uppercase tracking-wider">Guidance</dt>
                     <dd className="mt-1 font-semibold capitalize text-[var(--foreground)]">
-                      {formatOnboardingValue(onboarding.mentorship_interest)}
+                      {formatIntakeChoice(onboarding.mentorship_interest, "—")}
                     </dd>
                   </div>
                   <div>
                     <dt className="cb-caption text-xs font-bold uppercase tracking-wider">Confidence</dt>
                     <dd className="mt-1 font-semibold text-[var(--foreground)]">
-                      {onboarding.confidence_score ? `${onboarding.confidence_score}/5` : "—"}
+                      {formatConfidenceScore(onboarding.confidence_score, "—")}
                     </dd>
                   </div>
                   <div>

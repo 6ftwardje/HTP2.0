@@ -7,6 +7,11 @@ import type { AiStudentSummary, MentorSummary } from "@/lib/types";
 import { getAnthropicClient } from "@/lib/ai/anthropic";
 import { loadKnowledge } from "@/lib/ai/knowledge";
 import { getFeatureConfig } from "@/lib/ai/registry";
+import {
+  formatConfidenceScore,
+  formatIntakeChoice,
+  formatWeeklyTimeCommitment,
+} from "@/lib/intake";
 
 const FEATURE = "mentor_summary" as const;
 const MAX_TOKENS = 700;
@@ -61,14 +66,23 @@ export function buildMentorContext(detail: AdminStudentDetail): string {
   lines.push("");
   lines.push("# Intake");
   if (onboarding) {
-    lines.push(`Ervaring: ${onboarding.experience_level ?? "onbekend"}`);
-    lines.push(`Primaire markt: ${onboarding.primary_market ?? "onbekend"}`);
-    lines.push(`Tijd per week: ${onboarding.weekly_time_commitment ?? "onbekend"}`);
-    lines.push(`Interesse in begeleiding: ${onboarding.mentorship_interest ?? "onbekend"}`);
     lines.push(
-      `Vertrouwensscore: ${
-        onboarding.confidence_score != null ? `${onboarding.confidence_score}/5` : "onbekend"
-      }`
+      `Ervaring: ${formatIntakeChoice(onboarding.experience_level, "onbekend")}`
+    );
+    lines.push(
+      `Primaire markt: ${formatIntakeChoice(onboarding.primary_market, "onbekend")}`
+    );
+    lines.push(
+      `Tijd per week: ${formatWeeklyTimeCommitment(onboarding.weekly_time_commitment, "onbekend")}`
+    );
+    lines.push(
+      `Interesse in begeleiding: ${formatIntakeChoice(
+        onboarding.mentorship_interest,
+        "onbekend"
+      )}`
+    );
+    lines.push(
+      `Vertrouwensscore: ${formatConfidenceScore(onboarding.confidence_score, "onbekend")}`
     );
     lines.push(`Hoofduitdaging: ${onboarding.main_challenge?.trim() || "(niet ingevuld)"}`);
     lines.push(`90-dagen-doel: ${onboarding.goal_90_days?.trim() || "(niet ingevuld)"}`);

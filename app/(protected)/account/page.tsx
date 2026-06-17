@@ -7,13 +7,11 @@ import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
 } from "@/lib/onboarding";
-
-function formatIntakeValue(value: string | number | null | undefined) {
-  if (value === null || value === undefined || value === "") {
-    return "Nog niet ingevuld";
-  }
-  return String(value).replaceAll("_", " ");
-}
+import {
+  formatConfidenceScore,
+  formatIntakeChoice,
+  formatWeeklyTimeCommitment,
+} from "@/lib/intake";
 
 export default async function AccountPage() {
   const { student } = await ensureCurrentStudent();
@@ -112,25 +110,25 @@ export default async function AccountPage() {
             <div>
               <dt className="cb-caption text-xs font-bold uppercase tracking-[0.13em]">Ervaring</dt>
               <dd className="mt-1 font-semibold capitalize text-[var(--foreground)]">
-                {formatIntakeValue(onboarding?.experience_level)}
+                {formatIntakeChoice(onboarding?.experience_level)}
               </dd>
             </div>
             <div>
               <dt className="cb-caption text-xs font-bold uppercase tracking-[0.13em]">Markt</dt>
               <dd className="mt-1 font-semibold capitalize text-[var(--foreground)]">
-                {formatIntakeValue(onboarding?.primary_market)}
+                {formatIntakeChoice(onboarding?.primary_market)}
               </dd>
             </div>
             <div>
               <dt className="cb-caption text-xs font-bold uppercase tracking-[0.13em]">Tijd per week</dt>
               <dd className="mt-1 font-semibold text-[var(--foreground)]">
-                {formatIntakeValue(onboarding?.weekly_time_commitment)}
+                {formatWeeklyTimeCommitment(onboarding?.weekly_time_commitment)}
               </dd>
             </div>
             <div>
               <dt className="cb-caption text-xs font-bold uppercase tracking-[0.13em]">Zelfinschatting</dt>
               <dd className="mt-1 font-semibold text-[var(--foreground)]">
-                {formatIntakeValue(onboarding?.confidence_score)}/5
+                {formatConfidenceScore(onboarding?.confidence_score)}
               </dd>
             </div>
             <div className="sm:col-span-2">
