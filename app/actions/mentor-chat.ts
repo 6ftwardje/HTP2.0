@@ -10,6 +10,8 @@ import {
   markNotificationRead,
 } from "@/lib/notifications";
 
+type ActionResult = { success: true } | { success: false; error: string };
+
 export async function sendMentorMessage(formData: FormData): Promise<{
   success: boolean;
   error?: string;
@@ -30,12 +32,28 @@ export async function markMentorThreadRead(threadId: string) {
   revalidatePath("/mentor");
 }
 
-export async function markOneNotificationRead(notificationId: string) {
-  await markNotificationRead(notificationId);
+export async function markOneNotificationReadResult(
+  notificationId: string
+): Promise<ActionResult> {
+  const result = await markNotificationRead(notificationId);
+  if (!result.success) return result;
   revalidatePath("/notifications");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function markNotificationsReadResult(): Promise<ActionResult> {
+  const result = await markAllNotificationsRead();
+  if (!result.success) return result;
+  revalidatePath("/notifications");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function markOneNotificationRead(notificationId: string) {
+  await markOneNotificationReadResult(notificationId);
 }
 
 export async function markNotificationsRead() {
-  await markAllNotificationsRead();
-  revalidatePath("/notifications");
+  await markNotificationsReadResult();
 }

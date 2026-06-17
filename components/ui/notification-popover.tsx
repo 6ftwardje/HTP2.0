@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  markNotificationsRead,
-  markOneNotificationRead,
+  markNotificationsReadResult,
+  markOneNotificationReadResult,
 } from "@/app/actions/mentor-chat";
 
 export type FloatingNotification = {
@@ -126,7 +126,11 @@ export function NotificationPopover({
     setError(null);
     startTransition(async () => {
       try {
-        await markNotificationsRead();
+        const result = await markNotificationsReadResult();
+        if (!result.success) {
+          setError(result.error ?? "Meldingen bijwerken mislukt.");
+          return;
+        }
         closePopover();
         router.refresh();
       } catch {
@@ -141,7 +145,11 @@ export function NotificationPopover({
     startTransition(async () => {
       try {
         if (!notification.read) {
-          await markOneNotificationRead(notification.id);
+          const result = await markOneNotificationReadResult(notification.id);
+          if (!result.success) {
+            setError(result.error ?? "Melding openen mislukt.");
+            return;
+          }
         }
         closePopover();
         if (notification.href) {

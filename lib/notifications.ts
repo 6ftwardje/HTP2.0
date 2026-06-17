@@ -2,6 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudent } from "@/lib/students";
 import type { NotificationEvent, NotificationWithEvent } from "@/lib/types";
 
+export type NotificationActionResult =
+  | { success: true }
+  | { success: false; error: string };
+
 function isMissingTable(error: { code?: string; message?: string } | null) {
   return error?.code === "42P01" || error?.message?.includes("does not exist");
 }
@@ -60,27 +64,43 @@ export async function listMyNotifications(): Promise<{
   };
 }
 
-export async function markNotificationRead(notificationId: string) {
+export async function markNotificationRead(
+  notificationId: string
+): Promise<NotificationActionResult> {
   const { student } = await getCurrentStudent();
-  if (!student) return;
+  if (!student) return { success: false, error: "Niet ingelogd." };
 
   const db = await createClient();
-  await db
+  const { error } = await db
     .from("notification_recipients")
     .update({ read_at: new Date().toISOString() })
     .eq("id", notificationId)
     .eq("student_id", student.id);
+
+  if (error) {
+    console.error("markNotificationRead", error.message);
+    return { success: false, error: "Melding bijwerken mislukt." };
+  }
+
+  return { success: true };
 }
 
-export async function markAllNotificationsRead() {
+export async function markAllNotificationsRead(): Promise<NotificationActionResult> {
   const { student } = await getCurrentStudent();
-  if (!student) return;
+  if (!student) return { success: false, error: "Niet ingelogd." };
 
   const db = await createClient();
-  await db
+  const { error } = await db
     .from("notification_recipients")
     .update({ read_at: new Date().toISOString() })
     .eq("student_id", student.id)
     .is("read_at", null)
     .is("archived_at", null);
+
+  if (error) {
+    console.error("markAllNotificationsRead", error.message);
+    return { success: false, error: "Meldingen bijwerken mislukt." };
+  }
+
+  return { success: true };
 }
