@@ -11,6 +11,7 @@ import {
   updateWeeklyUpdateAdmin,
   updateWeeklyUpdateVideoAdmin,
 } from "@/lib/admin/weekly-updates";
+import { notifyWeeklyUpdatePublished } from "@/lib/admin/weekly-update-notifications";
 import {
   createMuxDirectUpload,
   getMuxAsset,
@@ -18,6 +19,7 @@ import {
   getMuxThumbnailUrl,
   getMuxUpload,
 } from "@/lib/mux";
+import { SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS } from "@/lib/weekly-update-access";
 import type { WeeklyUpdateAccessTier } from "@/lib/types";
 
 type ActionResult<T extends object = object> = T & {
@@ -33,12 +35,8 @@ const THUMBNAIL_MIME_EXTENSIONS: Record<string, string> = {
   "image/webp": "webp",
   "image/avif": "avif",
 };
-const ACCESS_TIERS: WeeklyUpdateAccessTier[] = [
-  "free",
-  "full_course",
-  "premium",
-  "mentor_membership",
-];
+const ACCESS_TIERS: WeeklyUpdateAccessTier[] =
+  SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS;
 
 type ThumbnailUploadInput = {
   name?: string;
@@ -106,6 +104,30 @@ function validateThumbnailUpload(input: ThumbnailUploadInput): string | null {
   return null;
 }
 
+function canPublishWeeklyUpdate(update: {
+  mux_status?: string | null;
+  mux_playback_id?: string | null;
+}) {
+  return update.mux_status === "ready" && Boolean(update.mux_playback_id);
+}
+
+async function notifyFirstPublication({
+  weeklyUpdate,
+  actorStudentId,
+}: {
+  weeklyUpdate: NonNullable<Awaited<ReturnType<typeof getWeeklyUpdateAdmin>>>;
+  actorStudentId: string;
+}) {
+  const notification = await notifyWeeklyUpdatePublished({
+    weeklyUpdate,
+    actorStudentId,
+  });
+
+  if (notification.error) {
+    console.error("notifyWeeklyUpdatePublished", notification.error);
+  }
+}
+
 function readWeeklyUpdateInput(formData: FormData) {
   const title = asString(formData.get("title"));
   const slug = slugify(asString(formData.get("slug")) || title);
@@ -146,6 +168,12 @@ export async function adminCreateWeeklyUpdate(
   const { actorStudent } = await requireAdmin();
   const parsed = readWeeklyUpdateInput(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
+  if (parsed.input.is_published) {
+    return {
+      success: false,
+      error: "Upload en sync eerst een Mux-video voordat je publiceert.",
+    };
+  }
 
   const { weeklyUpdate, error } = await createWeeklyUpdateAdmin({
     ...parsed.input,
@@ -175,15 +203,53 @@ export async function adminUpdateWeeklyUpdate(
   const parsed = readWeeklyUpdateInput(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
 
-  const { error } = await updateWeeklyUpdateAdmin(weeklyUpdateId, parsed.input);
+  const currentWeeklyUpdate = await getWeeklyUpdateAdmin(weeklyUpdateId);
+  if (!currentWeeklyUpdate) {
+    return { success: false, error: "Weekly update not found." };
+  }
+
+  const wasPublished = currentWeeklyUpdate.is_published;
+  const willPublish = parsed.input.is_published && !wasPublished;
+  if (wasPublished && parsed.input.slug !== currentWeeklyUpdate.slug) {
+    return {
+      success: false,
+      error:
+        "De slug van een gepubliceerde weekly update kan niet worden aangepast.",
+    };
+  }
+  if (willPublish && !canPublishWeeklyUpdate(currentWeeklyUpdate)) {
+    return {
+      success: false,
+      error: "Upload en sync eerst een Mux-video voordat je publiceert.",
+    };
+  }
+
+  const input = {
+    ...parsed.input,
+    published_at: parsed.input.is_published
+      ? currentWeeklyUpdate.published_at ?? parsed.input.published_at
+      : null,
+  };
+
+  const { error } = await updateWeeklyUpdateAdmin(weeklyUpdateId, input);
   if (error) return { success: false, error };
+
+  if (willPublish) {
+    const updatedWeeklyUpdate = await getWeeklyUpdateAdmin(weeklyUpdateId);
+    if (updatedWeeklyUpdate) {
+      await notifyFirstPublication({
+        weeklyUpdate: updatedWeeklyUpdate,
+        actorStudentId: actorStudent.id,
+      });
+    }
+  }
 
   logAdminAction("weekly_update.updated", {
     actorStudentId: actorStudent.id,
-    metadata: { weeklyUpdateId, title: parsed.input.title },
+    metadata: { weeklyUpdateId, title: input.title },
   });
 
-  revalidateWeeklyUpdatePaths(parsed.input.slug);
+  revalidateWeeklyUpdatePaths(input.slug);
   return { success: true };
 }
 
@@ -259,6 +325,12 @@ export async function adminCreateWeeklyUpdateWithMuxUpload(
   const { actorStudent } = await requireAdmin();
   const parsed = readWeeklyUpdateInput(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
+  if (parsed.input.is_published) {
+    return {
+      success: false,
+      error: "Upload en sync eerst een Mux-video voordat je publiceert.",
+    };
+  }
 
   const { weeklyUpdate, error } = await createWeeklyUpdateAdmin({
     ...parsed.input,

@@ -16,7 +16,11 @@ import {
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
-import type { Student } from "@/lib/types";
+import type { Student, WeeklyUpdateAccessTier } from "@/lib/types";
+import {
+  getWeeklyUpdateAccessLabel,
+  WEEKLY_UPDATE_ACCESS_OPTIONS,
+} from "@/lib/weekly-update-access";
 
 type MentorOption = Pick<Student, "id" | "name" | "email">;
 
@@ -135,11 +139,8 @@ function statusBadge(update: AdminWeeklyUpdateRow) {
   return <span className="cb-badge cb-badge-locked">No video</span>;
 }
 
-function accessLabel(value: string) {
-  if (value === "free") return "Free";
-  if (value === "full_course") return "Full course";
-  if (value === "mentor_membership") return "Mentorship";
-  return "Premium";
+function accessLabel(value: WeeklyUpdateAccessTier) {
+  return getWeeklyUpdateAccessLabel(value);
 }
 
 function formatDate(value: string) {
@@ -297,11 +298,19 @@ function WeeklyUpdateFields({
             Access
           </span>
           <select name="access_tier" defaultValue={update?.access_tier ?? "full_course"} className={fieldClass()}>
-            <option value="free">Free</option>
-            <option value="full_course">Full course</option>
-            <option value="premium">Premium</option>
-            <option value="mentor_membership">Mentorship</option>
+            {WEEKLY_UPDATE_ACCESS_OPTIONS.map((option) => (
+              <option
+                key={option.value}
+                value={option.value}
+                disabled={!option.selectable}
+              >
+                {option.label}
+              </option>
+            ))}
           </select>
+          <span className="block text-xs leading-5 text-[var(--muted)]">
+            Iedereen = alle ingelogde accounts. Full course en hoger sluit gratis accounts uit.
+          </span>
         </label>
       </div>
       <label className="space-y-1.5">
