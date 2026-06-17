@@ -24,7 +24,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (!student) return null;
 
   const [overview, onboarding, weeklyUpdates] = await Promise.all([
-    getDashboardOverview(student.id),
+    getDashboardOverview(student.id, student.access_level),
     getStudentOnboardingResponse(student.id),
     listPublishedWeeklyUpdates(3),
   ]);

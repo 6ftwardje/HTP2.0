@@ -47,13 +47,20 @@ export default async function ModuleDetailPage({ params }: Props) {
   ]);
   const intakeComplete = onboardingIsComplete(onboarding);
 
-  const [statusMap, moduleAccessMap, hasPassedThisExam] = await Promise.all([
-    getLessonStatuses(student.id, lessons),
+  const [moduleAccessMap, hasPassedThisExam] = await Promise.all([
     getModuleAccessMap(student.id, allModules),
     exam ? hasPassedExam(student.id, exam.id) : Promise.resolve(false),
   ]);
-  const lessonsWithStatusList = lessonsWithStatus(lessons, statusMap);
   const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
+  const statusMap = await getLessonStatuses(student.id, lessons, undefined, {
+    unlockAll: canAccessModule && intakeComplete,
+  });
+  const lessonsWithStatusList = lessonsWithStatus(lessons, statusMap);
+  const lockedDescription = !intakeComplete
+    ? "Vul eerst je intake in. Daarna openen de eerste 3 videocourses voor gratis accounts."
+    : student.access_level < 2
+      ? "Deze videocourse is beschikbaar voor full-course accounts."
+      : "Deze module is nog vergrendeld.";
   const allLessonsCompleted = lessons.every((l) => statusMap.get(l.id) === "completed");
   const examUnlocked = !!exam && allLessonsCompleted;
 
@@ -115,7 +122,7 @@ export default async function ModuleDetailPage({ params }: Props) {
           ]}
           eyebrow="Toegang"
           title="Deze module is nog vergrendeld"
-          description="Slaag eerst voor de toets van de vorige module om dit blok vrij te spelen."
+          description={lockedDescription}
         />
         <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center sm:p-10">
           <Link href="/modules" className="cb-btn cb-btn-primary">

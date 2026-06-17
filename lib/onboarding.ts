@@ -22,9 +22,6 @@ export const getStudentOnboardingResponse = cache(
 export function onboardingIsComplete(
   response: StudentOnboardingResponse | null
 ) {
-  if (!response) return false;
-  if (response.completed_at) return true;
-
   return hasRequiredIntake(response);
 }
 

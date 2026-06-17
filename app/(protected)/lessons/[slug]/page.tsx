@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
 import { getLessonBySlug, getPublishedLessonsByModuleId } from "@/lib/lessons";
-import { getModuleById } from "@/lib/modules";
+import { getModuleById, getPublishedModules } from "@/lib/modules";
 import { getLessonStatuses } from "@/lib/lesson-gate";
 import { getProgressByLessonIds } from "@/lib/progress";
 import { getExamByModuleId } from "@/lib/exams";
+import { getModuleAccessMap } from "@/lib/module-gate";
 import { VimeoPlayer } from "@/components/VimeoPlayer";
 import { LessonAutoCompleteVideo } from "./LessonAutoCompleteVideo";
 import { asText } from "@/lib/as-text";
@@ -128,22 +129,27 @@ export default async function LessonPage({ params }: Props) {
 
   const allLessons = await getPublishedLessonsByModuleId(lesson.module_id);
   const lessonIds = allLessons.map((l) => l.id);
-  const [moduleData, progressMap, exam, onboarding] = await Promise.all([
+  const [moduleData, progressMap, exam, onboarding, allModules] = await Promise.all([
     getModuleById(lesson.module_id),
     getProgressByLessonIds(student.id, lessonIds),
     getExamByModuleId(lesson.module_id),
     getStudentOnboardingResponse(student.id),
+    getPublishedModules(),
   ]);
-  const statusMap = await getLessonStatuses(student.id, allLessons, progressMap);
 
   if (!moduleData) notFound();
   const moduleTitle = stripModulePrefix(moduleData.title, moduleData.order_index);
+  const intakeComplete = onboardingIsComplete(onboarding);
+  const moduleAccessMap = await getModuleAccessMap(student.id, allModules);
+  const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
+  const statusMap = await getLessonStatuses(student.id, allLessons, progressMap, {
+    unlockAll: canAccessModule && intakeComplete,
+  });
 
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
   const status = statusMap.get(lesson.id) ?? "locked";
   const isCompleted = progressMap.get(lesson.id)?.watched === true;
-  const canAccess = status === "available" || status === "completed";
-  const intakeComplete = onboardingIsComplete(onboarding);
+  const canAccess = canAccessModule && (status === "available" || status === "completed");
 
   const prevLesson =
     currentIndex > 0 ? allLessons[currentIndex - 1] : null;
@@ -163,31 +169,6 @@ export default async function LessonPage({ params }: Props) {
     canAccess && lessonActions.length > 0
       ? await getLessonActionProgress(student.id, lesson.id)
       : new Map<number, boolean>();
-
-  if (!canAccess) {
-    return (
-      <div>
-        <PageHeader
-          breadcrumbs={[
-            { label: "Academy", href: "/modules" },
-            { label: moduleTitle, href: `/modules/${moduleData.slug}` },
-            { label: "Les" },
-          ]}
-          eyebrow="Toegang"
-          title="Deze les is nog vergrendeld"
-          description="Rond eerst de vorige les in deze module af om verder te gaan."
-        />
-        <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center sm:p-10">
-          <Link
-            href={`/modules/${moduleData.slug}`}
-            className="cb-btn cb-btn-primary"
-          >
-            Terug naar module
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   if (!intakeComplete) {
     return (
@@ -216,6 +197,56 @@ export default async function LessonPage({ params }: Props) {
             </Link>
           </div>
         </section>
+      </div>
+    );
+  }
+
+  if (!canAccessModule) {
+    return (
+      <div>
+        <PageHeader
+          breadcrumbs={[
+            { label: "Academy", href: "/modules" },
+            { label: moduleTitle, href: `/modules/${moduleData.slug}` },
+            { label: "Les" },
+          ]}
+          eyebrow="Toegang"
+          title="Deze les is nog vergrendeld"
+          description="Deze videocourse valt buiten je huidige toegangsniveau."
+        />
+        <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center sm:p-10">
+          <Link
+            href={`/modules/${moduleData.slug}`}
+            className="cb-btn cb-btn-primary"
+          >
+            Terug naar module
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canAccess) {
+    return (
+      <div>
+        <PageHeader
+          breadcrumbs={[
+            { label: "Academy", href: "/modules" },
+            { label: moduleTitle, href: `/modules/${moduleData.slug}` },
+            { label: "Les" },
+          ]}
+          eyebrow="Toegang"
+          title="Deze les is nog vergrendeld"
+          description="Rond eerst de vorige les in deze module af om verder te gaan."
+        />
+        <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center sm:p-10">
+          <Link
+            href={`/modules/${moduleData.slug}`}
+            className="cb-btn cb-btn-primary"
+          >
+            Terug naar module
+          </Link>
+        </div>
       </div>
     );
   }

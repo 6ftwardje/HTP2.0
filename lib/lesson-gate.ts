@@ -9,7 +9,8 @@ import { getProgressByLessonIds } from "@/lib/progress";
 export async function getLessonStatuses(
   studentId: string,
   lessons: Lesson[],
-  progressOverride?: Map<number, { watched: boolean; watched_at: string | null }>
+  progressOverride?: Map<number, { watched: boolean; watched_at: string | null }>,
+  options: { unlockAll?: boolean } = {}
 ): Promise<Map<number, LessonStatus>> {
   const map = new Map<number, LessonStatus>();
   if (lessons.length === 0) return map;
@@ -23,7 +24,9 @@ export async function getLessonStatuses(
     const prog = progress.get(lesson.id);
     const completed = prog?.watched === true;
 
-    if (i === 0) {
+    if (options.unlockAll) {
+      map.set(lesson.id, completed ? "completed" : "available");
+    } else if (i === 0) {
       map.set(lesson.id, completed ? "completed" : "available");
     } else {
       const prevCompleted = progress.get(lessons[i - 1].id)?.watched === true;

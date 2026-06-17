@@ -38,7 +38,13 @@ export default async function ModulesPage() {
     [...examMap.values()].map((exam) => [exam.module_id, exam.id])
   );
   const moduleAccessMap = student
-    ? buildModuleAccessMap(modules, onboarding, passedExamIds, examIdByModuleId)
+    ? buildModuleAccessMap(
+        modules,
+        onboarding,
+        passedExamIds,
+        examIdByModuleId,
+        student.access_level
+      )
     : new Map<number, boolean>();
 
   const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
@@ -87,6 +93,11 @@ export default async function ModulesPage() {
             const lessonCount = lessonCountMap.get(mod.id) ?? 0;
             const shortDesc = asText(mod.short_description);
             const moduleTitle = stripModulePrefix(mod.title, mod.order_index);
+            const lockedCopy = !intakeComplete
+              ? "Vul eerst je intake in"
+              : student && student.access_level < 2 && index >= 3
+                ? "Beschikbaar met full course"
+                : "Komt vrij na de vorige toets";
             return (
               <li key={mod.id}>
                 {canOpen ? (
@@ -156,7 +167,7 @@ export default async function ModulesPage() {
                       )}
                     </div>
                     <div className="mt-5 text-sm">
-                      <span className="cb-caption">Komt vrij na de vorige toets</span>
+                      <span className="cb-caption">{lockedCopy}</span>
                       </div>
                     </div>
                   </div>

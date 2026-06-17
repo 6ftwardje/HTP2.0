@@ -81,7 +81,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function getDashboardOverview(
-  studentId: string
+  studentId: string,
+  accessLevel = 1
 ): Promise<DashboardOverview> {
   const modules = await getPublishedModules();
   const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
@@ -106,7 +107,8 @@ export async function getDashboardOverview(
     orderedModules,
     onboarding,
     passedExamIds,
-    examIdByModuleId
+    examIdByModuleId,
+    accessLevel
   );
 
   const lessonsByModule = new Map<number, Lesson[]>();

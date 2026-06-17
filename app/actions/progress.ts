@@ -25,7 +25,7 @@ export async function markLessonComplete(lessonId: number): Promise<{
   }
 
   const [overview, onboarding] = await Promise.all([
-    getDashboardOverview(student.id),
+    getDashboardOverview(student.id, student.access_level),
     getStudentOnboardingResponse(student.id),
   ]);
   await syncStudentNextStep({

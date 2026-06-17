@@ -6,6 +6,7 @@ import { ensureCurrentStudent } from "@/lib/students";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardOverview } from "@/lib/dashboard";
 import { normalizeConfidenceScore } from "@/lib/intake";
+import { notifyMentorsStudentIntakeCompleted } from "@/lib/intake-notifications";
 import { syncStudentNextStep } from "@/lib/next-steps";
 
 function textValue(formData: FormData, key: string) {
@@ -33,20 +34,6 @@ function hasRequiredIntake(formData: FormData) {
     confidenceScore !== null;
 }
 
-function isMissingIntakeCompletionColumnError(error: {
-  code?: string;
-  message?: string;
-  details?: string;
-}) {
-  const text = `${error.message ?? ""} ${error.details ?? ""}`;
-  return (
-    error.code === "PGRST204" ||
-    error.code === "42703" ||
-    (/(confidence_score|completed_at|intake_version)/i.test(text) &&
-      /(schema cache|column|does not exist|not found)/i.test(text))
-  );
-}
-
 export async function saveOnboarding(formData: FormData) {
   const { student } = await ensureCurrentStudent();
   if (!student) {
@@ -58,8 +45,13 @@ export async function saveOnboarding(formData: FormData) {
   }
 
   const confidenceScore = numberValue(formData, "confidence_score");
+  if (confidenceScore === null) {
+    redirect("/onboarding?error=incomplete");
+  }
+
+  const completedAt = new Date().toISOString();
   const db = await createClient();
-  const baseResponse = {
+  const intakeResponse = {
     student_id: student.id,
     experience_level: textValue(formData, "experience_level"),
     primary_market: textValue(formData, "primary_market"),
@@ -67,70 +59,55 @@ export async function saveOnboarding(formData: FormData) {
     goal_90_days: textValue(formData, "goal_90_days"),
     weekly_time_commitment: textValue(formData, "weekly_time_commitment"),
     mentorship_interest: textValue(formData, "mentorship_interest"),
+    confidence_score: confidenceScore,
+    completed_at: completedAt,
+    intake_version: "v1",
     tools: {},
   };
 
   const { data: savedResponse, error: saveError } = await db
     .from("student_onboarding_responses")
-    .upsert(baseResponse, { onConflict: "student_id" })
-    .select("id")
+    .upsert(intakeResponse, { onConflict: "student_id" })
+    .select("id, confidence_score, completed_at")
     .single();
 
   if (saveError || !savedResponse) {
+    console.error("saveOnboarding", saveError?.message);
     redirect("/onboarding?error=save_failed");
   }
 
-  // These columns are introduced by the intake completion migration. Keep this
-  // as a separate best-effort update so the core intake still persists if a
-  // deployment temporarily runs before the migration is applied.
-  const { data: completionFields, error: completionError } = await db
-    .from("student_onboarding_responses")
-    .update({
-      confidence_score: confidenceScore,
-      completed_at: new Date().toISOString(),
-      intake_version: "v1",
-    })
-    .eq("student_id", student.id)
-    .select("confidence_score, completed_at")
-    .single();
-
-  if (completionError) {
-    if (isMissingIntakeCompletionColumnError(completionError)) {
-      console.warn(
-        "saveOnboarding intake completion columns unavailable",
-        completionError.message
-      );
-    } else {
-      console.error(
-        "saveOnboarding intake completion fields",
-        completionError.message
-      );
-      redirect("/onboarding?error=save_failed");
-    }
-  } else if (
-    normalizeConfidenceScore(completionFields?.confidence_score) !==
-      confidenceScore ||
-    !completionFields?.completed_at
+  if (
+    normalizeConfidenceScore(savedResponse.confidence_score) !== confidenceScore ||
+    !savedResponse.completed_at
   ) {
-    console.error("saveOnboarding intake completion fields were not persisted");
+    console.error("saveOnboarding intake fields were not persisted");
     redirect("/onboarding?error=save_failed");
   }
 
-  await db
+  const { error: studentUpdateError } = await db
     .from("students")
     .update({ onboarding_skipped_at: null })
     .eq("id", student.id);
 
-  const overview = await getDashboardOverview(student.id);
+  if (studentUpdateError) {
+    console.error("saveOnboarding student update", studentUpdateError.message);
+    redirect("/onboarding?error=save_failed");
+  }
+
+  const overview = await getDashboardOverview(student.id, student.access_level);
   await syncStudentNextStep({
     studentId: student.id,
     intakeComplete: true,
     dashboardNextStep: overview.nextStep,
   });
 
+  await notifyMentorsStudentIntakeCompleted(student.id);
+
   revalidatePath("/dashboard");
   revalidatePath("/account");
   revalidatePath("/modules");
+  revalidatePath(`/admin/students/${student.id}`);
+  revalidatePath("/admin/students");
   redirect("/dashboard?intake=completed");
 }
 

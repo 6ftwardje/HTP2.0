@@ -42,7 +42,7 @@ export async function toggleLessonAction(
   }
 
   const [overview, onboarding] = await Promise.all([
-    getDashboardOverview(student.id),
+    getDashboardOverview(student.id, student.access_level),
     getStudentOnboardingResponse(student.id),
   ]);
   await syncStudentNextStep({
