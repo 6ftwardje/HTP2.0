@@ -57,8 +57,100 @@ Voeg bij een productieomgeving ook toe:
 https://jouw-domein.nl/auth/callback**
 ```
 
-Zet de **Site URL** in productie op je echte domein. De callback verwerkt zowel
-de bevestigingsmail na registratie als de link voor wachtwoordherstel.
+Zet de **Site URL** in productie op je echte domein. De app gebruikt
+`/auth/confirm` voor e-mailtokens en behoudt `/auth/callback` als PKCE-callback.
+
+Voor `hettradeplatform.be`:
+
+| Instelling | Waarde |
+| --- | --- |
+| **Site URL** | `https://hettradeplatform.be` |
+| **Redirect URLs** | `https://hettradeplatform.be/auth/callback**` |
+| **Redirect URLs** | `https://hettradeplatform.be/auth/confirm**` |
+| **Redirect URLs** | `https://www.hettradeplatform.be/auth/callback**` |
+| **Redirect URLs** | `https://www.hettradeplatform.be/auth/confirm**` |
+| **Redirect URLs** | `http://localhost:3000/auth/callback**` |
+| **Redirect URLs** | `http://localhost:3000/auth/confirm**` |
+
+Zet in je productie-environment ook:
+
+```env
+NEXT_PUBLIC_SITE_URL=https://hettradeplatform.be
+```
+
+Voor de tijdelijke Netlify-productieomgeving uit de testfase:
+
+| Instelling | Waarde |
+| --- | --- |
+| **Site URL** | `https://htp2.netlify.app` |
+| **Redirect URLs** | `https://htp2.netlify.app/auth/callback**` |
+| **Redirect URLs** | `https://htp2.netlify.app/auth/confirm**` |
+| **Redirect URLs** | `http://localhost:3000/auth/callback**` |
+| **Redirect URLs** | `http://localhost:3000/auth/confirm**` |
+
+Zet in Netlify voor deze tijdelijke omgeving:
+
+```env
+NEXT_PUBLIC_SITE_URL=https://htp2.netlify.app
+```
+
+De app gebruikt deze waarde om de bevestigingslink na registratie en de
+resetlink voor wachtwoordherstel naar het live domein te laten wijzen.
+
+Als je aangepaste Supabase e-mailtemplates gebruikt, controleer dan dat de link
+naar `/auth/confirm` wijst en `{{ .TokenHash }}` meestuurt. Dat vermijdt dat de
+e-mailbevestiging afhankelijk is van de PKCE code-verifier-cookie van dezelfde
+browser.
+
+Voor bevestiging na registratie:
+
+```html
+{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/dashboard
+```
+
+### Wachtwoord vergeten correct laten redirecten
+
+De resettemplate moet verwijzen naar:
+
+```text
+/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/account/update-password
+```
+
+De aparte resetpagina wordt daarna door de app geopend nadat `/auth/confirm` de
+recovery-token heeft gevalideerd en de sessiecookie heeft gezet.
+
+Controleer in **Authentication** -> **URL Configuration**:
+
+| Instelling | Productiewaarde |
+| --- | --- |
+| **Site URL** | `https://hettradeplatform.be` |
+| **Redirect URL** | `https://hettradeplatform.be/auth/callback**` |
+| **Redirect URL** | `https://hettradeplatform.be/auth/confirm**` |
+| **Redirect URL** | `https://www.hettradeplatform.be/auth/callback**` |
+| **Redirect URL** | `https://www.hettradeplatform.be/auth/confirm**` |
+| **Redirect URL** | `http://localhost:3000/auth/callback**` |
+| **Redirect URL** | `http://localhost:3000/auth/confirm**` |
+
+Controleer in **Authentication** -> **Email Templates** -> **Reset Password**:
+
+1. De knop/link moet `/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/account/update-password` gebruiken.
+2. Gebruik geen hardcoded link naar `/account/update-password`.
+
+De gebruiker klikt dus op de app-link, de app valideert de token via Supabase,
+en stuurt daarna veilig door naar `/account/update-password`.
+
+## 3b. Password Security aanscherpen
+
+Controleer in **Authentication** -> **Password Security**:
+
+| Instelling | Aanbevolen |
+| --- | --- |
+| **Minimum password length** | minimaal `8`, liever `10` of `12` |
+| **Password requirements** | minstens letters + cijfers, bij voorkeur hoofdletters/kleine letters/cijfers |
+| **Secure password change** | aan |
+
+De UI eist minimaal 8 tekens. Supabase moet dit ook server-side afdwingen, zodat
+niemand via een aangepaste request een zwakker wachtwoord kan registreren.
 
 ## 4. Database-migraties toepassen
 
@@ -86,6 +178,25 @@ zonder eigen SMTP-provider geweigerd. De ingebouwde service is beperkt en niet
 bedoeld voor productie. Stel voor live gebruik via
 **Project Settings** -> **Authentication** -> **SMTP Settings** een eigen SMTP-provider
 in en controleer de afzendernaam en het afzenderadres.
+
+Voor Combell Basic Mail op `hettradeplatform.be`:
+
+| Supabase SMTP veld | Waarde |
+| --- | --- |
+| **Enable Custom SMTP** | aan |
+| **Host** | `smtp-auth.mailprotect.be` |
+| **Port** | `587` met TLS, of `465` met SSL |
+| **Username** | het volledige mailboxadres, bv. `info@hettradeplatform.be` of `no-reply@hettradeplatform.be` |
+| **Password** | het wachtwoord van die Combell mailbox |
+| **Sender email / From address** | hetzelfde mailboxadres |
+| **Sender name** | `Het Trade Platform` |
+
+Gebruik geen poort `25`. Maak in MyCombell eerst de mailbox aan die je als
+SMTP-gebruiker gebruikt. Controleer daarna de DNS van `hettradeplatform.be`:
+de SPF-record moet Combell mailprotect bevatten, bijvoorbeeld
+`include:_spf.relay.mailprotect.be`. Als er al een SPF-record bestaat, voeg je
+die include toe aan de bestaande record in plaats van een tweede SPF-record te
+maken.
 
 De ingebouwde service verstuurt maximaal 2 auth-mails per uur, gezamenlijk voor
 registratie en wachtwoordherstel. Daarnaast geldt standaard een wachttijd van

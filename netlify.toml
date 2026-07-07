@@ -3,6 +3,7 @@
   publish = ".next"
 
 [build.environment]
+  NEXT_PUBLIC_SITE_URL = "https://htp2.netlify.app"
   # Next.js/Netlify can inline public env values and middleware metadata into
   # generated build output. Keep secrets scanning enabled, but omit these known
   # deployment keys that Netlify reported as expected build-time matches.
