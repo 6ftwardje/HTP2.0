@@ -21,6 +21,7 @@ import {
   getMuxThumbnailUrl,
   getMuxUpload,
 } from "@/lib/mux";
+import type { LessonType } from "@/lib/types";
 
 type ActionResult<T extends object = object> = T & {
   success: boolean;
@@ -63,6 +64,10 @@ function asString(value: unknown): string {
 function asNullableString(value: unknown): string | null {
   const text = asString(value);
   return text ? text : null;
+}
+
+function parseLessonType(value: unknown): LessonType | null {
+  return value === "theorie" || value === "praktijk" ? value : null;
 }
 
 function asLineList(value: unknown): string[] {
@@ -128,11 +133,13 @@ function readModuleInput(formData: FormData) {
 
 function readLessonInput(formData: FormData) {
   const moduleId = parsePositiveInteger(formData.get("module_id"));
+  const lessonType = parseLessonType(formData.get("type"));
   const title = asString(formData.get("title"));
   const slug = slugify(asString(formData.get("slug")) || title);
   const orderIndex = parsePositiveInteger(formData.get("order_index"));
 
   if (!moduleId) return { error: "Choose a module." as const };
+  if (!lessonType) return { error: "Choose a lesson type." as const };
   if (!title) return { error: "Title is required." as const };
   if (!slug) return { error: "Slug is required." as const };
   if (!orderIndex) return { error: "Order must be a positive number." as const };
@@ -140,6 +147,7 @@ function readLessonInput(formData: FormData) {
   return {
     input: {
       module_id: moduleId,
+      type: lessonType,
       title,
       slug,
       description: asNullableString(formData.get("description")),

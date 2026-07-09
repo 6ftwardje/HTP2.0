@@ -14,13 +14,14 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppPageLayout } from "@/components/layout/AppPageLayout";
 import { RightRailCard } from "@/components/layout/RightRailCard";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
+import { LessonTypeBadge, normalizeLessonType } from "@/components/LessonTypeBadge";
 import { LessonActionList } from "@/components/LessonActionList";
 import { stripModulePrefix } from "@/lib/module-title";
 import {
   getLessonActionProgress,
   normalizeLessonActions,
 } from "@/lib/lesson-actions";
-import type { LessonStatus } from "@/lib/types";
+import type { LessonStatus, LessonType } from "@/lib/types";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
@@ -33,6 +34,7 @@ function LessonRailRow({
   title,
   orderIndex,
   status,
+  lessonType,
   isCurrent,
   locked,
   thumbnailUrl,
@@ -41,6 +43,7 @@ function LessonRailRow({
   title: string;
   orderIndex: number;
   status: LessonStatus;
+  lessonType: LessonType;
   isCurrent: boolean;
   locked: boolean;
   thumbnailUrl?: string | null;
@@ -74,6 +77,9 @@ function LessonRailRow({
           </div>
           <div className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--muted)] opacity-80">
             {label}
+          </div>
+          <div className="mt-2">
+            <LessonTypeBadge type={lessonType} />
           </div>
         </div>
       </div>
@@ -112,6 +118,9 @@ function LessonRailRow({
           }`}
         >
           {label}
+        </div>
+        <div className="mt-2">
+          <LessonTypeBadge type={lessonType} />
         </div>
       </div>
     </Link>
@@ -278,6 +287,7 @@ export default async function LessonPage({ params }: Props) {
                 title={l.title}
                 orderIndex={l.order_index}
                 status={st}
+                lessonType={normalizeLessonType(l.type)}
                 isCurrent={l.id === lesson.id}
                 locked={locked}
                 thumbnailUrl={l.thumbnail_url}
@@ -410,8 +420,11 @@ export default async function LessonPage({ params }: Props) {
         eyebrow={`Module ${moduleData.order_index} · Les ${lesson.order_index}`}
         title={lesson.title}
         meta={
-          <span className="cb-caption">
-            {lesson.order_index} van {allLessons.length}
+          <span className="flex flex-wrap items-center gap-2">
+            <LessonTypeBadge type={normalizeLessonType(lesson.type)} />
+            <span className="cb-caption">
+              {lesson.order_index} van {allLessons.length}
+            </span>
           </span>
         }
       />

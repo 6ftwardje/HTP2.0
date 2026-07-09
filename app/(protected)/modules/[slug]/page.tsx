@@ -11,8 +11,15 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppPageLayout } from "@/components/layout/AppPageLayout";
 import { RightRailCard } from "@/components/layout/RightRailCard";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
+import {
+  LESSON_TYPE_META,
+  LessonTypeBadge,
+  LessonTypeSectionIcon,
+  normalizeLessonType,
+} from "@/components/LessonTypeBadge";
 import { asText } from "@/lib/as-text";
 import { formatModuleTitle, stripModulePrefix } from "@/lib/module-title";
+import type { LessonType } from "@/lib/types";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
@@ -56,6 +63,14 @@ export default async function ModuleDetailPage({ params }: Props) {
     unlockAll: canAccessModule && intakeComplete,
   });
   const lessonsWithStatusList = lessonsWithStatus(lessons, statusMap);
+  const lessonTypeGroups = (["theorie", "praktijk"] as LessonType[])
+    .map((type) => ({
+      type,
+      lessons: lessonsWithStatusList.filter(
+        (lesson) => normalizeLessonType(lesson.type) === type
+      ),
+    }))
+    .filter((group) => group.lessons.length > 0);
   const lockedDescription = !intakeComplete
     ? "Vul eerst je intake in. Daarna openen de eerste 3 videocourses voor gratis accounts."
     : student.access_level < 2
@@ -197,6 +212,122 @@ export default async function ModuleDetailPage({ params }: Props) {
     </>
   );
 
+  function renderLessonItem(lesson: (typeof lessonsWithStatusList)[number]) {
+    const isLocked = lesson.status === "locked";
+    const intakeLocked = !intakeComplete;
+    const isCurrent = intakeComplete && nextAvailableLesson?.id === lesson.id;
+    const lessonDesc = asText(lesson.description);
+    const duration = formatDuration(lesson.video_duration_seconds);
+    const lessonType = normalizeLessonType(lesson.type);
+    const statusLabel = intakeLocked
+      ? "Intake vereist"
+      : lesson.status === "completed"
+        ? "Afgerond"
+        : lesson.status === "available"
+          ? "Beschikbaar"
+          : "Vergrendeld";
+    const statusClass =
+      lesson.status === "completed"
+        ? "text-emerald-300"
+        : lesson.status === "available" && !intakeLocked
+          ? "text-[var(--accent)]"
+          : "text-[var(--muted)]";
+    const rowContent = (
+      <div
+        className={[
+          "grid min-w-0 gap-4 px-4 py-4 transition-colors sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5",
+          isCurrent
+            ? "bg-[color-mix(in_oklab,var(--accent)_8%,var(--card))]"
+            : "bg-transparent",
+        ].join(" ")}
+      >
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h3
+              className={[
+                "font-semibold leading-snug",
+                isLocked || intakeLocked
+                  ? "text-[color-mix(in_oklab,var(--foreground)_62%,var(--muted)_38%)]"
+                  : "text-[var(--foreground)]",
+              ].join(" ")}
+            >
+              {lesson.title}
+            </h3>
+            <LessonTypeBadge type={lessonType} />
+            <span className={`text-xs font-semibold ${statusClass}`}>
+              {statusLabel}
+            </span>
+          </div>
+          {lessonDesc && (
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
+              {lessonDesc}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-4 sm:justify-end">
+          {duration && (
+            <span className="text-xs font-semibold text-[var(--muted)]">
+              {duration}
+            </span>
+          )}
+          {(isLocked || intakeLocked) && (
+            <span
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)]"
+              aria-label="Vergrendeld"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M7 11V8a5 5 0 0 1 10 0v3m-11 0h12v9H6v-9Z"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          )}
+        </div>
+      </div>
+    );
+
+    return (
+      <li key={lesson.id} className="border-b border-[var(--border)] last:border-b-0">
+        {isLocked || intakeLocked ? (
+          <div className="grid gap-0 sm:grid-cols-[176px_minmax(0,1fr)]">
+            <CourseThumbnail
+              src={lesson.thumbnail_url}
+              title={lesson.title}
+              eyebrow={`${lesson.order_index}`}
+              className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[118px]"
+              muted
+            />
+            {rowContent}
+          </div>
+        ) : (
+          <Link
+            href={`/lessons/${lesson.slug}`}
+            className="group grid gap-0 transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)] sm:grid-cols-[176px_minmax(0,1fr)]"
+          >
+            <CourseThumbnail
+              src={lesson.thumbnail_url}
+              title={lesson.title}
+              eyebrow={`${lesson.order_index}`}
+              className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[118px]"
+              imageClassName="group-hover:scale-[1.035]"
+            />
+            {rowContent}
+          </Link>
+        )}
+      </li>
+    );
+  }
+
   const main = (
     <>
       <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_92%,var(--background)_8%)]">
@@ -234,122 +365,34 @@ export default async function ModuleDetailPage({ params }: Props) {
             <p className="cb-caption">Deze module bevat nog geen lessen.</p>
           </div>
         ) : (
-          <ul className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)]">
-            {lessonsWithStatusList.map((lesson) => {
-              const isLocked = lesson.status === "locked";
-              const intakeLocked = !intakeComplete;
-              const isCurrent =
-                intakeComplete && nextAvailableLesson?.id === lesson.id;
-              const lessonDesc = asText(lesson.description);
-              const duration = formatDuration(lesson.video_duration_seconds);
-              const statusLabel = intakeLocked
-                ? "Intake vereist"
-                : lesson.status === "completed"
-                  ? "Afgerond"
-                  : lesson.status === "available"
-                    ? "Beschikbaar"
-                    : "Vergrendeld";
-              const statusClass =
-                lesson.status === "completed"
-                  ? "text-emerald-300"
-                  : lesson.status === "available" && !intakeLocked
-                    ? "text-[var(--accent)]"
-                    : "text-[var(--muted)]";
-              const rowContent = (
-                <div
-                  className={[
-                    "grid min-w-0 gap-4 px-4 py-4 transition-colors sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5",
-                    isCurrent
-                      ? "bg-[color-mix(in_oklab,var(--accent)_8%,var(--card))]"
-                      : "bg-transparent",
-                  ].join(" ")}
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <h3
-                        className={[
-                          "font-semibold leading-snug",
-                          isLocked || intakeLocked
-                            ? "text-[color-mix(in_oklab,var(--foreground)_62%,var(--muted)_38%)]"
-                            : "text-[var(--foreground)]",
-                        ].join(" ")}
-                      >
-                        {lesson.title}
-                      </h3>
-                      <span className={`text-xs font-semibold ${statusClass}`}>
-                        {statusLabel}
-                      </span>
-                    </div>
-                    {lessonDesc && (
-                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
-                        {lessonDesc}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between gap-4 sm:justify-end">
-                    {duration && (
-                      <span className="text-xs font-semibold text-[var(--muted)]">
-                        {duration}
-                      </span>
-                    )}
-                    {(isLocked || intakeLocked) && (
-                      <span
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] text-[var(--muted)]"
-                        aria-label="Vergrendeld"
-                      >
-                        <svg
-                          width="15"
-                          height="15"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          aria-hidden
-                        >
-                          <path
-                            d="M7 11V8a5 5 0 0 1 10 0v3m-11 0h12v9H6v-9Z"
-                            stroke="currentColor"
-                            strokeWidth="1.7"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-
+          <div className="space-y-6">
+            {lessonTypeGroups.map((group) => {
+              const meta = LESSON_TYPE_META[group.type];
               return (
-                <li key={lesson.id} className="border-b border-[var(--border)] last:border-b-0">
-                  {isLocked || intakeLocked ? (
-                    <div className="grid gap-0 sm:grid-cols-[176px_minmax(0,1fr)]">
-                      <CourseThumbnail
-                        src={lesson.thumbnail_url}
-                        title={lesson.title}
-                        eyebrow={`${lesson.order_index}`}
-                        className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[118px]"
-                        muted
-                      />
-                      {rowContent}
-                    </div>
-                  ) : (
-                    <Link
-                      href={`/lessons/${lesson.slug}`}
-                      className="group grid gap-0 transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)] sm:grid-cols-[176px_minmax(0,1fr)]"
+                <section key={group.type} className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border ${meta.className}`}
+                      aria-hidden
                     >
-                      <CourseThumbnail
-                        src={lesson.thumbnail_url}
-                        title={lesson.title}
-                        eyebrow={`${lesson.order_index}`}
-                        className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-[118px]"
-                        imageClassName="group-hover:scale-[1.035]"
-                      />
-                      {rowContent}
-                    </Link>
-                  )}
-                </li>
+                      <LessonTypeSectionIcon type={group.type} />
+                    </span>
+                    <div>
+                      <h3 className="text-base font-bold text-[var(--foreground)]">
+                        {meta.sectionTitle}
+                      </h3>
+                      <p className="text-sm text-[var(--muted)]">
+                        {meta.description}
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)]">
+                    {group.lessons.map(renderLessonItem)}
+                  </ul>
+                </section>
               );
             })}
-          </ul>
+          </div>
         )}
       </section>
     </>

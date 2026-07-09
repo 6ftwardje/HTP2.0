@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/admin/access";
 import { createClient } from "@/lib/supabase/server";
-import type { Lesson, Module } from "@/lib/types";
+import type { Lesson, LessonType, Module } from "@/lib/types";
 
 export type AdminLessonVideoRow = Lesson & {
   module: Pick<Module, "id" | "title" | "slug" | "order_index"> | null;
@@ -39,6 +39,7 @@ export type ModuleContentInput = {
 
 export type LessonContentInput = {
   module_id: number;
+  type: LessonType;
   title: string;
   slug: string;
   description: string | null;

@@ -2,13 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import type { Lesson } from "@/lib/types";
 
 const LESSON_DETAIL_COLUMNS =
-  "id, module_id, title, slug, description, takeaway, action_items, video_url, video_provider, video_duration_seconds, thumbnail_url, mux_playback_id, mux_playback_policy, order_index, is_published";
+  "id, module_id, type, title, slug, description, takeaway, action_items, video_url, video_provider, video_duration_seconds, thumbnail_url, mux_playback_id, mux_playback_policy, order_index, is_published";
 
 const LESSON_LIST_COLUMNS =
-  "id, module_id, title, slug, description, video_duration_seconds, thumbnail_url, order_index, is_published";
+  "id, module_id, type, title, slug, description, video_duration_seconds, thumbnail_url, order_index, is_published";
 
 const DASHBOARD_LESSON_COLUMNS =
-  "id, module_id, title, slug, description, takeaway, action_items, thumbnail_url, order_index, is_published";
+  "id, module_id, type, title, slug, description, takeaway, action_items, thumbnail_url, order_index, is_published";
 
 export async function getLessonBySlug(slug: string): Promise<Lesson | null> {
   const supabase = await createClient();

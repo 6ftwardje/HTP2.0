@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
+import { LessonTypeBadge, normalizeLessonType } from "@/components/LessonTypeBadge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BrandIcon } from "@/components/ui/Brand";
 import { asText } from "@/lib/as-text";
@@ -238,6 +239,11 @@ export default async function DashboardPage({ searchParams }: Props) {
               <div className="cb-eyebrow text-[var(--accent)]">
                 {moduleOrder ? `Module ${moduleOrder}` : "Jouw traject"}
               </div>
+              {nextStep.type === "lesson" ? (
+                <div className="mt-4">
+                  <LessonTypeBadge type={normalizeLessonType(nextStep.lesson.type)} />
+                </div>
+              ) : null}
               <h2 className="mt-4 text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[2.15rem]">
                 {stepTitle}
               </h2>

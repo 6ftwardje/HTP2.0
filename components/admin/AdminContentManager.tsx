@@ -23,7 +23,9 @@ import {
   formatModuleOptionLabel,
   stripModulePrefix,
 } from "@/lib/module-title";
+import { LessonTypeBadge } from "@/components/LessonTypeBadge";
 import type { AdminLessonVideoRow, AdminModuleVideoBlock } from "@/lib/admin/videos";
+import type { LessonType } from "@/lib/types";
 import type { Module } from "@/lib/types";
 
 type PanelState =
@@ -202,6 +204,8 @@ function LessonFields({
   defaultModuleId?: number;
   onThumbnailFileChange: (file: File | null) => void;
 }) {
+  const selectedType = lesson?.type;
+
   return (
     <div className="grid gap-3">
       <ThumbnailField
@@ -227,6 +231,31 @@ function LessonFields({
           <input name="order_index" type="number" min="1" defaultValue={lesson?.order_index ?? ""} required className={fieldClass()} />
         </label>
       </div>
+      <fieldset className="space-y-2">
+        <legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+          Lesson type
+        </legend>
+        <div className="grid grid-cols-2 gap-2">
+          {(["theorie", "praktijk"] as LessonType[]).map((type) => (
+            <label key={type} className="cursor-pointer">
+              <input
+                name="type"
+                type="radio"
+                value={type}
+                required
+                defaultChecked={selectedType === type}
+                className="peer sr-only"
+              />
+              <span className="flex min-h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-bold text-[var(--muted)] transition peer-checked:border-[color-mix(in_oklab,var(--foreground)_38%,var(--border))] peer-checked:bg-[color-mix(in_oklab,var(--card)_70%,var(--foreground)_7%)] peer-checked:text-[var(--foreground)] peer-focus-visible:ring-2 peer-focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)]">
+                <LessonTypeBadge type={type} />
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className="text-xs leading-relaxed text-[var(--muted)]">
+          Required for every lesson. Pick the dominant format; split mixed lessons later if needed.
+        </p>
+      </fieldset>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Title</span>
         <input name="title" defaultValue={lesson?.title ?? ""} required className={fieldClass()} />
@@ -910,6 +939,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                                 <span className="truncate text-sm font-semibold text-[var(--foreground)]">
                                   {lesson.title}
                                 </span>
+                                <LessonTypeBadge type={lesson.type} />
                                 {statusBadge(lesson)}
                                 <span className={lesson.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                                   {lesson.is_published ? "Published" : "Draft"}
@@ -1019,7 +1049,12 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
             </form>
           ) : panel.type === "create-lesson" ? (
             <form action={(formData) => runLessonSave(formData)} className="space-y-4">
-              <LessonFields modules={modules} defaultModuleId={panel.moduleId} onThumbnailFileChange={setThumbnailFile} />
+              <LessonFields
+                key={`create-lesson-${panel.moduleId ?? "none"}`}
+                modules={modules}
+                defaultModuleId={panel.moduleId}
+                onThumbnailFileChange={setThumbnailFile}
+              />
               <label className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Video file</span>
                 <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
@@ -1031,7 +1066,12 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
             </form>
           ) : panel.type === "edit-lesson" && selectedLesson ? (
             <form action={(formData) => runLessonSave(formData, selectedLesson)} className="space-y-4">
-              <LessonFields lesson={selectedLesson} modules={modules} onThumbnailFileChange={setThumbnailFile} />
+              <LessonFields
+                key={`edit-lesson-${selectedLesson.id}`}
+                lesson={selectedLesson}
+                modules={modules}
+                onThumbnailFileChange={setThumbnailFile}
+              />
               <div className="rounded-xl border border-[var(--border)] p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>

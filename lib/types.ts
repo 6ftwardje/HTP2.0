@@ -27,9 +27,12 @@ export type Module = {
   updated_at: string;
 };
 
+export type LessonType = "theorie" | "praktijk";
+
 export type Lesson = {
   id: number;
   module_id: number;
+  type: LessonType;
   title: string;
   slug: string;
   description: string | null;

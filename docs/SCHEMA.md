@@ -10,7 +10,7 @@ It includes:
 
 - `pgcrypto` extension
 - Tables: `students`, `modules`, `lessons`, `exams`, `exam_questions`, `exam_results`, `progress`
-- Follow-up migration: `lesson_action_progress`, plus `lessons.takeaway` and `lessons.action_items`
+- Follow-up migrations: `lesson_action_progress`, plus `lessons.takeaway`, `lessons.action_items`, and `lessons.type`
 - `set_updated_at()` trigger and triggers on all tables with `updated_at`
 - Check constraints: `access_level >= 1`, `passing_score` and `score` 0–100, phone length 8–20, `exam_questions.options` as JSON array
 - Indexes for FKs, unique keys, and filtered indexes for `is_published`
@@ -27,7 +27,7 @@ Run it with Supabase CLI (e.g. `supabase db push`) or apply the file in the SQL 
 |-------|--------|
 | **students** | Links Supabase Auth (`auth_user_id`) to a stable app identity (`id`). Holds profile (name, phone, email), `access_level` for future gating, and `last_seen` for activity. |
 | **modules** | Top-level curriculum units (e.g. “Technische Analyse”). `order_index` defines sequence; `slug` for URLs; `is_published` for draft/live. |
-| **lessons** | Content inside a module (e.g. video lessons). `order_index` per module drives lesson order and locking (complete lesson N before N+1). `video_url` / `video_provider` support legacy Vimeo and Mux playback. Mux uploads store `mux_asset_id`, `mux_playback_id`, `mux_playback_policy`, `mux_status`, `mux_upload_id`, and `mux_error_message`. |
+| **lessons** | Content inside a module (e.g. video lessons). `type` is required and distinguishes `theorie` from `praktijk`. `order_index` per module drives lesson order and locking (complete lesson N before N+1). `video_url` / `video_provider` support legacy Vimeo and Mux playback. Mux uploads store `mux_asset_id`, `mux_playback_id`, `mux_playback_policy`, `mux_status`, `mux_upload_id`, and `mux_error_message`. |
 | **exams** | One exam per module (v1). `passing_score` (0–100) defines what “passed” means for unlocking the next module. |
 | **exam_questions** | Questions for an exam. `options` is a JSON array of answer strings; `correct_answer` stores the correct option value for scoring. |
 | **exam_results** | One row per attempt. Stores `score`, `passed`, and `submitted_at`. No unique on `(student_id, exam_id)` so retakes are allowed. |
@@ -36,7 +36,7 @@ Run it with Supabase CLI (e.g. `supabase db push`) or apply the file in the SQL 
 
 Together: **modules** and **lessons** define the curriculum; **exams** and **exam_questions** define assessments; **progress** and **exam_results** record what each **student** has done, so the app can lock lessons in sequence and unlock the next module only after passing the previous exam.
 
-`lessons.takeaway` and `lessons.action_items` add optional lesson-level context. Actions stay scoped to the relevant lesson and remain separate from the gating rules, so they add value without blocking the training flow.
+`lessons.type` classifies each lesson as theory or practice for authoring and student-facing grouping. `lessons.takeaway` and `lessons.action_items` add optional lesson-level context. Actions stay scoped to the relevant lesson and remain separate from the gating rules, so they add value without blocking the training flow.
 
 ---
 
@@ -47,7 +47,7 @@ These were excluded from the initial Het Trade Platform 2.0 schema:
 - **updates** – No dedicated “updates” or announcements table.
 - **update_reads** – No read-tracking for updates.
 - **payments** – No subscriptions, one-time payments, or payment history; access can be controlled later via `students.access_level` or an external system.
-- **practical_lessons** – Only video/content lessons; no separate practical-lesson type or table.
+- **practical_lessons** – Practice is represented by `lessons.type = 'praktijk'`; no separate practical-lesson table.
 
 The schema stays minimal and focused on: identity (students), structure (modules, lessons, exams, exam_questions), and completion (progress, exam_results). Locking and gating are implemented in application logic using this data.
 
