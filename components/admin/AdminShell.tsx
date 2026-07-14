@@ -192,6 +192,8 @@ export function AdminShell({
   studentName: string | null;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const isWideWorkspace = pathname.startsWith("/admin/videos");
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -286,7 +288,13 @@ export function AdminShell({
         </div>
 
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+          <div
+            className={
+              isWideWorkspace
+                ? "w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
+                : "mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"
+            }
+          >
             <PageLoadOverlay>{children}</PageLoadOverlay>
           </div>
         </main>

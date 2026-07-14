@@ -11,6 +11,8 @@ import {
   adminCreateThumbnailUpload,
   adminDeleteLesson,
   adminDeleteModule,
+  adminReorderLessons,
+  adminReorderModules,
   adminSyncMuxUpload,
   adminUpdateLesson,
   adminUpdateLessonThumbnail,
@@ -44,7 +46,7 @@ function Icon({
   name,
   className = "h-4 w-4",
 }: {
-  name: "edit" | "trash" | "plus" | "upload" | "refresh";
+  name: "edit" | "trash" | "plus" | "upload" | "refresh" | "arrow-up" | "arrow-down";
   className?: string;
 }) {
   const common = {
@@ -87,6 +89,22 @@ function Icon({
     );
   }
 
+  if (name === "arrow-up") {
+    return (
+      <svg {...common}>
+        <path d="M12 19V5m0 0-5 5m5-5 5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  if (name === "arrow-down") {
+    return (
+      <svg {...common}>
+        <path d="M12 5v14m0 0 5-5m-5 5-5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
   return (
     <svg {...common}>
       <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -103,7 +121,7 @@ function iconButtonClass(tone: "normal" | "danger" = "normal") {
     tone === "danger"
       ? "border-red-500/20 text-red-700 hover:bg-red-500/10 dark:text-red-300"
       : "border-[var(--border)] text-[var(--muted)] hover:bg-[color-mix(in_oklab,var(--card)_70%,var(--foreground)_6%)] hover:text-[var(--foreground)]"
-  }`;
+  } disabled:cursor-not-allowed disabled:opacity-40`;
 }
 
 function statusBadge(lesson: AdminLessonVideoRow) {
@@ -150,13 +168,16 @@ function putFileWithProgress(
 
 function ModuleFields({
   module,
+  orderIndex,
   onThumbnailFileChange,
 }: {
   module?: Module;
+  orderIndex: number;
   onThumbnailFileChange: (file: File | null) => void;
 }) {
   return (
     <div className="grid gap-3">
+      <input type="hidden" name="order_index" value={module?.order_index ?? orderIndex} readOnly />
       <ThumbnailField
         title={module?.title ?? "Module thumbnail"}
         currentUrl={module?.thumbnail_url}
@@ -167,16 +188,10 @@ function ModuleFields({
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Title</span>
         <input name="title" defaultValue={module?.title ?? ""} required className={fieldClass()} />
       </label>
-      <div className="grid gap-3 sm:grid-cols-[1fr_110px]">
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Slug</span>
-          <input name="slug" defaultValue={module?.slug ?? ""} placeholder="auto from title" className={fieldClass()} />
-        </label>
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Order</span>
-          <input name="order_index" type="number" min="1" defaultValue={module?.order_index ?? ""} required className={fieldClass()} />
-        </label>
-      </div>
+      <label className="space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Slug</span>
+        <input name="slug" defaultValue={module?.slug ?? ""} placeholder="auto from title" className={fieldClass()} />
+      </label>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Short description</span>
         <input name="short_description" defaultValue={module?.short_description ?? ""} className={fieldClass()} />
@@ -196,41 +211,52 @@ function ModuleFields({
 function LessonFields({
   lesson,
   modules,
+  moduleNextLessonOrder,
   defaultModuleId,
   onThumbnailFileChange,
 }: {
   lesson?: AdminLessonVideoRow;
   modules: Module[];
+  moduleNextLessonOrder: Record<number, number>;
   defaultModuleId?: number;
   onThumbnailFileChange: (file: File | null) => void;
 }) {
   const selectedType = lesson?.type;
+  const initialModuleId = lesson?.module_id ?? defaultModuleId ?? modules[0]?.id ?? null;
+  const [selectedModuleId, setSelectedModuleId] = useState<number | null>(initialModuleId);
+  const selectedModuleNextOrder =
+    selectedModuleId === null ? 1 : moduleNextLessonOrder[selectedModuleId] ?? 1;
+  const orderIndex =
+    lesson && selectedModuleId === lesson.module_id
+      ? lesson.order_index
+      : selectedModuleNextOrder;
 
   return (
     <div className="grid gap-3">
+      <input type="hidden" name="order_index" value={orderIndex} readOnly />
       <ThumbnailField
         title={lesson?.title ?? "Lesson thumbnail"}
         currentUrl={lesson?.thumbnail_url}
         label="Lesson thumbnail"
         onFileChange={onThumbnailFileChange}
       />
-      <div className="grid gap-3 sm:grid-cols-[1fr_110px]">
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Module</span>
-          <select name="module_id" defaultValue={lesson?.module_id ?? defaultModuleId ?? ""} required className={fieldClass()}>
-            <option value="">Choose module</option>
-            {modules.map((module) => (
-              <option key={module.id} value={module.id}>
-                {formatModuleOptionLabel(module.order_index, module.title)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Order</span>
-          <input name="order_index" type="number" min="1" defaultValue={lesson?.order_index ?? ""} required className={fieldClass()} />
-        </label>
-      </div>
+      <label className="space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Module</span>
+        <select
+          name="module_id"
+          value={selectedModuleId ?? ""}
+          required
+          className={fieldClass()}
+          onChange={(event) => setSelectedModuleId(Number(event.currentTarget.value) || null)}
+        >
+          <option value="">Choose module</option>
+          {modules.map((module) => (
+            <option key={module.id} value={module.id}>
+              {formatModuleOptionLabel(module.order_index, module.title)}
+            </option>
+          ))}
+        </select>
+      </label>
       <fieldset className="space-y-2">
         <legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
           Lesson type
@@ -483,6 +509,20 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
   );
   const modules = useMemo(
     () => visibleBlocks.map((block) => block.module),
+    [visibleBlocks]
+  );
+  const nextModuleOrderIndex =
+    modules.reduce((maxOrder, module) => Math.max(maxOrder, module.order_index), 0) + 1;
+  const moduleNextLessonOrder = useMemo(
+    () =>
+      visibleBlocks.reduce<Record<number, number>>((counts, block) => {
+        counts[block.module.id] =
+          block.lessons.reduce(
+            (maxOrder, lesson) => Math.max(maxOrder, lesson.order_index),
+            0
+          ) + 1;
+        return counts;
+      }, {}),
     [visibleBlocks]
   );
   const lessons = useMemo(
@@ -782,6 +822,57 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
     });
   }
 
+  function moveInOrder(ids: number[], id: number, direction: -1 | 1) {
+    const index = ids.indexOf(id);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= ids.length) return null;
+    const nextIds = [...ids];
+    [nextIds[index], nextIds[nextIndex]] = [nextIds[nextIndex], nextIds[index]];
+    return nextIds;
+  }
+
+  function reorderModule(moduleId: number, direction: -1 | 1) {
+    const nextIds = moveInOrder(
+      modules.map((module) => module.id),
+      moduleId,
+      direction
+    );
+    if (!nextIds) return;
+
+    resetFeedback();
+    startTransition(async () => {
+      setMessage("Saving module order...");
+      const result = await adminReorderModules(nextIds);
+      if (!result.success) {
+        setError(result.error ?? "Could not reorder modules.");
+        return;
+      }
+      refresh("Module order saved.");
+    });
+  }
+
+  function reorderLesson(moduleId: number, lessonId: number, direction: -1 | 1) {
+    const block = visibleBlocks.find((item) => item.module.id === moduleId);
+    if (!block) return;
+    const nextIds = moveInOrder(
+      block.lessons.map((lesson) => lesson.id),
+      lessonId,
+      direction
+    );
+    if (!nextIds) return;
+
+    resetFeedback();
+    startTransition(async () => {
+      setMessage("Saving lesson order...");
+      const result = await adminReorderLessons(moduleId, nextIds);
+      if (!result.success) {
+        setError(result.error ?? "Could not reorder lessons.");
+        return;
+      }
+      refresh("Lesson order saved.");
+    });
+  }
+
   const panelTitle =
     panel.type === "create-module"
       ? "New module"
@@ -794,14 +885,17 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
             : "Select an item";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-      <section className="min-w-0 rounded-2xl border border-[var(--border)] bg-[var(--card)]">
-        <div className="flex flex-col gap-4 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="grid gap-5 lg:h-[calc(100dvh-10rem)] lg:min-h-[620px] lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:overflow-hidden">
+      <section className="flex min-w-0 min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <div className="flex shrink-0 flex-col gap-4 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="cb-eyebrow">Overview</div>
             <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
               Modules and lessons
             </h2>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Use the arrows to save module and lesson order.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
@@ -826,20 +920,22 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
           </div>
         </div>
 
-        <div className="divide-y divide-[var(--border)]">
+        <div className="min-h-0 flex-1 divide-y divide-[var(--border)] overflow-y-auto overscroll-contain">
           {visibleBlocks.length === 0 ? (
             <div className="p-8 text-center">
               <p className="cb-body">No modules yet. Create the first module to start building the curriculum.</p>
             </div>
           ) : (
-            visibleBlocks.map(({ module, lessons: moduleLessons }) => {
+            visibleBlocks.map(({ module, lessons: moduleLessons }, moduleIndex) => {
               const moduleTitle = stripModulePrefix(
                 module.title,
                 module.order_index
               );
+              const isModuleSelected =
+                panel.type === "edit-module" && panel.module.id === module.id;
 
               return (
-              <div key={module.id} className="p-4">
+              <div key={module.id} className={`p-4 transition ${isModuleSelected ? "bg-[var(--surface-hover)]" : ""}`}>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <button
                     type="button"
@@ -870,6 +966,28 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     </div>
                   </button>
                   <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] p-1" role="group" aria-label={`Reorder ${moduleTitle}`}>
+                      <button
+                        type="button"
+                        className={iconButtonClass()}
+                        aria-label={`Move ${moduleTitle} up`}
+                        title="Move module up"
+                        disabled={pending || moduleIndex === 0}
+                        onClick={() => reorderModule(module.id, -1)}
+                      >
+                        <Icon name="arrow-up" />
+                      </button>
+                      <button
+                        type="button"
+                        className={iconButtonClass()}
+                        aria-label={`Move ${moduleTitle} down`}
+                        title="Move module down"
+                        disabled={pending || moduleIndex === visibleBlocks.length - 1}
+                        onClick={() => reorderModule(module.id, 1)}
+                      >
+                        <Icon name="arrow-down" />
+                      </button>
+                    </div>
                     <button
                       type="button"
                       className={iconButtonClass()}
@@ -918,8 +1036,11 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     </div>
                   ) : (
                     <div className="divide-y divide-[var(--border)]">
-                      {moduleLessons.map((lesson) => (
-                        <div key={lesson.id} className="grid gap-3 bg-[color-mix(in_oklab,var(--background)_88%,var(--card)_12%)] px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                      {moduleLessons.map((lesson, lessonIndex) => {
+                        const isLessonSelected =
+                          panel.type === "edit-lesson" && panel.lesson.id === lesson.id;
+                        return (
+                        <div key={lesson.id} className={`grid gap-3 bg-[color-mix(in_oklab,var(--background)_88%,var(--card)_12%)] px-4 py-3 transition md:grid-cols-[minmax(0,1fr)_auto] md:items-center ${isLessonSelected ? "ring-1 ring-inset ring-[color-mix(in_oklab,var(--accent)_38%,var(--border))]" : ""}`}>
                           <button
                             type="button"
                             className="grid min-w-0 gap-3 text-left sm:grid-cols-[76px_minmax(0,1fr)] sm:items-center"
@@ -951,6 +1072,28 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                             </div>
                           </button>
                           <div className="flex items-center gap-2 md:justify-end">
+                            <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] p-1" role="group" aria-label={`Reorder ${lesson.title}`}>
+                              <button
+                                type="button"
+                                className={iconButtonClass()}
+                                aria-label={`Move ${lesson.title} up`}
+                                title="Move lesson up"
+                                disabled={pending || lessonIndex === 0}
+                                onClick={() => reorderLesson(module.id, lesson.id, -1)}
+                              >
+                                <Icon name="arrow-up" />
+                              </button>
+                              <button
+                                type="button"
+                                className={iconButtonClass()}
+                                aria-label={`Move ${lesson.title} down`}
+                                title="Move lesson down"
+                                disabled={pending || lessonIndex === moduleLessons.length - 1}
+                                onClick={() => reorderLesson(module.id, lesson.id, 1)}
+                              >
+                                <Icon name="arrow-down" />
+                              </button>
+                            </div>
                             <button
                               type="button"
                               className={iconButtonClass()}
@@ -998,7 +1141,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                             </button>
                           </div>
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1009,8 +1153,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
         </div>
       </section>
 
-      <aside className="h-fit rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 lg:sticky lg:top-6">
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] pb-4">
+      <aside className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] lg:max-h-full">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border)] p-4">
           <div>
             <div className="cb-eyebrow">Details</div>
             <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">{panelTitle}</h2>
@@ -1028,21 +1172,28 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
           ) : null}
         </div>
 
-        <div className="pt-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
           {panel.type === "empty" ? (
             <p className="cb-body">
               Select a module or lesson from the overview, or create a new item with the actions above.
             </p>
           ) : panel.type === "create-module" ? (
             <form action={(formData) => runModuleSave(formData)} className="space-y-4">
-              <ModuleFields onThumbnailFileChange={setThumbnailFile} />
+              <ModuleFields
+                orderIndex={nextModuleOrderIndex}
+                onThumbnailFileChange={setThumbnailFile}
+              />
               <button type="submit" disabled={pending} className="cb-btn cb-btn-primary w-full justify-center text-sm">
                 {pending ? "Saving..." : "Create module"}
               </button>
             </form>
           ) : panel.type === "edit-module" && selectedModule ? (
             <form action={(formData) => runModuleSave(formData, selectedModule)} className="space-y-4">
-              <ModuleFields module={selectedModule} onThumbnailFileChange={setThumbnailFile} />
+              <ModuleFields
+                module={selectedModule}
+                orderIndex={selectedModule.order_index}
+                onThumbnailFileChange={setThumbnailFile}
+              />
               <button type="submit" disabled={pending} className="cb-btn cb-btn-primary w-full justify-center text-sm">
                 {pending ? "Saving..." : "Save module"}
               </button>
@@ -1052,6 +1203,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
               <LessonFields
                 key={`create-lesson-${panel.moduleId ?? "none"}`}
                 modules={modules}
+                moduleNextLessonOrder={moduleNextLessonOrder}
                 defaultModuleId={panel.moduleId}
                 onThumbnailFileChange={setThumbnailFile}
               />
@@ -1066,12 +1218,6 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
             </form>
           ) : panel.type === "edit-lesson" && selectedLesson ? (
             <form action={(formData) => runLessonSave(formData, selectedLesson)} className="space-y-4">
-              <LessonFields
-                key={`edit-lesson-${selectedLesson.id}`}
-                lesson={selectedLesson}
-                modules={modules}
-                onThumbnailFileChange={setThumbnailFile}
-              />
               <div className="rounded-xl border border-[var(--border)] p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -1103,6 +1249,13 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                 </label>
               </div>
               <UploadProgress progress={progress} />
+              <LessonFields
+                key={`edit-lesson-${selectedLesson.id}`}
+                lesson={selectedLesson}
+                modules={modules}
+                moduleNextLessonOrder={moduleNextLessonOrder}
+                onThumbnailFileChange={setThumbnailFile}
+              />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
                 {pending || progress !== null ? "Working..." : "Save lesson"}
               </button>

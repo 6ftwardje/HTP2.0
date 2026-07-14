@@ -264,6 +264,76 @@ export async function updateLessonContentAdmin(
   return { error: null };
 }
 
+export async function reorderModulesAdmin(
+  moduleIds: number[]
+): Promise<{ error: string | null }> {
+  await requireAdmin();
+
+  if (process.env.NODE_ENV === "test") {
+    return { error: null };
+  }
+
+  const db = await createClient();
+  const { error } = await db.rpc("reorder_modules_admin", {
+    module_ids: moduleIds,
+  });
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function reorderLessonsAdmin(
+  moduleId: number,
+  lessonIds: number[]
+): Promise<{ error: string | null }> {
+  await requireAdmin();
+
+  if (process.env.NODE_ENV === "test") {
+    return { error: null };
+  }
+
+  const db = await createClient();
+  const { error } = await db.rpc("reorder_lessons_admin", {
+    target_module_id: moduleId,
+    lesson_ids: lessonIds,
+  });
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function normalizeModulesAdmin(): Promise<{ error: string | null }> {
+  await requireAdmin();
+
+  if (process.env.NODE_ENV === "test") {
+    return { error: null };
+  }
+
+  const db = await createClient();
+  const { error } = await db.rpc("normalize_modules_admin");
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function normalizeLessonsAdmin(
+  moduleId: number
+): Promise<{ error: string | null }> {
+  await requireAdmin();
+
+  if (process.env.NODE_ENV === "test") {
+    return { error: null };
+  }
+
+  const db = await createClient();
+  const { error } = await db.rpc("normalize_lessons_admin", {
+    target_module_id: moduleId,
+  });
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
 export async function deleteLessonAdmin(
   lessonId: number
 ): Promise<{ error: string | null }> {

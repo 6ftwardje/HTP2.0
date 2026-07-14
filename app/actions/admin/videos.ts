@@ -10,6 +10,10 @@ import {
   deleteEmptyModuleAdmin,
   deleteLessonAdmin,
   getLessonForVideoAdmin,
+  normalizeLessonsAdmin,
+  normalizeModulesAdmin,
+  reorderLessonsAdmin,
+  reorderModulesAdmin,
   updateLessonContentAdmin,
   updateLessonVideoAdmin,
   updateModuleAdmin,
@@ -55,6 +59,13 @@ function parsePositiveInteger(value: unknown): number | null {
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isInteger(n) || n <= 0) return null;
   return n;
+}
+
+function parsePositiveIntegerList(value: unknown): number[] | null {
+  if (!Array.isArray(value)) return null;
+  const parsed = value.map(parsePositiveInteger);
+  if (parsed.some((item) => item === null)) return null;
+  return parsed as number[];
 }
 
 function asString(value: unknown): string {
@@ -456,11 +467,21 @@ export async function adminUpdateLesson(
   const lessonId = parseLessonId(lessonIdRaw);
   if (!lessonId) return { success: false, error: "Invalid lesson." };
 
+  const existingLesson = await getLessonForVideoAdmin(lessonId);
+  if (!existingLesson) return { success: false, error: "Lesson not found." };
+
   const parsed = readLessonInput(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
 
   const { error } = await updateLessonContentAdmin(lessonId, parsed.input);
   if (error) return { success: false, error };
+
+  if (existingLesson.module_id !== parsed.input.module_id) {
+    const sourceNormalized = await normalizeLessonsAdmin(existingLesson.module_id);
+    if (sourceNormalized.error) return { success: false, error: sourceNormalized.error };
+  }
+  const targetNormalized = await normalizeLessonsAdmin(parsed.input.module_id);
+  if (targetNormalized.error) return { success: false, error: targetNormalized.error };
 
   logAdminAction("content.lesson_updated", {
     actorStudentId: actorStudent.id,
@@ -468,6 +489,50 @@ export async function adminUpdateLesson(
   });
 
   revalidateVideoPaths(parsed.input.slug);
+  return { success: true };
+}
+
+export async function adminReorderModules(
+  moduleIdsRaw: unknown
+): Promise<ActionResult> {
+  const { actorStudent } = await requireAdmin();
+  const moduleIds = parsePositiveIntegerList(moduleIdsRaw);
+  if (!moduleIds || moduleIds.length === 0) {
+    return { success: false, error: "Invalid module order." };
+  }
+
+  const { error } = await reorderModulesAdmin(moduleIds);
+  if (error) return { success: false, error };
+
+  logAdminAction("content.modules_reordered", {
+    actorStudentId: actorStudent.id,
+    metadata: { moduleIds },
+  });
+
+  revalidateVideoPaths();
+  return { success: true };
+}
+
+export async function adminReorderLessons(
+  moduleIdRaw: unknown,
+  lessonIdsRaw: unknown
+): Promise<ActionResult> {
+  const { actorStudent } = await requireAdmin();
+  const moduleId = parsePositiveInteger(moduleIdRaw);
+  const lessonIds = parsePositiveIntegerList(lessonIdsRaw);
+  if (!moduleId || !lessonIds || lessonIds.length === 0) {
+    return { success: false, error: "Invalid lesson order." };
+  }
+
+  const { error } = await reorderLessonsAdmin(moduleId, lessonIds);
+  if (error) return { success: false, error };
+
+  logAdminAction("content.lessons_reordered", {
+    actorStudentId: actorStudent.id,
+    metadata: { moduleId, lessonIds },
+  });
+
+  revalidateVideoPaths();
   return { success: true };
 }
 
@@ -483,6 +548,9 @@ export async function adminDeleteLesson(
 
   const { error } = await deleteLessonAdmin(lessonId);
   if (error) return { success: false, error };
+
+  const normalized = await normalizeLessonsAdmin(lesson.module_id);
+  if (normalized.error) return { success: false, error: normalized.error };
 
   logAdminAction("content.lesson_deleted", {
     actorStudentId: actorStudent.id,
@@ -502,6 +570,9 @@ export async function adminDeleteModule(
 
   const { error } = await deleteEmptyModuleAdmin(moduleId);
   if (error) return { success: false, error };
+
+  const normalized = await normalizeModulesAdmin();
+  if (normalized.error) return { success: false, error: normalized.error };
 
   logAdminAction("content.module_deleted", {
     actorStudentId: actorStudent.id,
