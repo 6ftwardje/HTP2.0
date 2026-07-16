@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { BrandLogo } from "@/components/ui/Brand";
 
 type AuthMode = "login" | "register" | "reset";
@@ -10,6 +10,7 @@ type FormStatus = "idle" | "loading" | "success" | "error";
 type AuthFailure = {
   status?: number;
 };
+type SupabaseClientFactory = () => Promise<SupabaseClient>;
 
 function getEmailAuthErrorMessage(error: AuthFailure, fallback: string) {
   if (error.status === 429) {
@@ -37,7 +38,7 @@ function getCallbackUrl(next: string) {
   return callbackUrl.toString();
 }
 
-function AuthForm() {
+function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFactory }) {
   const searchParams = useSearchParams();
   const redirectedFrom = getSafeRedirect(searchParams.get("redirectedFrom"));
   const callbackFailed = searchParams.get("error") === "auth";
@@ -79,7 +80,7 @@ function AuthForm() {
     setStatus("loading");
     setMessage("");
 
-    const supabase = createClient();
+    const supabase = await getSupabaseClient();
 
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({
@@ -354,10 +355,14 @@ function AuthFallback() {
   return <div className="min-h-screen bg-[var(--background)]" />;
 }
 
-export default function StudentAuthForm() {
+export function StudentAuthFormCore({
+  getSupabaseClient,
+}: {
+  getSupabaseClient: SupabaseClientFactory;
+}) {
   return (
     <Suspense fallback={<AuthFallback />}>
-      <AuthForm />
+      <AuthForm getSupabaseClient={getSupabaseClient} />
     </Suspense>
   );
 }
