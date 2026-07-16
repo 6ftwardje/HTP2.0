@@ -41,7 +41,26 @@ Een eerste server-dynamische componentkeuze behield beide clientgraphs. De brows
 
 ## Productie-A/B en geselecteerde stand
 
-Nog in te vullen na twee volledig afgeronde Netlify-deploys van dezelfde commit: eerst flag uit, daarna flag aan. De experimentstand blijft alleen actief wanneer transferwinst, foutloze authboundary en stabiele p95 reproduceerbaar zijn.
+Getest op commit `f2e5c5a725502a400df2954aa5db3b9b7d124ca6`, telkens tien verse browsercontexten:
+
+| Loginmetric | Legacy A p50/p95 | Experiment p50/p95 | Legacy B p50/p95 |
+| --- | ---: | ---: | ---: |
+| TTFB | 236 / 2.910 ms | 206 / 3.385 ms | 202 / 3.158 ms |
+| FCP | 508 / 3.920 ms | 612 / 4.056 ms | 588 / 4.036 ms |
+| LCP | 508 / 3.920 ms | 612 / 4.056 ms | 588 / 4.036 ms |
+| DOMContentLoaded | 334 / 3.169 ms | 405 / 3.723 ms | 385 / 3.529 ms |
+| Load | 486 / 3.903 ms | 585 / 4.040 ms | 569 / 4.014 ms |
+| Totale transfer | 243.951 / 244.183 B | 191.524 / 191.686 B | 243.949 / 243.966 B |
+| JavaScript-transfer | 160.751 / 160.919 B | 108.423 / 108.462 B | 160.750 / 160.774 B |
+| Requests | 13 / 13 | 12 / 12 | 13 / 13 |
+| CLS | 0 / 0 | 0 / 0 | 0 / 0 |
+| Console-errors | 0 / 0 | 0 / 0 | 0 / 0 |
+
+Legacy A was deploy `6a588b3f0c8faa0008d7f51f`; experiment was `6a588c114ec4d48b6e2b9867`; de afsluitende legacydeploy was `6a588cf1d6997dd1b0864c38`. Alle drie waren `ready`, `production`, branch `main`, dezelfde commit en Functions-regio `dub` (`eu-west-1`). De productie-boundarytest met experiment actief bevestigde 0 authrequests vóór interactie, één onderschepte request na submit, uitgestelde scripts na interactie en afwijzing van anonieme/forged-header toegang.
+
+De transferwinst is exact en reproduceerbaar: circa 32,6% minder initiële JavaScript, 21,5% minder totale transfer en één request minder. De gebruikersgerichte timingwinst is echter niet reproduceerbaar. FCP en load waren in de experimentreeks slechter dan beide of één van de legacyreeksen en de netwerk-tail varieerde sterk.
+
+Geselecteerde productiestand: `PROJECT_SPEED_LAZY_AUTH_CLIENT=0` (legacy). Conform de beslisregel blijft het experiment uit totdat een dedicated testaccount ook de submit-to-dashboardtrade-off kan meten en een nieuwe productie-A/B een gebruikersgerichte winst aantoont. De experimentele code en legacy fallback blijven beschikbaar voor die herhaling.
 
 ## Resterende risico's
 
