@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
 import { AppShell } from "@/components/AppShell";
 import {
+  getNotificationShellReadModel,
   getUnreadNotificationCount,
   listMyNotifications,
 } from "@/lib/notifications";
@@ -30,10 +31,19 @@ export default async function ProtectedLayout({
     redirect("/?redirectedFrom=" + encodeURIComponent("/dashboard"));
   }
 
-  const [unreadNotificationCount, notificationResult] = await Promise.all([
-    getUnreadNotificationCount(),
-    listMyNotifications(),
-  ]);
+  const notificationShell =
+    process.env.PROJECT_SPEED_NOTIFICATION_SHELL === "1"
+      ? await getNotificationShellReadModel(student.id)
+      : null;
+  const [unreadNotificationCount, notificationResult] = notificationShell
+    ? [
+        notificationShell.unreadCount,
+        { notifications: notificationShell.notifications },
+      ]
+    : await Promise.all([
+        getUnreadNotificationCount(),
+        listMyNotifications(),
+      ]);
 
   const floatingNotifications = notificationResult.notifications
     .slice(0, 8)

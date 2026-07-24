@@ -6,6 +6,21 @@ export type NotificationActionResult =
   | { success: true }
   | { success: false; error: string };
 
+type NotificationShellReadModel = {
+  studentId: string;
+  unreadCount: number;
+  notifications: {
+    id: string;
+    created_at: string;
+    read_at: string | null;
+    event: {
+      title: string | null;
+      body: string | null;
+      href: string | null;
+    } | null;
+  }[];
+};
+
 function isMissingTable(error: { code?: string; message?: string } | null) {
   return error?.code === "42P01" || error?.message?.includes("does not exist");
 }
@@ -62,6 +77,27 @@ export async function listMyNotifications(): Promise<{
     })) as NotificationWithEvent[],
     missingMigration: false,
   };
+}
+
+export async function getNotificationShellReadModel(
+  expectedStudentId: string
+): Promise<NotificationShellReadModel | null> {
+  const db = await createClient();
+  const { data, error } = await db.rpc("get_my_notification_shell");
+  const payload = data as NotificationShellReadModel | null;
+
+  if (
+    error ||
+    !payload ||
+    payload.studentId !== expectedStudentId ||
+    !Number.isInteger(payload.unreadCount) ||
+    payload.unreadCount < 0 ||
+    !Array.isArray(payload.notifications)
+  ) {
+    return null;
+  }
+
+  return payload;
 }
 
 export async function markNotificationRead(

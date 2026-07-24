@@ -6,6 +6,8 @@ const lazyAuthClientEnabled =
 const lazyMediaEnabled = process.env.PROJECT_SPEED_LAZY_MEDIA === "1";
 const dashboardHeroPriorityEnabled =
   process.env.PROJECT_SPEED_DASHBOARD_HERO_PRIORITY === "1";
+const notificationShellEnabled =
+  process.env.PROJECT_SPEED_NOTIFICATION_SHELL === "1";
 
 function getSupabaseHostname() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,6 +37,7 @@ const nextConfig: NextConfig = {
     PROJECT_SPEED_DASHBOARD_HERO_PRIORITY: dashboardHeroPriorityEnabled
       ? "1"
       : "0",
+    PROJECT_SPEED_NOTIFICATION_SHELL: notificationShellEnabled ? "1" : "0",
   },
   webpack(config, { webpack }) {
     if (lazyAuthClientEnabled) {
