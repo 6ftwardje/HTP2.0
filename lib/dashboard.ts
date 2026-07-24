@@ -7,6 +7,7 @@ import { getPublishedModules } from "@/lib/modules";
 import { getStudentOnboardingResponse } from "@/lib/onboarding";
 import { getProgressByLessonIds } from "@/lib/progress";
 import type { DashboardStats, Exam, Lesson, Module } from "@/lib/types";
+import type { StudentOnboardingResponse } from "@/lib/types";
 
 export type DashboardModuleState = "locked" | "available" | "completed";
 
@@ -60,48 +61,34 @@ export type DashboardOverview = {
   modules: DashboardModuleSummary[];
 };
 
-export async function getDashboardStats(): Promise<DashboardStats> {
-  const supabase = await createClient();
+type DashboardReadModel = {
+  studentId: string;
+  modules: Module[];
+  lessons: Lesson[];
+  exams: Exam[];
+  onboarding: StudentOnboardingResponse | null;
+  passedExamIds: number[];
+  progress: {
+    lesson_id: number;
+    watched: boolean;
+    watched_at: string | null;
+  }[];
+};
 
-  const [modulesRes, lessonsRes] = await Promise.all([
-    supabase.from("modules").select("id, is_published", { count: "exact" }),
-    supabase.from("lessons").select("id", { count: "exact", head: true }),
-  ]);
-
-  const totalModules = modulesRes.count ?? 0;
-  const publishedModules =
-    modulesRes.data?.filter((m) => m.is_published).length ?? 0;
-  const totalLessons = lessonsRes.count ?? 0;
-
-  return {
-    totalModules,
-    publishedModules,
-    totalLessons,
-  };
-}
-
-export async function getDashboardOverview(
+async function buildDashboardOverview(
   studentId: string,
-  accessLevel = 1
+  accessLevel: number,
+  modules: Module[],
+  lessons: Lesson[],
+  exams: Exam[],
+  onboarding: StudentOnboardingResponse | null,
+  passedExamIds: Set<number>,
+  progressMap: Map<number, { watched: boolean; watched_at: string | null }>
 ): Promise<DashboardOverview> {
-  const modules = await getPublishedModules();
   const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
-  const moduleIds = orderedModules.map((module) => module.id);
-  const [examMap, lessons, onboarding] = await Promise.all([
-    getExamsByModuleIds(moduleIds),
-    getPublishedLessonsByModuleIds(moduleIds),
-    getStudentOnboardingResponse(studentId),
-  ]);
-  const lessonIds = lessons.map((lesson) => lesson.id);
-  const [passedExamIds, progressMap] = await Promise.all([
-    getPassedExamIdsForStudent(
-      studentId,
-      [...examMap.values()].map((exam) => exam.id)
-    ),
-    getProgressByLessonIds(studentId, lessonIds),
-  ]);
+  const examMap = new Map(exams.map((exam) => [exam.module_id, exam]));
   const examIdByModuleId = new Map(
-    [...examMap.values()].map((exam) => [exam.module_id, exam.id])
+    exams.map((exam) => [exam.module_id, exam.id])
   );
   const accessMap = buildModuleAccessMap(
     orderedModules,
@@ -222,4 +209,96 @@ export async function getDashboardOverview(
       totalLessons: currentSummary.totalLessons,
     },
   };
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const supabase = await createClient();
+
+  const [modulesRes, lessonsRes] = await Promise.all([
+    supabase.from("modules").select("id, is_published", { count: "exact" }),
+    supabase.from("lessons").select("id", { count: "exact", head: true }),
+  ]);
+
+  const totalModules = modulesRes.count ?? 0;
+  const publishedModules =
+    modulesRes.data?.filter((m) => m.is_published).length ?? 0;
+  const totalLessons = lessonsRes.count ?? 0;
+
+  return {
+    totalModules,
+    publishedModules,
+    totalLessons,
+  };
+}
+
+export async function getDashboardOverview(
+  studentId: string,
+  accessLevel = 1
+): Promise<DashboardOverview> {
+  const modules = await getPublishedModules();
+  const moduleIds = modules.map((module) => module.id);
+  const [examMap, lessons, onboarding] = await Promise.all([
+    getExamsByModuleIds(moduleIds),
+    getPublishedLessonsByModuleIds(moduleIds),
+    getStudentOnboardingResponse(studentId),
+  ]);
+  const lessonIds = lessons.map((lesson) => lesson.id);
+  const [passedExamIds, progressMap] = await Promise.all([
+    getPassedExamIdsForStudent(
+      studentId,
+      [...examMap.values()].map((exam) => exam.id)
+    ),
+    getProgressByLessonIds(studentId, lessonIds),
+  ]);
+  return buildDashboardOverview(
+    studentId,
+    accessLevel,
+    modules,
+    lessons,
+    [...examMap.values()],
+    onboarding,
+    passedExamIds,
+    progressMap
+  );
+}
+
+export async function getDashboardOverviewReadModel(
+  studentId: string,
+  accessLevel = 1
+): Promise<DashboardOverview> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_my_dashboard_read_model");
+  const payload = data as DashboardReadModel | null;
+
+  if (
+    error ||
+    !payload ||
+    payload.studentId !== studentId ||
+    !Array.isArray(payload.modules) ||
+    !Array.isArray(payload.lessons) ||
+    !Array.isArray(payload.exams) ||
+    !Array.isArray(payload.passedExamIds) ||
+    !Array.isArray(payload.progress)
+  ) {
+    return getDashboardOverview(studentId, accessLevel);
+  }
+
+  return buildDashboardOverview(
+    studentId,
+    accessLevel,
+    payload.modules,
+    payload.lessons,
+    payload.exams,
+    payload.onboarding,
+    new Set(payload.passedExamIds),
+    new Map(
+      payload.progress.map((progress) => [
+        progress.lesson_id,
+        {
+          watched: progress.watched,
+          watched_at: progress.watched_at,
+        },
+      ])
+    )
+  );
 }

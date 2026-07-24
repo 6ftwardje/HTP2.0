@@ -4,7 +4,10 @@ import { LessonTypeBadge, normalizeLessonType } from "@/components/LessonTypeBad
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BrandIcon } from "@/components/ui/Brand";
 import { asText } from "@/lib/as-text";
-import { getDashboardOverview } from "@/lib/dashboard";
+import {
+  getDashboardOverview,
+  getDashboardOverviewReadModel,
+} from "@/lib/dashboard";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
@@ -25,7 +28,9 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (!student) return null;
 
   const [overview, onboarding, weeklyUpdates] = await Promise.all([
-    getDashboardOverview(student.id, student.access_level),
+    process.env.PROJECT_SPEED_DASHBOARD_READ_MODEL === "1"
+      ? getDashboardOverviewReadModel(student.id, student.access_level)
+      : getDashboardOverview(student.id, student.access_level),
     getStudentOnboardingResponse(student.id),
     listPublishedWeeklyUpdates(3),
   ]);
