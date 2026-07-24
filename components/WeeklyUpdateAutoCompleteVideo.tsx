@@ -2,7 +2,7 @@
 
 import { useCallback, useTransition } from "react";
 import { markWeeklyUpdateWatched } from "@/app/actions/weekly-updates";
-import { VimeoPlayer } from "@/components/VimeoPlayer";
+import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
 
 export function WeeklyUpdateAutoCompleteVideo({
   weeklyUpdateId,

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { VimeoPlayer } from "@/components/VimeoPlayer";
+import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
 import { markLessonComplete } from "@/app/actions/progress";
 
 export function LessonAutoCompleteVideo({

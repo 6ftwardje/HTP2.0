@@ -7,7 +7,7 @@ import { getLessonStatuses } from "@/lib/lesson-gate";
 import { getProgressByLessonIds } from "@/lib/progress";
 import { getExamByModuleId } from "@/lib/exams";
 import { getModuleAccessMap } from "@/lib/module-gate";
-import { VimeoPlayer } from "@/components/VimeoPlayer";
+import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
 import { LessonAutoCompleteVideo } from "./LessonAutoCompleteVideo";
 import { asText } from "@/lib/as-text";
 import { PageHeader } from "@/components/layout/PageHeader";

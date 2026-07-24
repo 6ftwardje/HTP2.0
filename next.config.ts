@@ -3,6 +3,7 @@ import path from "node:path";
 
 const lazyAuthClientEnabled =
   process.env.PROJECT_SPEED_LAZY_AUTH_CLIENT === "1";
+const lazyMediaEnabled = process.env.PROJECT_SPEED_LAZY_MEDIA === "1";
 
 function getSupabaseHostname() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -37,6 +38,14 @@ const nextConfig: NextConfig = {
             process.cwd(),
             "components/auth/StudentAuthFormLazy.tsx"
           )
+        )
+      );
+    }
+    if (lazyMediaEnabled) {
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /VimeoPlayerLegacy$/,
+          path.resolve(process.cwd(), "components/VimeoPlayerLazy.tsx")
         )
       );
     }
