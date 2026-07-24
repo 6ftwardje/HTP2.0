@@ -4,6 +4,8 @@ import path from "node:path";
 const lazyAuthClientEnabled =
   process.env.PROJECT_SPEED_LAZY_AUTH_CLIENT === "1";
 const lazyMediaEnabled = process.env.PROJECT_SPEED_LAZY_MEDIA === "1";
+const dashboardHeroPriorityEnabled =
+  process.env.PROJECT_SPEED_DASHBOARD_HERO_PRIORITY === "1";
 
 function getSupabaseHostname() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,6 +31,11 @@ const supabaseImageHostnames = Array.from(
 );
 
 const nextConfig: NextConfig = {
+  env: {
+    PROJECT_SPEED_DASHBOARD_HERO_PRIORITY: dashboardHeroPriorityEnabled
+      ? "1"
+      : "0",
+  },
   webpack(config, { webpack }) {
     if (lazyAuthClientEnabled) {
       config.plugins.push(
