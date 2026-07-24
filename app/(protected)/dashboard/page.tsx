@@ -220,6 +220,9 @@ export default async function DashboardPage({ searchParams }: Props) {
               <CourseThumbnail
                 src={thumbnail}
                 title={stepTitle}
+                priority={
+                  process.env.PROJECT_SPEED_DASHBOARD_HERO_PRIORITY === "1"
+                }
                 className="aspect-[16/9] min-h-[220px] w-full"
               />
               {nextStep.type === "lesson" && (
