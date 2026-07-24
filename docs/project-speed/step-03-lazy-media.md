@@ -51,7 +51,47 @@ dedicated account en dezelfde weekly update.
 
 ## Productie-A/B
 
-Nog uit te voeren op dezelfde commit: flag uit deployen en meten, daarna flag
-aan deployen en dezelfde detailroute meten. De experimentstand blijft niet
-actief tenzij initiële transfer/request count én gebruikersgerichte timings
-reproduceerbaar verbeteren zonder fouten of completion-regressie.
+Uitgevoerd op commit `91661432f57c5ea1059cb4a93ce73c3a8247cf32`,
+telkens tien verse authenticated browsercontexten op dezelfde weekly update:
+
+| Metric | Legacy A p50/p95 | Experiment p50/p95 | Legacy B p50/p95 |
+| --- | ---: | ---: | ---: |
+| TTFB | 1.328 / 2.584 ms | 761 / 2.628 ms | 716 / 1.998 ms |
+| FCP | 1.688 / 2.860 ms | 860 / 2.852 ms | 780 / 2.068 ms |
+| LCP | 1.688 / 2.860 ms | 872 / 3.404 ms | 1.196 / 2.388 ms |
+| Load | 2.599 / 3.820 ms | 909 / 3.596 ms | 930 / 2.129 ms |
+| Transfer | 550.457 / 557.635 B | 300.209 / 300.291 B | 874.577 / 874.634 B |
+| Requests | 24 / 27 | 23 / 23 | 34 / 34 |
+| Mux-requests vóór klik | 4 / 5 | 1 / 1 | 4 / 4 |
+| Streamrequests vóór klik | 1 / 1 | 0 / 0 | 1 / 1 |
+
+Legacy A was deploy `6a6337d4e57afd536133441a`; experiment was
+`6a63387b40f03b428745e0d3`; legacy B was
+`6a63393fbe43e35c29023602`. Alle waren `ready`, productiecontext, branch
+`main` en dezelfde commit.
+
+De productie-boundarytest bevestigde nul streamrequests vóór interactie, één
+streamrequest na de play-actie, nul consolefouten en afwijzing van vervalste
+interne headers.
+
+## Geselecteerde productiestand
+
+`PROJECT_SPEED_LAZY_MEDIA=0` (legacy).
+
+De mediawinst is structureel: het experiment voorkomt initiële streaming en
+verkleint de gemeten transfer sterk. De gebruikersgerichte timingwinst is echter
+niet reproduceerbaar. Experiment-load p50 (909 ms) is vrijwel gelijk aan legacy
+B (930 ms), terwijl experiment-LCP/load p95 slechter zijn dan legacy B. Door die
+instabiele tail blijft de flag conform de beslisregels uit. De rollbackbare
+experimentcode blijft beschikbaar voor een latere herhaling met netwerkshaping
+en een grotere steekproef.
+
+## Resterende risico's
+
+- Het testaccount heeft nog geen voltooide intake en bood daarom geen
+  toegankelijke lesdetailroute; completion is op de weekly update getest tot en
+  met het starten van dezelfde speler, maar de video is niet volledig afgespeeld.
+- Transfer verschilde sterk tussen legacy A en B door Mux-segment/cachegedrag.
+  Een vervolgmeting moet cachebeleid en netwerkcondities expliciet vastzetten.
+- De modulesbaseline had geen stabiele tekst/linkhash en moet apart worden
+  onderzocht voordat een modulespecifieke optimalisatie wordt geselecteerd.
