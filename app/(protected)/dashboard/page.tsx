@@ -61,10 +61,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         : nextStep.type === "completed"
           ? "Mooi werk. Je hebt alle beschikbare modules doorlopen."
           : "Open de module om verder te gaan met je traject.";
-  const thumbnail =
-    nextStep.type === "lesson"
-      ? nextStep.lesson.thumbnail_url ?? nextStep.module.thumbnail_url
-      : nextStep.module?.thumbnail_url;
+  const thumbnail = nextStep.module?.thumbnail_url;
   const moduleTitle = nextStep.module
     ? stripModulePrefix(nextStep.module.title, nextStep.module.order_index)
     : "Academy";

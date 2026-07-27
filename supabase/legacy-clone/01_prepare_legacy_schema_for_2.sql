@@ -28,23 +28,38 @@ alter table public.modules add column if not exists is_published boolean default
 alter table public.modules add column if not exists created_at timestamptz default now();
 alter table public.modules add column if not exists updated_at timestamptz default now();
 
-update public.modules
+with ordered_modules as (
+  select
+    id,
+    coalesce(
+      "order",
+      coalesce(max("order") over (), 0) +
+        row_number() over (
+          partition by ("order" is null)
+          order by id
+        )::integer
+    ) as generated_order
+  from public.modules
+)
+update public.modules m
 set
   slug = coalesce(
-    slug,
+    m.slug,
     regexp_replace(
-      lower(regexp_replace(trim(title), '[^a-zA-Z0-9]+', '-', 'g')),
+      lower(regexp_replace(trim(m.title), '[^a-zA-Z0-9]+', '-', 'g')),
       '(^-+|-+$)',
       '',
       'g'
-    ) || '-' || id::text
+    ) || '-' || m.id::text
   ),
-  short_description = coalesce(short_description, description),
-  order_index = coalesce(order_index, "order"),
-  thumbnail_url = coalesce(thumbnail_url, icon_url),
-  is_published = coalesce(is_published, true),
-  created_at = coalesce(created_at, now()),
-  updated_at = coalesce(updated_at, now());
+  short_description = coalesce(m.short_description, m.description),
+  order_index = coalesce(m.order_index, ordered_modules.generated_order),
+  thumbnail_url = coalesce(m.thumbnail_url, m.icon_url),
+  is_published = coalesce(m.is_published, true),
+  created_at = coalesce(m.created_at, now()),
+  updated_at = coalesce(m.updated_at, now())
+from ordered_modules
+where m.id = ordered_modules.id;
 
 do $$
 begin
@@ -89,10 +104,11 @@ with ordered_lessons as (
     id,
     coalesce(
       "order",
-      row_number() over (
-        partition by module_id
-        order by "order" nulls last, id
-      )::integer
+      coalesce(max("order") over (partition by module_id), 0) +
+        row_number() over (
+          partition by module_id, ("order" is null)
+          order by id
+        )::integer
     ) as generated_order
   from public.lessons
 )

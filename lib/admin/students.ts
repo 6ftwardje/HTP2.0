@@ -8,6 +8,7 @@ import type { AdminSortField, AdminStudentListRow } from "@/lib/admin/types";
 import { buildAdminStudentProgressDetail } from "@/lib/admin/progress";
 import type { AdminStudentDetail } from "@/lib/admin/types";
 import { requireAdmin } from "@/lib/admin/access";
+import { measureAsync } from "@/lib/performance";
 
 type ListParams = {
   q?: string;
@@ -19,23 +20,22 @@ type ListParams = {
 
 export async function listStudentsAdmin(
   params: ListParams
-): Promise<{ rows: AdminStudentListRow[]; total: number }> {
+): Promise<{ rows: AdminStudentListRow[]; hasNextPage: boolean }> {
   await requireAdmin();
 
   if (process.env.NODE_ENV === "test") {
-    return { rows: [], total: 0 };
+    return { rows: [], hasNextPage: false };
   }
 
   const db = await createClient();
   const { q, sortBy, order, page, pageSize } = params;
   const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  const to = from + pageSize;
 
   let qBuilder = db
     .from("students")
     .select(
-      "id, email, name, phone, access_level, mentor_status, tags, created_at, last_seen",
-      { count: "exact" }
+      "id, email, name, phone, access_level, mentor_status, tags, created_at, last_seen"
     );
 
   const trimmed = q?.trim();
@@ -51,7 +51,17 @@ export async function listStudentsAdmin(
     nullsFirst: false,
   });
 
-  const { data, error, count } = await qBuilder.range(from, to);
+  const { data, error } = await measureAsync(
+    "admin.students.list.query",
+    async () => await qBuilder.range(from, to),
+    {
+      page,
+      page_size: pageSize,
+      sort: sortBy,
+      order,
+      search: Boolean(trimmed),
+    }
+  );
 
   if (error) {
     console.error(
@@ -61,12 +71,14 @@ export async function listStudentsAdmin(
       error.details,
       error.hint
     );
-    return { rows: [], total: 0 };
+    return { rows: [], hasNextPage: false };
   }
 
+  const fetchedRows = (data ?? []) as AdminStudentListRow[];
+
   return {
-    rows: (data ?? []) as AdminStudentListRow[],
-    total: count ?? 0,
+    rows: fetchedRows.slice(0, pageSize),
+    hasNextPage: fetchedRows.length > pageSize,
   };
 }
 
@@ -80,11 +92,15 @@ export async function getStudentByIdAdmin(
   }
 
   const db = await createClient();
-  const { data, error } = await db
-    .from("students")
-    .select("*")
-    .eq("id", studentId)
-    .maybeSingle();
+  const { data, error } = await measureAsync(
+    "admin.student.detail.student.query",
+    async () =>
+      await db
+        .from("students")
+        .select("*")
+        .eq("id", studentId)
+        .maybeSingle()
+  );
 
   if (error || !data) return null;
   return data as Student;
@@ -119,11 +135,15 @@ export async function getStudentOnboardingResponseAdmin(
   }
 
   const db = await createClient();
-  const { data, error } = await db
-    .from("student_onboarding_responses")
-    .select("*")
-    .eq("student_id", studentId)
-    .maybeSingle();
+  const { data, error } = await measureAsync(
+    "admin.student.detail.onboarding.query",
+    async () =>
+      await db
+        .from("student_onboarding_responses")
+        .select("*")
+        .eq("student_id", studentId)
+        .maybeSingle()
+  );
 
   if (error || !data) return null;
   return data as StudentOnboardingResponse;
@@ -139,12 +159,16 @@ export async function getStudentMentorNotesAdmin(
   }
 
   const db = await createClient();
-  const { data, error } = await db
-    .from("student_mentor_notes")
-    .select("*")
-    .eq("student_id", studentId)
-    .order("is_pinned", { ascending: false })
-    .order("created_at", { ascending: false });
+  const { data, error } = await measureAsync(
+    "admin.student.detail.mentor_notes.query",
+    async () =>
+      await db
+        .from("student_mentor_notes")
+        .select("*")
+        .eq("student_id", studentId)
+        .order("is_pinned", { ascending: false })
+        .order("created_at", { ascending: false })
+  );
 
   if (error) return [];
   return (data ?? []) as StudentMentorNote[];

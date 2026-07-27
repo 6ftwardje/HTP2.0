@@ -5,6 +5,7 @@ import {
   onboardingIsComplete,
 } from "@/lib/onboarding";
 import { createClient } from "@/lib/supabase/server";
+import { logError } from "@/lib/logger";
 
 export const FREE_ACCESS_MODULE_LIMIT = 3;
 export const FULL_COURSE_ACCESS_LEVEL = 2;
@@ -41,16 +42,29 @@ export async function getModuleAccessMap(
   const passedExamIds = new Set(
     (resultsRes.data ?? []).map((r: { exam_id: number }) => r.exam_id)
   );
+  if (resultsRes.error) {
+    logError("module_access.exam_results_query_failed", resultsRes.error, {
+      studentId,
+    });
+  }
+  if (studentRes.error) {
+    logError("module_access.student_query_failed", studentRes.error, {
+      studentId,
+    });
+  }
 
   // We need "passed exam for module with order_index K" to unlock "module with order_index K+1"
   const examIdByModuleId = new Map<number, number>();
-  const { data: exams } = await supabase
+  const { data: exams, error: examsError } = await supabase
     .from("exams")
     .select("id, module_id")
     .in(
       "module_id",
       ordered.map((m) => m.id)
     );
+  if (examsError) {
+    logError("module_access.exams_query_failed", examsError, { studentId });
+  }
   for (const e of exams ?? []) {
     const row = e as { id: number; module_id: number };
     examIdByModuleId.set(row.module_id, row.id);

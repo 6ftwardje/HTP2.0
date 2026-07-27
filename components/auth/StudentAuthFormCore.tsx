@@ -12,6 +12,8 @@ type AuthFailure = {
 };
 type SupabaseClientFactory = () => Promise<SupabaseClient>;
 
+const LEGAL_ACCEPTANCE_VERSION = "2026-06-17";
+
 function getEmailAuthErrorMessage(error: AuthFailure, fallback: string) {
   if (error.status === 429) {
     return "Er zijn te veel e-mails aangevraagd. Wacht even en probeer het later opnieuw.";
@@ -32,8 +34,26 @@ function getSafeRedirect(redirectedFrom: string | null) {
   return redirectedFrom;
 }
 
+function getSiteOrigin() {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+
+  if (!configuredSiteUrl) return window.location.origin;
+
+  try {
+    const url = new URL(
+      configuredSiteUrl.startsWith("http")
+        ? configuredSiteUrl
+        : `https://${configuredSiteUrl}`
+    );
+
+    return url.origin;
+  } catch {
+    return window.location.origin;
+  }
+}
+
 function getCallbackUrl(next: string) {
-  const callbackUrl = new URL("/auth/callback", window.location.origin);
+  const callbackUrl = new URL("/auth/callback", getSiteOrigin());
   callbackUrl.searchParams.set("next", getSafeRedirect(next));
   return callbackUrl.toString();
 }
@@ -48,6 +68,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [acceptedLegalTerms, setAcceptedLegalTerms] = useState(false);
   const [status, setStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
 
@@ -57,6 +78,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
     setMessage("");
     setPassword("");
     setPasswordConfirmation("");
+    setAcceptedLegalTerms(false);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -77,6 +99,12 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
       return;
     }
 
+    if (mode === "register" && !acceptedLegalTerms) {
+      setStatus("error");
+      setMessage("Bevestig eerst de voorwaarden en risicowaarschuwing.");
+      return;
+    }
+
     setStatus("loading");
     setMessage("");
 
@@ -89,6 +117,10 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
       });
 
       if (error) {
+        console.error("[auth.login_failed]", {
+          status: error.status,
+          code: error.code,
+        });
         setStatus("error");
         setMessage("Inloggen lukt niet. Controleer je e-mailadres en wachtwoord.");
         return;
@@ -105,12 +137,19 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
         options: {
           data: {
             full_name: fullName.trim(),
+            legal_acceptance_version: LEGAL_ACCEPTANCE_VERSION,
+            legal_acceptance_accepted_at: new Date().toISOString(),
+            legal_acceptance_scope: "tos_privacy_education_risk_disclaimer",
           },
           emailRedirectTo: getCallbackUrl(redirectedFrom),
         },
       });
 
       if (error) {
+        console.error("[auth.registration_failed]", {
+          status: error.status,
+          code: error.code,
+        });
         setStatus("error");
         setMessage(
           getEmailAuthErrorMessage(
@@ -138,6 +177,10 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
     });
 
     if (error) {
+      console.error("[auth.password_reset_failed]", {
+        status: error.status,
+        code: error.code,
+      });
       setStatus("error");
       setMessage(
         getEmailAuthErrorMessage(
@@ -308,6 +351,27 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                     autoComplete="new-password"
                     className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--foreground)_35%,transparent)] disabled:opacity-60"
                   />
+                </div>
+              )}
+
+              {mode === "register" && (
+                <div className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-4">
+                  <label className="flex gap-3 text-sm leading-6 text-[var(--foreground)]">
+                    <input
+                      type="checkbox"
+                      checked={acceptedLegalTerms}
+                      onChange={(event) => setAcceptedLegalTerms(event.target.checked)}
+                      required
+                      disabled={status === "loading" || status === "success"}
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--border)] accent-[var(--foreground)] disabled:opacity-60"
+                    />
+                    <span>
+                      Ik aanvaard de algemene voorwaarden en privacyverklaring. Ik begrijp dat Het Trade Platform een educatief leerplatform is en geen financieel, beleggings-, fiscaal of juridisch advies verstrekt.
+                    </span>
+                  </label>
+                  <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
+                    Trading en crypto brengen risico op verlies met zich mee. Lessen, voorbeelden, coaching en AI-output zijn geen koop- of verkoopaanbevelingen en bieden geen garantie op resultaat. Virtuele munten, reele risico&apos;s. De enige garantie in crypto is het risico.
+                  </p>
                 </div>
               )}
 

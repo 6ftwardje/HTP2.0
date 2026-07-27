@@ -64,6 +64,7 @@ function findDuplicateKeys(rows, keyForRow) {
   const counts = new Map();
   for (const row of rows) {
     const key = keyForRow(row);
+    if (key == null) continue;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return [...counts.entries()].filter(([, count]) => count > 1);
@@ -123,13 +124,18 @@ const [modules, lessons, exams, progress] = await Promise.all([
 const checks = [
   [
     "duplicate module order",
-    findDuplicateKeys(modules, (row) => String(row[moduleOrderColumn])),
+    findDuplicateKeys(modules, (row) =>
+      row[moduleOrderColumn] == null ? null : String(row[moduleOrderColumn])
+    ),
   ],
   [
     "duplicate lesson module/order",
     findDuplicateKeys(
       lessons,
-      (row) => `${row.module_id}:${row[lessonOrderColumn]}`
+      (row) =>
+        row[lessonOrderColumn] == null
+          ? null
+          : `${row.module_id}:${row[lessonOrderColumn]}`
     ),
   ],
   [

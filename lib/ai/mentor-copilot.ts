@@ -12,6 +12,7 @@ import {
   formatIntakeChoice,
   formatWeeklyTimeCommitment,
 } from "@/lib/intake";
+import { measureAsync } from "@/lib/performance";
 
 const FEATURE = "mentor_summary" as const;
 const MAX_TOKENS = 700;
@@ -244,12 +245,17 @@ export async function getMentorSummaryAdmin(
   await requireAdmin();
 
   const db = await createClient();
-  const { data, error } = await db
-    .from("ai_student_summaries")
-    .select("*")
-    .eq("student_id", studentId)
-    .eq("feature", FEATURE)
-    .maybeSingle();
+  const { data, error } = await measureAsync(
+    "admin.student.detail.ai_summary.query",
+    async () =>
+      await db
+        .from("ai_student_summaries")
+        .select("*")
+        .eq("student_id", studentId)
+        .eq("feature", FEATURE)
+        .maybeSingle(),
+    { feature: FEATURE }
+  );
 
   if (error || !data) return null;
   return data as AiStudentSummary;

@@ -17,6 +17,7 @@ out/
 .idea/
 .vscode/
 .cursor/
+*.swp
 
 # Vercel
 .vercel
@@ -24,6 +25,7 @@ out/
 # Testing
 coverage/
 output/playwright/
+tsconfig.tsbuildinfo
 
 # Misc
 *.log

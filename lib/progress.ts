@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Progress } from "@/lib/types";
+import { logError } from "@/lib/logger";
 
 /**
  * Get progress rows for a student and a set of lesson IDs.
@@ -18,7 +19,13 @@ export async function getProgressByLessonIds(
     .eq("student_id", studentId)
     .in("lesson_id", lessonIds);
 
-  if (error) return new Map();
+  if (error) {
+    logError("progress.list_failed", error, {
+      studentId,
+      lessonCount: lessonIds.length,
+    });
+    return new Map();
+  }
 
   const map = new Map<number, { watched: boolean; watched_at: string | null }>();
   for (const row of data ?? []) {
@@ -50,7 +57,10 @@ export async function upsertLessonProgress(
     }
   );
 
-  if (error) return { error };
+  if (error) {
+    logError("progress.upsert_failed", error, { studentId, lessonId });
+    return { error };
+  }
   return { error: null };
 }
 

@@ -5,6 +5,7 @@ import type {
   ExamResult,
   PublicExamAttempt,
 } from "@/lib/types";
+import { logError } from "@/lib/logger";
 
 const EXAM_COLUMNS =
   "id, module_id, title, description, passing_score, is_published";
@@ -23,7 +24,11 @@ export async function getExamByModuleId(
     .eq("is_published", true)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) {
+    logError("exam.get_by_module_failed", error, { moduleId });
+    return null;
+  }
+  if (!data) return null;
   return data as Exam;
 }
 
@@ -40,7 +45,10 @@ export async function getExamsByModuleIds(
     .in("module_id", moduleIds)
     .eq("is_published", true);
 
-  if (error) return map;
+  if (error) {
+    logError("exam.list_by_modules_failed", error, { moduleCount: moduleIds.length });
+    return map;
+  }
 
   for (const row of data ?? []) {
     const exam = row as Exam;
@@ -60,7 +68,10 @@ export async function getExamQuestions(
     .eq("exam_id", examId)
     .order("order_index", { ascending: true });
 
-  if (error) return [];
+  if (error) {
+    logError("exam.questions_query_failed", error, { examId });
+    return [];
+  }
   return (data ?? []).map((row) => ({
     ...row,
     options: Array.isArray(row.options) ? row.options : [],
@@ -84,7 +95,11 @@ export async function hasPassedExam(
     .limit(1)
     .maybeSingle();
 
-  if (error || !data) return false;
+  if (error) {
+    logError("exam.passed_check_failed", error, { studentId, examId });
+    return false;
+  }
+  if (!data) return false;
   return true;
 }
 
@@ -103,7 +118,13 @@ export async function getPassedExamIdsForStudent(
     .eq("passed", true)
     .in("exam_id", examIds);
 
-  if (error) return passedExamIds;
+  if (error) {
+    logError("exam.passed_ids_query_failed", error, {
+      studentId,
+      examCount: examIds.length,
+    });
+    return passedExamIds;
+  }
 
   for (const row of data ?? []) {
     const result = row as { exam_id: number };
@@ -178,6 +199,7 @@ export async function getOrStartExamAttemptForModule(
   });
 
   if (error) {
+    logError("exam.start_rpc_failed", error, { moduleId });
     return {
       success: false,
       error: "De toets kon niet worden gestart. Controleer of de exam migration is toegepast.",
@@ -215,6 +237,10 @@ export async function submitExamAttempt(params: {
   });
 
   if (error) {
+    logError("exam.submit_rpc_failed", error, {
+      attemptId: params.attemptId,
+      answerCount: params.answers.length,
+    });
     return {
       success: false,
       error: "Je resultaat kon niet worden opgeslagen.",

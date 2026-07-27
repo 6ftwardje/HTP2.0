@@ -59,9 +59,7 @@ export default async function ModuleDetailPage({ params }: Props) {
     exam ? hasPassedExam(student.id, exam.id) : Promise.resolve(false),
   ]);
   const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
-  const statusMap = await getLessonStatuses(student.id, lessons, undefined, {
-    unlockAll: canAccessModule && intakeComplete,
-  });
+  const statusMap = await getLessonStatuses(student.id, lessons);
   const lessonsWithStatusList = lessonsWithStatus(lessons, statusMap);
   const lessonTypeGroups = (["theorie", "praktijk"] as LessonType[])
     .map((type) => ({

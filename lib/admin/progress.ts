@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Module } from "@/lib/types";
 import { getExamSummariesByModuleForStudent } from "@/lib/admin/exams";
 import { requireAdmin } from "@/lib/admin/access";
+import { measureAsync } from "@/lib/performance";
 import type {
   AdminModuleProgressBlock,
   AdminStudentProgressOverview,
@@ -32,23 +33,32 @@ export async function buildAdminStudentProgressDetail(
 
   const db = await createClient();
 
-  const { data: modRows } = await db
-    .from("modules")
-    .select("*")
-    .eq("is_published", true)
-    .order("order_index", { ascending: true });
+  const { data: modRows } = await measureAsync(
+    "admin.student.detail.progress.modules.query",
+    async () =>
+      await db
+        .from("modules")
+        .select("*")
+        .eq("is_published", true)
+        .order("order_index", { ascending: true })
+  );
 
   const modules = (modRows ?? []) as Module[];
   const moduleIds = modules.map((m) => m.id);
 
   const { data: lessonRows } =
     moduleIds.length > 0
-      ? await db
-          .from("lessons")
-          .select("*")
-          .eq("is_published", true)
-          .in("module_id", moduleIds)
-          .order("order_index", { ascending: true })
+      ? await measureAsync(
+          "admin.student.detail.progress.lessons.query",
+          async () =>
+            await db
+              .from("lessons")
+              .select("*")
+              .eq("is_published", true)
+              .in("module_id", moduleIds)
+              .order("order_index", { ascending: true }),
+          { module_count: moduleIds.length }
+        )
       : { data: [] as unknown[] };
 
   const lessonsByModule = new Map<number, typeof lessonRows>();
@@ -61,14 +71,25 @@ export async function buildAdminStudentProgressDetail(
 
   const allLessonIds = (lessonRows ?? []).map((l) => (l as { id: number }).id);
 
-  const { data: progressRows } =
+  const [progressResult, examByModule] = await Promise.all([
     allLessonIds.length > 0
-      ? await db
-          .from("progress")
-          .select("lesson_id, watched, watched_at")
-          .eq("student_id", studentId)
-          .in("lesson_id", allLessonIds)
-      : { data: [] as { lesson_id: number; watched: boolean; watched_at: string | null }[] };
+      ? measureAsync(
+          "admin.student.detail.progress.progress_rows.query",
+          async () =>
+            await db
+              .from("progress")
+              .select("lesson_id, watched, watched_at")
+              .eq("student_id", studentId)
+              .in("lesson_id", allLessonIds),
+          { lesson_count: allLessonIds.length }
+        )
+      : Promise.resolve({
+          data: [] as { lesson_id: number; watched: boolean; watched_at: string | null }[],
+        }),
+    getExamSummariesByModuleForStudent(studentId, moduleIds),
+  ]);
+
+  const progressRows = progressResult.data;
 
   const progressByLesson = new Map<
     number,
@@ -85,11 +106,6 @@ export async function buildAdminStudentProgressDetail(
       watched_at: row.watched_at,
     });
   }
-
-  const examByModule = await getExamSummariesByModuleForStudent(
-    studentId,
-    moduleIds
-  );
 
   let completedLessons = 0;
   let totalLessonsPublished = 0;

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentStudent } from "@/lib/students";
+import { logDuration } from "@/lib/performance";
 import type { Student } from "@/lib/types";
 import {
   ADMIN_ACCESS_LEVEL,
@@ -34,14 +35,19 @@ export async function requireAdmin(): Promise<{ actorStudent: Student }> {
     return { actorStudent: MOCK_ADMIN };
   }
 
-  const { student, error } = await getCurrentStudent();
-  if (error || !student) {
-    redirect("/?redirectedFrom=" + encodeURIComponent("/admin"));
+  const startedAt = Date.now();
+  try {
+    const { student, error } = await getCurrentStudent();
+    if (error || !student) {
+      redirect("/?redirectedFrom=" + encodeURIComponent("/admin"));
+    }
+    if (student.access_level !== ADMIN_ACCESS_LEVEL) {
+      notFound();
+    }
+    return { actorStudent: student };
+  } finally {
+    logDuration("admin.requireAdmin", startedAt);
   }
-  if (student.access_level !== ADMIN_ACCESS_LEVEL) {
-    notFound();
-  }
-  return { actorStudent: student };
 }
 
 export function parseAccessLevel(value: unknown): AllowedAccessLevel | null {

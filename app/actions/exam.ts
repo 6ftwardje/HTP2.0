@@ -2,6 +2,7 @@
 
 import { ensureCurrentStudent } from "@/lib/students";
 import { submitExamAttempt } from "@/lib/exams";
+import { logError } from "@/lib/logger";
 
 /**
  * Submit an in-progress attempt. Scoring happens server-side in the
@@ -20,6 +21,9 @@ export async function submitExam(
 }> {
   const { student, error: studentError } = await ensureCurrentStudent();
   if (studentError || !student) {
+    if (studentError) {
+      logError("exam.submit_auth_failed", studentError);
+    }
     return { success: false, error: "Je bent niet aangemeld." };
   }
 
@@ -44,5 +48,14 @@ export async function submitExam(
     return { success: false, error: "Een of meer antwoorden zijn ongeldig." };
   }
 
-  return submitExamAttempt({ attemptId, answers: normalizedAnswers });
+  try {
+    return await submitExamAttempt({ attemptId, answers: normalizedAnswers });
+  } catch (error) {
+    logError("exam.submit_unexpected_failure", error, {
+      studentId: student.id,
+      attemptId,
+      answerCount: normalizedAnswers.length,
+    });
+    return { success: false, error: "Je resultaat kon niet worden opgeslagen." };
+  }
 }

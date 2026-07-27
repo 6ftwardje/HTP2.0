@@ -151,9 +151,7 @@ export default async function LessonPage({ params }: Props) {
   const intakeComplete = onboardingIsComplete(onboarding);
   const moduleAccessMap = await getModuleAccessMap(student.id, allModules);
   const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
-  const statusMap = await getLessonStatuses(student.id, allLessons, progressMap, {
-    unlockAll: canAccessModule && intakeComplete,
-  });
+  const statusMap = await getLessonStatuses(student.id, allLessons, progressMap);
 
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
   const status = statusMap.get(lesson.id) ?? "locked";
@@ -297,12 +295,6 @@ export default async function LessonPage({ params }: Props) {
         </div>
       </RightRailCard>
 
-      <RightRailCard title="Focus">
-        <p className="cb-caption leading-relaxed">
-          Neem één les tegelijk door. Bekijk de video rustig en werk daarna je
-          opdrachten af.
-        </p>
-      </RightRailCard>
     </>
   );
 

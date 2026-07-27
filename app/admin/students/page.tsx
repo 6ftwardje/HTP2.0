@@ -33,15 +33,15 @@ export default async function AdminStudentsPage({
   const { sortBy } = parseSort(sortRaw);
   const order = orderRaw === "asc" || orderRaw === "desc" ? orderRaw : "desc";
 
-  const { rows, total } = await listStudentsAdmin({
+  const { rows, hasNextPage } = await listStudentsAdmin({
     q,
     sortBy,
     order,
     page,
     pageSize: PAGE_SIZE,
   });
-
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const visibleFrom = rows.length > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
+  const visibleTo = rows.length > 0 ? (page - 1) * PAGE_SIZE + rows.length : 0;
 
   const buildHref = (next: Record<string, string | undefined>) => {
     const params = new URLSearchParams();
@@ -125,8 +125,8 @@ export default async function AdminStudentsPage({
 
       <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-[var(--border)] pt-6 sm:flex-row">
         <p className="cb-caption">
-          Showing {(page - 1) * PAGE_SIZE + 1}–
-          {Math.min(page * PAGE_SIZE, total)} of {total}
+          Showing {visibleFrom}–{visibleTo}
+          {hasNextPage ? "+" : ""}
         </p>
         <div className="flex gap-2">
           <Link
@@ -137,9 +137,9 @@ export default async function AdminStudentsPage({
             Previous
           </Link>
           <Link
-            href={page < totalPages ? buildHref({ page: String(page + 1) }) : "#"}
-            className={`cb-btn cb-btn-secondary text-sm ${page >= totalPages ? "pointer-events-none opacity-40" : ""}`}
-            aria-disabled={page >= totalPages}
+            href={hasNextPage ? buildHref({ page: String(page + 1) }) : "#"}
+            className={`cb-btn cb-btn-secondary text-sm ${!hasNextPage ? "pointer-events-none opacity-40" : ""}`}
+            aria-disabled={!hasNextPage}
           >
             Next
           </Link>

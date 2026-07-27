@@ -71,15 +71,21 @@ export function ExamForm({
       selectedOptionId: answers[q.id] ?? 0,
     }));
 
-    submitExam(attempt.attemptId, answersList).then((res) => {
-      setSubmitting(false);
-      if (res.success && res.score != null && res.passed != null) {
-        setResult({ score: res.score, passed: res.passed });
-        router.refresh();
-      } else {
-        setError(res.error ?? "Indienen mislukt.");
-      }
-    });
+    submitExam(attempt.attemptId, answersList)
+      .then((res) => {
+        if (res.success && res.score != null && res.passed != null) {
+          setResult({ score: res.score, passed: res.passed });
+          router.refresh();
+        } else {
+          setError(res.error ?? "Indienen mislukt.");
+        }
+      })
+      .catch(() => {
+        setError("De verbinding werd onderbroken. Probeer de toets opnieuw in te dienen.");
+      })
+      .finally(() => {
+        setSubmitting(false);
+      });
   }
 
   if (result) {

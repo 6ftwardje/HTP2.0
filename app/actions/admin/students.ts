@@ -41,8 +41,6 @@ export async function adminUpdateStudentAccessLevel(
     metadata: { access_level: level },
   });
 
-  revalidatePath("/admin/students");
-  revalidatePath(`/admin/students/${targetStudentId}`);
   return { success: true };
 }
 

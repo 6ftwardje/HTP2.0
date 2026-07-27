@@ -27,7 +27,7 @@ export default async function UpdatePasswordPage() {
           Kies een nieuw wachtwoord
         </h1>
         <p className="mt-3 text-sm leading-6 text-stone-400">
-          Gebruik minimaal 8 tekens. Daarna kun je direct verder in het platform.
+          Deze pagina werkt alleen via de beveiligde link uit je resetmail. Kies een nieuw wachtwoord van minimaal 8 tekens; daarna kun je direct verder in het platform.
         </p>
         <UpdatePasswordForm />
       </section>

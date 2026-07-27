@@ -36,15 +36,15 @@ export default async function AdminStudentDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { actorStudent } = await requireAdmin();
-  const { id } = await params;
+  const [{ actorStudent }, { id }] = await Promise.all([requireAdmin(), params]);
 
-  const detail = await getAdminStudentDetail(id);
+  const [detail, mentorSummary] = await Promise.all([
+    getAdminStudentDetail(id),
+    getMentorSummaryAdmin(id),
+  ]);
   if (!detail) {
     notFound();
   }
-
-  const mentorSummary = await getMentorSummaryAdmin(id);
 
   const { student, progressOverview, modules, onboarding, mentorNotes } = detail;
   const label = student.name?.trim() || student.email;
