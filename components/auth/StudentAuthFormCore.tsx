@@ -12,7 +12,9 @@ type AuthFailure = {
 };
 type SupabaseClientFactory = () => Promise<SupabaseClient>;
 
-const LEGAL_ACCEPTANCE_VERSION = "2026-06-17";
+const LEGAL_ACCEPTANCE_VERSION = "2026-07-28-fsma-mica-v1";
+const LEGAL_ACCEPTANCE_SCOPE =
+  "terms_privacy_education_no_advice_crypto_risk_disclaimer";
 
 function getEmailAuthErrorMessage(error: AuthFailure, fallback: string) {
   if (error.status === 429) {
@@ -99,9 +101,11 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
       return;
     }
 
-    if (mode === "register" && !acceptedLegalTerms) {
+    if (mode !== "reset" && !acceptedLegalTerms) {
       setStatus("error");
-      setMessage("Bevestig eerst de voorwaarden en risicowaarschuwing.");
+      setMessage(
+        "Lees en aanvaard eerst de voorwaarden en risicowaarschuwing."
+      );
       return;
     }
 
@@ -111,6 +115,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
     const supabase = await getSupabaseClient();
 
     if (mode === "login") {
+      const acceptedAt = new Date().toISOString();
       const { error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
         password,
@@ -126,11 +131,34 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
         return;
       }
 
+      const { error: acceptanceError } = await supabase.auth.updateUser({
+        data: {
+          legal_acceptance_version: LEGAL_ACCEPTANCE_VERSION,
+          legal_acceptance_accepted_at: acceptedAt,
+          legal_acceptance_scope: LEGAL_ACCEPTANCE_SCOPE,
+          legal_acceptance_source: "login",
+        },
+      });
+
+      if (acceptanceError) {
+        console.error("[auth.legal_acceptance_save_failed]", {
+          status: acceptanceError.status,
+          code: acceptanceError.code,
+        });
+        await supabase.auth.signOut();
+        setStatus("error");
+        setMessage(
+          "Je akkoord kon niet veilig worden geregistreerd. Probeer opnieuw."
+        );
+        return;
+      }
+
       window.location.assign(redirectedFrom);
       return;
     }
 
     if (mode === "register") {
+      const acceptedAt = new Date().toISOString();
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
@@ -138,8 +166,9 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
           data: {
             full_name: fullName.trim(),
             legal_acceptance_version: LEGAL_ACCEPTANCE_VERSION,
-            legal_acceptance_accepted_at: new Date().toISOString(),
-            legal_acceptance_scope: "tos_privacy_education_risk_disclaimer",
+            legal_acceptance_accepted_at: acceptedAt,
+            legal_acceptance_scope: LEGAL_ACCEPTANCE_SCOPE,
+            legal_acceptance_source: "registration",
           },
           emailRedirectTo: getCallbackUrl(redirectedFrom),
         },
@@ -354,24 +383,29 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                 </div>
               )}
 
-              {mode === "register" && (
-                <div className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-4">
-                  <label className="flex gap-3 text-sm leading-6 text-[var(--foreground)]">
+              {mode !== "reset" && (
+                <div className="flex items-start gap-3 py-1 text-sm leading-6">
+                  <label className="flex shrink-0 items-start">
                     <input
                       type="checkbox"
                       checked={acceptedLegalTerms}
                       onChange={(event) => setAcceptedLegalTerms(event.target.checked)}
                       required
+                      aria-label="Ik aanvaard de risicowaarschuwing"
+                      aria-describedby="legal-risk-link"
                       disabled={status === "loading" || status === "success"}
                       className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--border)] accent-[var(--foreground)] disabled:opacity-60"
                     />
-                    <span>
-                      Ik aanvaard de algemene voorwaarden en privacyverklaring. Ik begrijp dat Het Trade Platform een educatief leerplatform is en geen financieel, beleggings-, fiscaal of juridisch advies verstrekt.
-                    </span>
                   </label>
-                  <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
-                    Trading en crypto brengen risico op verlies met zich mee. Lessen, voorbeelden, coaching en AI-output zijn geen koop- of verkoopaanbevelingen en bieden geen garantie op resultaat. Virtuele munten, reele risico&apos;s. De enige garantie in crypto is het risico.
-                  </p>
+                  <a
+                    id="legal-risk-link"
+                    href="/risicowaarschuwing"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-[var(--foreground)] underline underline-offset-2 hover:text-[var(--muted)]"
+                  >
+                    Lees de volledige risicowaarschuwing
+                  </a>
                 </div>
               )}
 
