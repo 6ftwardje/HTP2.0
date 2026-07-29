@@ -146,8 +146,8 @@ export default async function ModuleExamPage({ params }: Props) {
     );
 
   return (
-    <section className="grid h-auto min-h-0 gap-8 overflow-visible lg:h-[calc(100dvh-6rem)] lg:grid-cols-[minmax(0,0.85fr)_minmax(420px,1fr)] lg:overflow-hidden xl:gap-12">
-      <aside className="flex min-h-0 flex-col justify-center overflow-hidden">
+    <section className="grid min-h-0 gap-8 lg:min-h-[calc(100dvh-6rem)] lg:grid-cols-[minmax(0,0.85fr)_minmax(420px,1fr)] xl:gap-12">
+      <aside className="flex min-h-0 flex-col justify-center">
         <div className="cb-eyebrow">
           Academy / Module {moduleData.order_index} / Toets
         </div>
@@ -181,7 +181,7 @@ export default async function ModuleExamPage({ params }: Props) {
         </Link>
       </aside>
 
-      <div className="min-h-0 overflow-hidden">{main}</div>
+      <div className="min-h-0">{main}</div>
     </section>
   );
 }
