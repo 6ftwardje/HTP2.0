@@ -66,6 +66,16 @@ export default async function AdminStudentsPage({
         description="Search by name or email, sort the list, and open a profile for full progress control."
       />
 
+      <div className="mb-4 flex justify-end">
+        <a
+          href="/admin/students/export"
+          download
+          className="cb-btn cb-btn-secondary text-sm"
+        >
+          Export all students (CSV)
+        </a>
+      </div>
+
       <form
         method="get"
         className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end"
