@@ -40,7 +40,7 @@ function iconButtonClass(tone: "normal" | "danger" = "normal") {
     tone === "danger"
       ? "border-red-500/20 text-red-700 hover:bg-red-500/10 dark:text-red-300"
       : "border-[var(--border)] text-[var(--muted)] hover:bg-[color-mix(in_oklab,var(--card)_70%,var(--foreground)_6%)] hover:text-[var(--foreground)]"
-  }`;
+  } disabled:cursor-not-allowed disabled:opacity-40`;
 }
 
 function Icon({
@@ -505,15 +505,37 @@ export function AdminWeeklyUpdatesManager({
       return;
     }
 
+    if (panel.type === "edit" && panel.update.is_published) {
+      setMessage(
+        "De update is tijdelijk als concept gezet totdat de nieuwe video klaar is."
+      );
+    }
+
     try {
       setMessage("Uploading to Mux...");
       await putFileWithProgress(created.uploadUrl, file, setProgress);
       setMessage("Upload complete. Syncing status...");
-      await adminSyncWeeklyUpdateMuxUpload(weeklyUpdateId, created.uploadId);
+      const synced = await adminSyncWeeklyUpdateMuxUpload(
+        weeklyUpdateId,
+        created.uploadId
+      );
+      if (!synced.success) {
+        setProgress(null);
+        setError(
+          synced.error ??
+            "Video uploaded, but Mux status could not be synced. Try Sync again."
+        );
+        setMessage("Video uploaded safely. Mux status still needs to be synced.");
+        refresh();
+        return;
+      }
       setThumbnailFile(null);
-      setPanel({ type: "empty" });
       setProgress(null);
-      refresh("Weekly update video uploaded. Mux is processing it.");
+      refresh(
+        synced.status === "ready"
+          ? "Weekly update video is ready."
+          : "Weekly update video uploaded. Mux is processing it."
+      );
     } catch (uploadError) {
       setProgress(null);
       setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
@@ -575,14 +597,31 @@ export function AdminWeeklyUpdatesManager({
           setMessage("Uploading to Mux...");
           await putFileWithProgress(created.uploadUrl, file, setProgress);
           setMessage("Upload complete. Syncing status...");
-          await adminSyncWeeklyUpdateMuxUpload(
+          const synced = await adminSyncWeeklyUpdateMuxUpload(
             created.weeklyUpdateId,
             created.uploadId
           );
+          if (!synced.success) {
+            setProgress(null);
+            setPanel({ type: "empty" });
+            setError(
+              synced.error ??
+                "Weekly update created and video uploaded, but Mux status could not be synced. Open the update and try Sync again."
+            );
+            setMessage(
+              "Weekly update and video were saved. Mux status still needs to be synced."
+            );
+            refresh();
+            return;
+          }
           setThumbnailFile(null);
           setPanel({ type: "empty" });
           setProgress(null);
-          refresh("Weekly update created. Mux is processing the video.");
+          refresh(
+            synced.status === "ready"
+              ? "Weekly update created. Video is ready."
+              : "Weekly update created. Mux is processing the video."
+          );
         } catch (uploadError) {
           setProgress(null);
           setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
@@ -616,7 +655,16 @@ export function AdminWeeklyUpdatesManager({
         setError(result.error ?? "Could not sync Mux status.");
         return;
       }
-      refresh(result.status === "ready" ? "Video is ready." : "Mux status updated.");
+      if (result.status === "errored") {
+        setError("Mux kon deze video niet verwerken. Upload het videobestand opnieuw.");
+        refresh();
+        return;
+      }
+      refresh(
+        result.status === "ready"
+          ? "Video is ready."
+          : "Mux verwerkt de video nog. Probeer straks opnieuw te syncen."
+      );
     });
   }
 
@@ -649,8 +697,8 @@ export function AdminWeeklyUpdatesManager({
         : "Select an update";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-      <section className="min-w-0 rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+    <div className="grid gap-5 lg:h-[calc(100dvh-10rem)] lg:min-h-[620px] lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:overflow-hidden">
+      <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
         <div className="flex flex-col gap-4 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="cb-eyebrow">Archive</div>
@@ -667,7 +715,7 @@ export function AdminWeeklyUpdatesManager({
           </button>
         </div>
 
-        <div className="divide-y divide-[var(--border)]">
+        <div className="min-h-0 flex-1 divide-y divide-[var(--border)] overflow-y-auto overscroll-contain">
           {visibleUpdates.length === 0 ? (
             <div className="p-8 text-center">
               <p className="cb-body">
@@ -676,7 +724,14 @@ export function AdminWeeklyUpdatesManager({
             </div>
           ) : (
             visibleUpdates.map((update) => (
-              <div key={update.id} className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+              <div
+                key={update.id}
+                className={`grid gap-3 p-4 transition md:grid-cols-[minmax(0,1fr)_auto] md:items-center ${
+                  panel.type === "edit" && panel.update.id === update.id
+                    ? "bg-[var(--surface-hover)]"
+                    : ""
+                }`}
+              >
                 <button
                   type="button"
                   className="grid min-w-0 gap-3 text-left sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center"
@@ -764,8 +819,8 @@ export function AdminWeeklyUpdatesManager({
         </div>
       </section>
 
-      <aside className="h-fit rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 lg:sticky lg:top-6">
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] pb-4">
+      <aside className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] lg:max-h-full">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border)] p-4">
           <div>
             <div className="cb-eyebrow">Details</div>
             <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
@@ -783,7 +838,7 @@ export function AdminWeeklyUpdatesManager({
           ) : null}
         </div>
 
-        <div className="pt-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
           {panel.type === "empty" ? (
             <p className="cb-body">
               Select an update from the archive, or create a new weekly market analysis.

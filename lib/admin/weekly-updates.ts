@@ -33,6 +33,8 @@ type WeeklyUpdateVideoUpdate = Partial<
     | "mux_status"
     | "mux_upload_id"
     | "mux_error_message"
+    | "is_published"
+    | "published_at"
   >
 >;
 

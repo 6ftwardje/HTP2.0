@@ -111,6 +111,20 @@ function canPublishWeeklyUpdate(update: {
   return update.mux_status === "ready" && Boolean(update.mux_playback_id);
 }
 
+function getWeeklyUpdateSyncError(error: unknown): string {
+  const detail = error instanceof Error ? error.message : "Unknown Mux error.";
+  if (/abort|timeout|timed out|fetch failed|network/i.test(detail)) {
+    return "Mux reageerde niet op tijd. De upload is niet verloren; probeer over enkele seconden opnieuw te syncen.";
+  }
+  if (/not found|status 404/i.test(detail)) {
+    return "Mux verwerkt de upload nog. Wacht enkele seconden en probeer opnieuw te syncen.";
+  }
+  if (/rate|status 429/i.test(detail)) {
+    return "Mux krijgt tijdelijk te veel verzoeken. Wacht even en probeer opnieuw te syncen.";
+  }
+  return `Mux-sync mislukt: ${detail}`;
+}
+
 async function notifyFirstPublication({
   weeklyUpdate,
   actorStudentId,
@@ -300,6 +314,11 @@ export async function adminCreateWeeklyUpdateMuxUpload(
       mux_asset_id: null,
       mux_playback_id: null,
       mux_error_message: null,
+      // Never leave a published update pointing at a playback ID that was
+      // just cleared. The admin can publish again once the replacement is ready.
+      ...(weeklyUpdate.is_published
+        ? { is_published: false, published_at: null }
+        : {}),
     });
     if (error) return { success: false, error };
 
@@ -403,6 +422,18 @@ export async function adminSyncWeeklyUpdateMuxUpload(
     return { success: false, error: "This weekly update has no Mux upload yet." };
   }
 
+  if (
+    uploadIdRaw &&
+    weeklyUpdate.mux_upload_id &&
+    uploadId !== weeklyUpdate.mux_upload_id
+  ) {
+    return {
+      success: false,
+      error:
+        "Deze sync hoort bij een oudere upload. De nieuwste video is behouden; vernieuw de pagina en sync opnieuw.",
+    };
+  }
+
   try {
     const upload = await getMuxUpload(uploadId);
     const uploadError = getMuxErrorMessage(upload.error);
@@ -477,8 +508,7 @@ export async function adminSyncWeeklyUpdateMuxUpload(
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : "Could not sync Mux upload.",
+      error: getWeeklyUpdateSyncError(error),
     };
   }
 }

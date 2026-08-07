@@ -48,26 +48,46 @@ async function muxFetch<T>(
   path: string,
   init?: RequestInit
 ): Promise<MuxResponse<T>> {
-  const res = await fetch(`https://api.mux.com${path}`, {
-    ...init,
-    headers: {
-      Authorization: getMuxAuthHeader(),
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  const method = init?.method?.toUpperCase() ?? "GET";
+  const maxAttempts = method === "GET" ? 3 : 1;
+  let lastError: Error | null = null;
 
-  const json = (await res.json().catch(() => ({}))) as MuxResponse<T>;
-  if (!res.ok) {
-    const detail =
-      json.error?.messages?.join(" ") ||
-      json.error?.type ||
-      `Mux request failed with status ${res.status}`;
-    throw new Error(detail);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const res = await fetch(`https://api.mux.com${path}`, {
+        ...init,
+        headers: {
+          Authorization: getMuxAuthHeader(),
+          "Content-Type": "application/json",
+          ...(init?.headers ?? {}),
+        },
+        cache: "no-store",
+        signal: init?.signal ?? AbortSignal.timeout(10_000),
+      });
+
+      const json = (await res.json().catch(() => ({}))) as MuxResponse<T>;
+      if (res.ok) return json;
+
+      const detail =
+        json.error?.messages?.join(" ") ||
+        json.error?.type ||
+        `Mux request failed with status ${res.status}`;
+      lastError = new Error(detail);
+
+      // Direct uploads can briefly be unavailable immediately after creation.
+      // Retry read-only calls on eventual-consistency and transient API errors.
+      if (![404, 408, 429, 500, 502, 503, 504].includes(res.status)) break;
+    } catch (error) {
+      lastError =
+        error instanceof Error ? error : new Error("Could not reach Mux.");
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+    }
   }
 
-  return json;
+  throw lastError ?? new Error("Could not reach Mux.");
 }
 
 export async function createMuxDirectUpload({
