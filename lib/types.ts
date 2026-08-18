@@ -60,13 +60,21 @@ export type WeeklyUpdateAccessTier =
   | "premium"
   | "mentor_membership";
 
+export type MarketAnalysisType =
+  | "weekly_outlook"
+  | "market_update"
+  | "live_session";
+
+export type Market = "stocks" | "forex" | "crypto";
+
 export type WeeklyUpdate = {
   id: number;
   title: string;
   slug: string;
   summary: string | null;
   key_takeaways: string[];
-  market: string | null;
+  type: MarketAnalysisType | null;
+  market: Market | null;
   week_start_date: string;
   mentor_student_id: string | null;
   created_by_student_id: string | null;

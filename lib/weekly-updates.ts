@@ -6,6 +6,36 @@ export type WeeklyUpdateWithMentor = WeeklyUpdate & {
 };
 
 export async function listPublishedWeeklyUpdates(
+  limit = 48
+): Promise<WeeklyUpdateWithMentor[]> {
+  const db = await createClient();
+  const { data, error } = await db
+    .from("weekly_updates")
+    .select(
+      `
+        *,
+        mentor:students!weekly_updates_mentor_student_id_fkey (
+          id,
+          name,
+          email
+        )
+      `
+    )
+    .eq("is_published", true)
+    .in("type", ["weekly_outlook", "market_update"])
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("listPublishedWeeklyUpdates", error.message);
+    return [];
+  }
+
+  return (data ?? []) as WeeklyUpdateWithMentor[];
+}
+
+export async function listPublishedWeeklyOutlooks(
   limit = 12
 ): Promise<WeeklyUpdateWithMentor[]> {
   const db = await createClient();
@@ -22,11 +52,42 @@ export async function listPublishedWeeklyUpdates(
       `
     )
     .eq("is_published", true)
+    .eq("type", "weekly_outlook")
     .order("week_start_date", { ascending: false })
     .limit(limit);
 
   if (error) {
-    console.error("listPublishedWeeklyUpdates", error.message);
+    console.error("listPublishedWeeklyOutlooks", error.message);
+    return [];
+  }
+
+  return (data ?? []) as WeeklyUpdateWithMentor[];
+}
+
+export async function listPublishedMarketUpdates(
+  limit = 60
+): Promise<WeeklyUpdateWithMentor[]> {
+  const db = await createClient();
+  const { data, error } = await db
+    .from("weekly_updates")
+    .select(
+      `
+        *,
+        mentor:students!weekly_updates_mentor_student_id_fkey (
+          id,
+          name,
+          email
+        )
+      `
+    )
+    .eq("is_published", true)
+    .eq("type", "market_update")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("listPublishedMarketUpdates", error.message);
     return [];
   }
 
@@ -51,6 +112,7 @@ export async function getPublishedWeeklyUpdateBySlug(
     )
     .eq("slug", slug)
     .eq("is_published", true)
+    .in("type", ["weekly_outlook", "market_update"])
     .maybeSingle();
 
   if (error || !data) return null;

@@ -25,5 +25,6 @@ export async function markWeeklyUpdateWatched(
 
   revalidatePath("/dashboard");
   revalidatePath("/weekly-updates");
+  revalidatePath("/market-analysis");
   return { success: true };
 }

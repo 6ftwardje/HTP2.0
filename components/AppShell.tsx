@@ -59,8 +59,8 @@ const coreNav = [
     ),
   },
   {
-    href: "/weekly-updates",
-    label: "Weekly Updates",
+    href: "/market-analysis",
+    label: "Marktanalyse",
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path

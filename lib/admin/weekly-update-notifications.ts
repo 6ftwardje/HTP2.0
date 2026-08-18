@@ -14,7 +14,13 @@ export async function notifyWeeklyUpdatePublished({
 }: {
   weeklyUpdate: Pick<
     WeeklyUpdate,
-    "id" | "title" | "slug" | "summary" | "access_tier"
+    | "id"
+    | "title"
+    | "slug"
+    | "summary"
+    | "access_tier"
+    | "type"
+    | "market"
   >;
   actorStudentId: string;
 }): Promise<{ notified: number; skipped: boolean; error: string | null }> {
@@ -70,10 +76,15 @@ export async function notifyWeeklyUpdatePublished({
       actor_student_id: actorStudentId,
       target_table: "weekly_updates",
       target_id: targetId,
-      title: "Nieuwe weekly update",
+      title:
+        weeklyUpdate.type === "weekly_outlook"
+          ? "Nieuwe weekly outlook"
+          : "Nieuwe markt update",
       body: weeklyUpdate.title,
-      href: `/weekly-updates/${weeklyUpdate.slug}`,
+      href: `/market-analysis/${weeklyUpdate.slug}`,
       metadata: {
+        type: weeklyUpdate.type,
+        market: weeklyUpdate.market,
         access_tier: weeklyUpdate.access_tier,
         access_label: accessOption.label,
         summary: weeklyUpdate.summary,
@@ -123,4 +134,3 @@ export function isWeeklyUpdateNotificationTarget(
   const option = getWeeklyUpdateAccessOption(accessTier);
   return option.selectable && option.minAccessLevel !== null;
 }
-

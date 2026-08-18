@@ -88,8 +88,8 @@ const adminNav = [
     ),
   },
   {
-    href: "/admin/weekly-updates",
-    label: "Weekly Updates",
+    href: "/admin/market-analysis",
+    label: "Marktanalyse",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path

@@ -20,7 +20,12 @@ import {
   getMuxUpload,
 } from "@/lib/mux";
 import { SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS } from "@/lib/weekly-update-access";
-import type { WeeklyUpdateAccessTier } from "@/lib/types";
+import { getMondayDate } from "@/lib/market-analysis";
+import type {
+  Market,
+  MarketAnalysisType,
+  WeeklyUpdateAccessTier,
+} from "@/lib/types";
 
 type ActionResult<T extends object = object> = T & {
   success: boolean;
@@ -37,6 +42,11 @@ const THUMBNAIL_MIME_EXTENSIONS: Record<string, string> = {
 };
 const ACCESS_TIERS: WeeklyUpdateAccessTier[] =
   SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS;
+const MARKET_ANALYSIS_TYPES: Array<Exclude<MarketAnalysisType, "live_session">> = [
+  "weekly_outlook",
+  "market_update",
+];
+const MARKETS: Market[] = ["stocks", "forex", "crypto"];
 
 type ThumbnailUploadInput = {
   name?: string;
@@ -88,9 +98,14 @@ function getCorsOrigin(): string {
 function revalidateWeeklyUpdatePaths(slug?: string) {
   revalidatePath("/admin");
   revalidatePath("/admin/weekly-updates");
+  revalidatePath("/admin/market-analysis");
   revalidatePath("/dashboard");
   revalidatePath("/weekly-updates");
-  if (slug) revalidatePath(`/weekly-updates/${slug}`);
+  revalidatePath("/market-analysis");
+  if (slug) {
+    revalidatePath(`/weekly-updates/${slug}`);
+    revalidatePath(`/market-analysis/${slug}`);
+  }
 }
 
 function validateThumbnailUpload(input: ThumbnailUploadInput): string | null {
@@ -125,6 +140,13 @@ function getWeeklyUpdateSyncError(error: unknown): string {
   return `Mux-sync mislukt: ${detail}`;
 }
 
+function getMarketAnalysisSaveError(error: string): string {
+  if (error.includes("weekly_updates_one_outlook_per_week")) {
+    return "Er bestaat al een weekly outlook voor deze week. Bewerk de bestaande outlook in plaats van een tweede toe te voegen.";
+  }
+  return error;
+}
+
 async function notifyFirstPublication({
   weeklyUpdate,
   actorStudentId,
@@ -142,10 +164,31 @@ async function notifyFirstPublication({
   }
 }
 
-function readWeeklyUpdateInput(formData: FormData) {
+function readWeeklyUpdateInput(
+  formData: FormData,
+  existingWeekStartDate?: string | null
+) {
   const title = asString(formData.get("title"));
   const slug = slugify(asString(formData.get("slug")) || title);
-  const weekStartDate = asString(formData.get("week_start_date"));
+  const typeRaw = asString(formData.get("type"));
+  const type = MARKET_ANALYSIS_TYPES.includes(
+    typeRaw as Exclude<MarketAnalysisType, "live_session">
+  )
+    ? (typeRaw as Exclude<MarketAnalysisType, "live_session">)
+    : null;
+  const marketRaw = asString(formData.get("market"));
+  const market = MARKETS.includes(marketRaw as Market)
+    ? (marketRaw as Market)
+    : null;
+  const automaticDate = new Date().toISOString().slice(0, 10);
+  const weekStartDate =
+    type === "weekly_outlook"
+      ? getMondayDate(
+          existingWeekStartDate
+            ? new Date(`${existingWeekStartDate}T12:00:00`)
+            : new Date()
+        )
+      : existingWeekStartDate ?? automaticDate;
   const accessTierRaw = asString(formData.get("access_tier"));
   const accessTier = ACCESS_TIERS.includes(accessTierRaw as WeeklyUpdateAccessTier)
     ? (accessTierRaw as WeeklyUpdateAccessTier)
@@ -154,6 +197,10 @@ function readWeeklyUpdateInput(formData: FormData) {
 
   if (!title) return { error: "Title is required." as const };
   if (!slug) return { error: "Slug is required." as const };
+  if (!type) return { error: "Kies verplicht een videotype." as const };
+  if (type === "market_update" && !market) {
+    return { error: "Kies verplicht een markt voor deze markt update." as const };
+  }
   if (!weekStartDate || Number.isNaN(Date.parse(weekStartDate))) {
     return { error: "Choose a valid week date." as const };
   }
@@ -165,7 +212,8 @@ function readWeeklyUpdateInput(formData: FormData) {
       slug,
       summary: asNullableString(formData.get("summary")),
       key_takeaways: asLineList(formData.get("key_takeaways")),
-      market: asNullableString(formData.get("market")),
+      type,
+      market: type === "market_update" ? market : null,
       week_start_date: weekStartDate,
       mentor_student_id: asNullableString(formData.get("mentor_student_id")),
       access_tier: accessTier,
@@ -195,7 +243,7 @@ export async function adminCreateWeeklyUpdate(
     video_provider: "mux",
     mux_playback_policy: "public",
   });
-  if (error) return { success: false, error };
+  if (error) return { success: false, error: getMarketAnalysisSaveError(error) };
 
   logAdminAction("weekly_update.created", {
     actorStudentId: actorStudent.id,
@@ -212,15 +260,18 @@ export async function adminUpdateWeeklyUpdate(
 ): Promise<ActionResult> {
   const { actorStudent } = await requireAdmin();
   const weeklyUpdateId = parsePositiveInteger(weeklyUpdateIdRaw);
-  if (!weeklyUpdateId) return { success: false, error: "Invalid weekly update." };
-
-  const parsed = readWeeklyUpdateInput(formData);
-  if ("error" in parsed) return { success: false, error: parsed.error };
+  if (!weeklyUpdateId) return { success: false, error: "Ongeldige marktanalyse." };
 
   const currentWeeklyUpdate = await getWeeklyUpdateAdmin(weeklyUpdateId);
   if (!currentWeeklyUpdate) {
-    return { success: false, error: "Weekly update not found." };
+    return { success: false, error: "Marktanalyse niet gevonden." };
   }
+
+  const parsed = readWeeklyUpdateInput(
+    formData,
+    currentWeeklyUpdate.week_start_date
+  );
+  if ("error" in parsed) return { success: false, error: parsed.error };
 
   const wasPublished = currentWeeklyUpdate.is_published;
   const willPublish = parsed.input.is_published && !wasPublished;
@@ -228,7 +279,7 @@ export async function adminUpdateWeeklyUpdate(
     return {
       success: false,
       error:
-        "De slug van een gepubliceerde weekly update kan niet worden aangepast.",
+        "De slug van een gepubliceerde marktanalyse kan niet worden aangepast.",
     };
   }
   if (willPublish && !canPublishWeeklyUpdate(currentWeeklyUpdate)) {
@@ -246,7 +297,7 @@ export async function adminUpdateWeeklyUpdate(
   };
 
   const { error } = await updateWeeklyUpdateAdmin(weeklyUpdateId, input);
-  if (error) return { success: false, error };
+  if (error) return { success: false, error: getMarketAnalysisSaveError(error) };
 
   if (willPublish) {
     const updatedWeeklyUpdate = await getWeeklyUpdateAdmin(weeklyUpdateId);
@@ -272,10 +323,10 @@ export async function adminDeleteWeeklyUpdate(
 ): Promise<ActionResult> {
   const { actorStudent } = await requireAdmin();
   const weeklyUpdateId = parsePositiveInteger(weeklyUpdateIdRaw);
-  if (!weeklyUpdateId) return { success: false, error: "Invalid weekly update." };
+  if (!weeklyUpdateId) return { success: false, error: "Ongeldige marktanalyse." };
 
   const weeklyUpdate = await getWeeklyUpdateAdmin(weeklyUpdateId);
-  if (!weeklyUpdate) return { success: false, error: "Weekly update not found." };
+  if (!weeklyUpdate) return { success: false, error: "Marktanalyse niet gevonden." };
 
   const { error } = await deleteWeeklyUpdateAdmin(weeklyUpdateId);
   if (error) return { success: false, error };
@@ -294,10 +345,10 @@ export async function adminCreateWeeklyUpdateMuxUpload(
 ): Promise<ActionResult<{ uploadId?: string; uploadUrl?: string }>> {
   const { actorStudent } = await requireAdmin();
   const weeklyUpdateId = parsePositiveInteger(weeklyUpdateIdRaw);
-  if (!weeklyUpdateId) return { success: false, error: "Invalid weekly update." };
+  if (!weeklyUpdateId) return { success: false, error: "Ongeldige marktanalyse." };
 
   const weeklyUpdate = await getWeeklyUpdateAdmin(weeklyUpdateId);
-  if (!weeklyUpdate) return { success: false, error: "Weekly update not found." };
+  if (!weeklyUpdate) return { success: false, error: "Marktanalyse niet gevonden." };
 
   try {
     const upload = await createMuxDirectUpload({
@@ -359,7 +410,12 @@ export async function adminCreateWeeklyUpdateWithMuxUpload(
     mux_playback_policy: "public",
   });
   if (error || !weeklyUpdate) {
-    return { success: false, error: error ?? "Could not create weekly update." };
+    return {
+      success: false,
+      error: error
+        ? getMarketAnalysisSaveError(error)
+        : "De marktanalyse kon niet worden toegevoegd.",
+    };
   }
 
   try {
@@ -408,10 +464,10 @@ export async function adminSyncWeeklyUpdateMuxUpload(
 ): Promise<ActionResult<{ status?: string }>> {
   const { actorStudent } = await requireAdmin();
   const weeklyUpdateId = parsePositiveInteger(weeklyUpdateIdRaw);
-  if (!weeklyUpdateId) return { success: false, error: "Invalid weekly update." };
+  if (!weeklyUpdateId) return { success: false, error: "Ongeldige marktanalyse." };
 
   const weeklyUpdate = await getWeeklyUpdateAdmin(weeklyUpdateId);
-  if (!weeklyUpdate) return { success: false, error: "Weekly update not found." };
+  if (!weeklyUpdate) return { success: false, error: "Marktanalyse niet gevonden." };
 
   const uploadId =
     typeof uploadIdRaw === "string" && uploadIdRaw.trim()
@@ -419,7 +475,7 @@ export async function adminSyncWeeklyUpdateMuxUpload(
       : weeklyUpdate.mux_upload_id;
 
   if (!uploadId) {
-    return { success: false, error: "This weekly update has no Mux upload yet." };
+    return { success: false, error: "Deze marktanalyse heeft nog geen Mux-upload." };
   }
 
   if (
@@ -519,7 +575,7 @@ export async function adminCreateWeeklyUpdateThumbnailUpload(
 ): Promise<ActionResult<{ path?: string; token?: string; publicUrl?: string }>> {
   const { actorStudent } = await requireAdmin();
   const weeklyUpdateId = parsePositiveInteger(weeklyUpdateIdRaw);
-  if (!weeklyUpdateId) return { success: false, error: "Invalid weekly update." };
+  if (!weeklyUpdateId) return { success: false, error: "Ongeldige marktanalyse." };
 
   const validationError = validateThumbnailUpload(fileInput);
   if (validationError) return { success: false, error: validationError };
@@ -554,7 +610,7 @@ export async function adminUpdateWeeklyUpdateThumbnail(
 ): Promise<ActionResult> {
   const { actorStudent } = await requireAdmin();
   const weeklyUpdateId = parsePositiveInteger(weeklyUpdateIdRaw);
-  if (!weeklyUpdateId) return { success: false, error: "Invalid weekly update." };
+  if (!weeklyUpdateId) return { success: false, error: "Ongeldige marktanalyse." };
 
   const thumbnailUrl = asNullableString(thumbnailUrlRaw);
   if (!thumbnailUrl) return { success: false, error: "Thumbnail URL is required." };

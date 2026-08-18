@@ -14,7 +14,7 @@ import {
 } from "@/lib/onboarding";
 import { stripModulePrefix } from "@/lib/module-title";
 import { ensureCurrentStudent } from "@/lib/students";
-import { listPublishedWeeklyUpdates } from "@/lib/weekly-updates";
+import { listPublishedWeeklyOutlooks } from "@/lib/weekly-updates";
 
 type Props = {
   searchParams?: Promise<{ intake?: string }>;
@@ -32,7 +32,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       ? getDashboardOverviewReadModel(student.id, student.access_level)
       : getDashboardOverview(student.id, student.access_level),
     getStudentOnboardingResponse(student.id),
-    listPublishedWeeklyUpdates(3),
+    listPublishedWeeklyOutlooks(1),
   ]);
   const { nextStep } = overview;
   const intakeComplete = onboardingIsComplete(onboarding);
@@ -300,18 +300,18 @@ export default async function DashboardPage({ searchParams }: Props) {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
           <section
-            id="weekly-updates"
+            id="market-analysis"
             className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="cb-eyebrow">Weekly Updates</div>
+                <div className="cb-eyebrow">Marktanalyse</div>
                 <h2 className="mt-2 text-2xl font-extrabold leading-tight text-[var(--foreground)]">
                   Marktanalyse van de week
                 </h2>
               </div>
               <Link
-                href="/weekly-updates"
+                href="/market-analysis"
                 className="shrink-0 text-sm font-semibold text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
               >
                 Archief →
@@ -321,13 +321,13 @@ export default async function DashboardPage({ searchParams }: Props) {
             {latestWeeklyUpdate ? (
               <div className="mt-6 grid gap-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
                 <Link
-                  href={`/weekly-updates/${latestWeeklyUpdate.slug}`}
+                  href={`/market-analysis/${latestWeeklyUpdate.slug}`}
                   className="relative block overflow-hidden rounded-lg bg-black"
                 >
                   <CourseThumbnail
                     src={latestWeeklyUpdate.thumbnail_url}
                     title={latestWeeklyUpdate.title}
-                    eyebrow={latestWeeklyUpdate.market ?? "Market"}
+                    eyebrow="Weekly outlook"
                     className="aspect-[16/10] w-full"
                   />
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -356,7 +356,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                     </p>
                   ) : null}
                   <Link
-                    href={`/weekly-updates/${latestWeeklyUpdate.slug}`}
+                    href={`/market-analysis/${latestWeeklyUpdate.slug}`}
                     className="mt-4 inline-flex cb-btn cb-btn-secondary px-4 py-2 text-sm"
                   >
                     Bekijk analyse
@@ -366,8 +366,8 @@ export default async function DashboardPage({ searchParams }: Props) {
             ) : (
               <div className="mt-6 rounded-lg border border-dashed border-[var(--border)] p-5">
                 <p className="cb-body">
-                  Er staat nog geen weekly update klaar. Zodra een mentor publiceert,
-                  verschijnt de nieuwste analyse hier.
+                  Er staat nog geen weekly outlook klaar. Zodra een mentor publiceert,
+                  verschijnt de startanalyse van de week hier.
                 </p>
               </div>
             )}

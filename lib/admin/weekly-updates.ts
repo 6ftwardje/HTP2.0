@@ -1,6 +1,12 @@
 import { requireAdmin } from "@/lib/admin/access";
 import { createClient } from "@/lib/supabase/server";
-import type { Student, WeeklyUpdate, WeeklyUpdateAccessTier } from "@/lib/types";
+import type {
+  Market,
+  MarketAnalysisType,
+  Student,
+  WeeklyUpdate,
+  WeeklyUpdateAccessTier,
+} from "@/lib/types";
 
 export type AdminWeeklyUpdateRow = WeeklyUpdate & {
   mentor: Pick<Student, "id" | "name" | "email"> | null;
@@ -11,7 +17,8 @@ export type WeeklyUpdateInput = {
   slug: string;
   summary: string | null;
   key_takeaways: string[];
-  market: string | null;
+  type: Exclude<MarketAnalysisType, "live_session">;
+  market: Market | null;
   week_start_date: string;
   mentor_student_id: string | null;
   access_tier: WeeklyUpdateAccessTier;

@@ -16,7 +16,18 @@ import {
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
-import type { Student, WeeklyUpdateAccessTier } from "@/lib/types";
+import {
+  getIsoWeekNumber,
+  getMarketAnalysisTypeLabel,
+  getMarketLabel,
+  MARKET_ANALYSIS_TYPE_OPTIONS,
+  MARKET_OPTIONS,
+} from "@/lib/market-analysis";
+import type {
+  MarketAnalysisType,
+  Student,
+  WeeklyUpdateAccessTier,
+} from "@/lib/types";
 import {
   getWeeklyUpdateAccessLabel,
   WEEKLY_UPDATE_ACCESS_OPTIONS,
@@ -198,8 +209,8 @@ function ThumbnailField({
     <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_86%,var(--card)_14%)]">
       <CourseThumbnail
         src={previewUrl}
-        title={update?.title ?? "Weekly update thumbnail"}
-        eyebrow="Weekly"
+        title={update?.title ?? "Marktanalyse thumbnail"}
+        eyebrow={getMarketAnalysisTypeLabel(update?.type ?? null)}
         className="aspect-[16/9] w-full"
       />
       <div className="grid gap-3 p-3">
@@ -256,27 +267,82 @@ function WeeklyUpdateFields({
   mentors: MentorOption[];
   onThumbnailFileChange: (file: File | null) => void;
 }) {
+  const [analysisType, setAnalysisType] = useState<MarketAnalysisType | "">(
+    update?.type ?? ""
+  );
+
+  useEffect(() => {
+    setAnalysisType(update?.type ?? "");
+  }, [update?.id, update?.type]);
+
   return (
     <div className="grid gap-3">
       <ThumbnailField update={update} onFileChange={onThumbnailFileChange} />
+      <label className="space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+          Videotype <span className="text-red-600">*</span>
+        </span>
+        <select
+          name="type"
+          value={analysisType}
+          required
+          className={fieldClass()}
+          onChange={(event) =>
+            setAnalysisType(event.currentTarget.value as MarketAnalysisType | "")
+          }
+        >
+          <option value="" disabled>Kies videotype</option>
+          {MARKET_ANALYSIS_TYPE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+        <span className="block text-xs leading-5 text-[var(--muted)]">
+          Dit bepaalt automatisch waar de video voor leden verschijnt.
+        </span>
+      </label>
+      {analysisType === "market_update" ? (
+        <label className="space-y-1.5">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+            Markt <span className="text-red-600">*</span>
+          </span>
+          <select
+            name="market"
+            defaultValue={update?.market ?? ""}
+            required
+            className={fieldClass()}
+          >
+            <option value="" disabled>Kies markt</option>
+            {MARKET_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <input type="hidden" name="market" value="" />
+      )}
+      {analysisType === "weekly_outlook" ? (
+        <div className="rounded-lg border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_72%,var(--background)_28%)] px-3 py-2.5">
+          <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Week & publicatie</div>
+          <p className="mt-1 text-sm text-[var(--foreground)]">
+            {update?.week_start_date
+              ? `Week ${getIsoWeekNumber(update.week_start_date)} · ${formatDate(update.week_start_date)}`
+              : "Weeknummer en maandagdatum worden automatisch gekoppeld."}
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">De publicatiedatum wordt vastgelegd bij publiceren.</p>
+        </div>
+      ) : null}
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
           Title
         </span>
         <input name="title" defaultValue={update?.title ?? ""} required className={fieldClass()} />
       </label>
-      <div className="grid gap-3 sm:grid-cols-[1fr_150px]">
+      <div className="grid gap-3">
         <label className="space-y-1.5">
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
             Slug
           </span>
           <input name="slug" defaultValue={update?.slug ?? ""} placeholder="auto from title" className={fieldClass()} />
-        </label>
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Week
-          </span>
-          <input name="week_start_date" type="date" defaultValue={update?.week_start_date ?? new Date().toISOString().slice(0, 10)} required className={fieldClass()} />
         </label>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -313,12 +379,6 @@ function WeeklyUpdateFields({
           </span>
         </label>
       </div>
-      <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Market
-        </span>
-        <input name="market" defaultValue={update?.market ?? "Crypto"} className={fieldClass()} />
-      </label>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
           Summary
@@ -361,14 +421,14 @@ function DeleteConfirmModal({
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-stone-950/45 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="delete-weekly-update-title"
+      aria-labelledby="delete-market-analysis-title"
     >
       <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-2xl">
-        <h2 id="delete-weekly-update-title" className="text-lg font-semibold text-[var(--foreground)]">
-          Delete weekly update?
+        <h2 id="delete-market-analysis-title" className="text-lg font-semibold text-[var(--foreground)]">
+          Video verwijderen?
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          This will delete <span className="font-semibold">{confirm.update.title}</span> and remove its watch rows.
+          <span className="font-semibold">{confirm.update.title}</span> en de bijbehorende kijkstatus worden verwijderd.
         </p>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button type="button" className="cb-btn cb-btn-secondary justify-center text-sm" disabled={pending} onClick={onCancel}>
@@ -408,10 +468,19 @@ export function AdminWeeklyUpdatesManager({
   const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [mounted, setMounted] = useState(false);
   const [deletedIds, setDeletedIds] = useState<Set<number>>(() => new Set());
+  const [archiveFilter, setArchiveFilter] = useState<"all" | "uncategorized">("all");
 
-  const visibleUpdates = useMemo(
+  const availableUpdates = useMemo(
     () => updates.filter((update) => !deletedIds.has(update.id)),
     [updates, deletedIds]
+  );
+  const uncategorizedCount = availableUpdates.filter((update) => !update.type).length;
+  const visibleUpdates = useMemo(
+    () =>
+      archiveFilter === "uncategorized"
+        ? availableUpdates.filter((update) => !update.type)
+        : availableUpdates,
+    [archiveFilter, availableUpdates]
   );
   const selectedUpdate =
     panel.type === "edit"
@@ -533,8 +602,8 @@ export function AdminWeeklyUpdatesManager({
       setProgress(null);
       refresh(
         synced.status === "ready"
-          ? "Weekly update video is ready."
-          : "Weekly update video uploaded. Mux is processing it."
+          ? "De video is klaar."
+          : "De video is geüpload. Mux verwerkt hem nog."
       );
     } catch (uploadError) {
       setProgress(null);
@@ -551,7 +620,7 @@ export function AdminWeeklyUpdatesManager({
       if (update) {
         const saved = await adminUpdateWeeklyUpdate(update.id, formData);
         if (!saved.success) {
-          setError(saved.error ?? "Could not save weekly update.");
+          setError(saved.error ?? "De video kon niet worden opgeslagen.");
           return;
         }
 
@@ -570,17 +639,17 @@ export function AdminWeeklyUpdatesManager({
 
         setThumbnailFile(null);
         setPanel({ type: "empty" });
-        refresh("Weekly update saved.");
+        refresh("Video opgeslagen.");
         return;
       }
 
       if (file) {
-        setMessage("Creating weekly update and upload...");
+        setMessage("Video-item en upload worden voorbereid...");
         setProgress(0);
         const created = await adminCreateWeeklyUpdateWithMuxUpload(formData);
         if (!created.success || !created.weeklyUpdateId || !created.uploadId || !created.uploadUrl) {
           setProgress(null);
-          setError(created.error ?? "Could not create weekly update upload.");
+          setError(created.error ?? "De video-upload kon niet worden voorbereid.");
           return;
         }
         try {
@@ -606,10 +675,10 @@ export function AdminWeeklyUpdatesManager({
             setPanel({ type: "empty" });
             setError(
               synced.error ??
-                "Weekly update created and video uploaded, but Mux status could not be synced. Open the update and try Sync again."
+                "De video is opgeslagen en geüpload, maar de Mux-status kon niet worden gesynchroniseerd. Open de video en probeer Sync opnieuw."
             );
             setMessage(
-              "Weekly update and video were saved. Mux status still needs to be synced."
+              "De video is veilig opgeslagen. De Mux-status moet nog worden gesynchroniseerd."
             );
             refresh();
             return;
@@ -619,8 +688,8 @@ export function AdminWeeklyUpdatesManager({
           setProgress(null);
           refresh(
             synced.status === "ready"
-              ? "Weekly update created. Video is ready."
-              : "Weekly update created. Mux is processing the video."
+              ? "Video toegevoegd en klaar voor gebruik."
+              : "Video toegevoegd. Mux verwerkt hem nog."
           );
         } catch (uploadError) {
           setProgress(null);
@@ -631,7 +700,7 @@ export function AdminWeeklyUpdatesManager({
 
       const created = await adminCreateWeeklyUpdate(formData);
       if (!created.success) {
-        setError(created.error ?? "Could not create weekly update.");
+        setError(created.error ?? "De video kon niet worden toegevoegd.");
         return;
       }
       if (selectedThumbnailFile && created.weeklyUpdateId) {
@@ -643,7 +712,7 @@ export function AdminWeeklyUpdatesManager({
       }
       setThumbnailFile(null);
       setPanel({ type: "empty" });
-      refresh("Weekly update created.");
+      refresh("Video toegevoegd.");
     });
   }
 
@@ -673,7 +742,7 @@ export function AdminWeeklyUpdatesManager({
     startTransition(async () => {
       const result = await adminDeleteWeeklyUpdate(update.id);
       if (!result.success) {
-        setError(result.error ?? "Could not delete weekly update.");
+        setError(result.error ?? "De video kon niet worden verwijderd.");
         return;
       }
       setDeletedIds((current) => {
@@ -685,25 +754,25 @@ export function AdminWeeklyUpdatesManager({
         setThumbnailFile(null);
         setPanel({ type: "empty" });
       }
-      refresh("Weekly update deleted.");
+      refresh("Video verwijderd.");
     });
   }
 
   const panelTitle =
     panel.type === "create"
-      ? "New weekly update"
+      ? "Nieuwe video"
       : panel.type === "edit"
-        ? "Edit weekly update"
-        : "Select an update";
+        ? "Video bewerken"
+        : "Selecteer een video";
 
   return (
     <div className="grid gap-5 lg:h-[calc(100dvh-10rem)] lg:min-h-[620px] lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:overflow-hidden">
       <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
         <div className="flex flex-col gap-4 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="cb-eyebrow">Archive</div>
+            <div className="cb-eyebrow">Bibliotheek</div>
             <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
-              Weekly updates
+              Marktanalyse
             </h2>
           </div>
           <button
@@ -711,7 +780,28 @@ export function AdminWeeklyUpdatesManager({
             className="cb-btn cb-btn-primary text-sm"
             onClick={() => resetPanel({ type: "create" })}
           >
-            <Icon name="plus" /> Weekly update
+            <Icon name="plus" /> Video toevoegen
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--border)] px-4 py-2" role="tablist" aria-label="Filter beheer">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={archiveFilter === "all"}
+            className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-bold ${archiveFilter === "all" ? "bg-[var(--foreground)] text-[var(--background)]" : "text-[var(--muted)]"}`}
+            onClick={() => setArchiveFilter("all")}
+          >
+            Alle video’s ({availableUpdates.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={archiveFilter === "uncategorized"}
+            className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-bold ${archiveFilter === "uncategorized" ? "bg-[var(--foreground)] text-[var(--background)]" : "text-[var(--muted)]"}`}
+            onClick={() => setArchiveFilter("uncategorized")}
+          >
+            Niet gecategoriseerd ({uncategorizedCount})
           </button>
         </div>
 
@@ -719,7 +809,9 @@ export function AdminWeeklyUpdatesManager({
           {visibleUpdates.length === 0 ? (
             <div className="p-8 text-center">
               <p className="cb-body">
-                No weekly updates yet. Create the first market analysis to start the archive.
+                {archiveFilter === "uncategorized"
+                  ? "Alle bestaande video’s zijn gecategoriseerd."
+                  : "Nog geen marktanalyses. Voeg de eerste video toe."}
               </p>
             </div>
           ) : (
@@ -740,7 +832,7 @@ export function AdminWeeklyUpdatesManager({
                   <CourseThumbnail
                     src={update.thumbnail_url}
                     title={update.title}
-                    eyebrow={update.market ?? "Market"}
+                    eyebrow={update.type === "market_update" ? getMarketLabel(update.market) : getMarketAnalysisTypeLabel(update.type)}
                     className="aspect-[16/10] rounded-xl"
                     muted={!update.is_published}
                   />
@@ -756,9 +848,17 @@ export function AdminWeeklyUpdatesManager({
                       <span className="cb-badge cb-badge-locked">
                         {accessLabel(update.access_tier)}
                       </span>
+                      <span className={update.type ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
+                        {getMarketAnalysisTypeLabel(update.type)}
+                      </span>
+                      {update.type === "market_update" ? (
+                        <span className="cb-badge cb-badge-available">{getMarketLabel(update.market)}</span>
+                      ) : null}
                     </div>
                     <p className="mt-1 text-sm text-[var(--muted)]">
-                      Week van {formatDate(update.week_start_date)}
+                      {update.type === "weekly_outlook"
+                        ? `Week ${getIsoWeekNumber(update.week_start_date)} · ${formatDate(update.week_start_date)}`
+                        : formatDate(update.published_at ?? update.created_at)}
                       {update.mentor ? ` · ${update.mentor.name ?? update.mentor.email}` : ""}
                     </p>
                     {update.summary ? (
@@ -773,7 +873,7 @@ export function AdminWeeklyUpdatesManager({
                     type="button"
                     className={iconButtonClass()}
                     aria-label={`Edit ${update.title}`}
-                    title="Edit weekly update"
+                    title="Video bewerken"
                     onClick={() => resetPanel({ type: "edit", update })}
                   >
                     <Icon name="edit" />
@@ -804,7 +904,7 @@ export function AdminWeeklyUpdatesManager({
                     type="button"
                     className={iconButtonClass("danger")}
                     aria-label={`Delete ${update.title}`}
-                    title="Delete weekly update"
+                    title="Video verwijderen"
                     onClick={() => {
                       resetFeedback();
                       setConfirm({ type: "delete", update });
@@ -841,23 +941,23 @@ export function AdminWeeklyUpdatesManager({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
           {panel.type === "empty" ? (
             <p className="cb-body">
-              Select an update from the archive, or create a new weekly market analysis.
+              Selecteer een video uit de bibliotheek of voeg een nieuwe marktanalyse toe.
             </p>
           ) : panel.type === "create" ? (
             <form action={(formData) => runSave(formData)} className="space-y-4">
-              <WeeklyUpdateFields mentors={mentors} onThumbnailFileChange={setThumbnailFile} />
+              <WeeklyUpdateFields key="create" mentors={mentors} onThumbnailFileChange={setThumbnailFile} />
               <label className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Video file</span>
                 <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
               </label>
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Working..." : "Create weekly update"}
+                {pending || progress !== null ? "Bezig..." : "Video toevoegen"}
               </button>
             </form>
           ) : selectedUpdate ? (
             <form action={(formData) => runSave(formData, selectedUpdate)} className="space-y-4">
-              <WeeklyUpdateFields update={selectedUpdate} mentors={mentors} onThumbnailFileChange={setThumbnailFile} />
+              <WeeklyUpdateFields key={selectedUpdate.id} update={selectedUpdate} mentors={mentors} onThumbnailFileChange={setThumbnailFile} />
               <div className="rounded-xl border border-[var(--border)] p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -890,7 +990,7 @@ export function AdminWeeklyUpdatesManager({
               </div>
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Working..." : "Save weekly update"}
+                {pending || progress !== null ? "Bezig..." : "Video opslaan"}
               </button>
             </form>
           ) : null}
