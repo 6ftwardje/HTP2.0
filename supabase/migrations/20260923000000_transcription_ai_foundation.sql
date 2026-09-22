@@ -87,3 +87,73 @@ comment on table public.ai_video_transcripts is
   'Admin-only transcript lifecycle. Transcript text must never be copied into application logs.';
 comment on table public.ai_video_enrichments is
   'Admin-only AI drafts and human review metadata; published student projections are queried separately.';
+
+create or replace function public.process_mux_caption_event(
+  p_event_id text,
+  p_event_type text,
+  p_asset_id text,
+  p_track_id text,
+  p_language_code text,
+  p_error_code text default null
+)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inserted_count integer;
+  updated_count integer;
+begin
+  if p_event_type not in ('video.asset.track.ready', 'video.asset.track.errored') then
+    raise exception 'unsupported mux caption event';
+  end if;
+
+  insert into public.mux_webhook_events (event_id, event_type)
+  values (p_event_id, p_event_type)
+  on conflict (event_id) do nothing;
+  get diagnostics inserted_count = row_count;
+
+  if inserted_count = 0 then
+    return 'duplicate';
+  end if;
+
+  update public.ai_video_transcripts transcript
+  set
+    provider_track_id = p_track_id,
+    source_language = p_language_code,
+    status = case
+      when transcript.status = 'ready' then 'ready'
+      when p_event_type = 'video.asset.track.ready' then 'processing'
+      else 'failed'
+    end,
+    failure_code = case
+      when p_event_type = 'video.asset.track.errored'
+        then coalesce(nullif(p_error_code, ''), 'provider_error')
+      else null
+    end,
+    failure_retryable = (p_event_type = 'video.asset.track.errored'),
+    failed_at = case
+      when p_event_type = 'video.asset.track.errored' and transcript.status <> 'ready'
+        then now()
+      else transcript.failed_at
+    end
+  from public.weekly_updates content
+  where transcript.weekly_update_id = content.id
+    and content.mux_asset_id = p_asset_id
+    and transcript.status in ('pending', 'processing', 'ready');
+  get diagnostics updated_count = row_count;
+
+  update public.mux_webhook_events
+  set processed_at = now(),
+      processing_error_code = case when updated_count = 0 then 'transcript_not_found' else null end
+  where event_id = p_event_id;
+
+  return case when updated_count = 0 then 'ignored' else 'processed' end;
+end;
+$$;
+
+revoke all on function public.process_mux_caption_event(text, text, text, text, text, text)
+  from public, anon, authenticated;
+grant execute on function public.process_mux_caption_event(text, text, text, text, text, text)
+  to service_role;
