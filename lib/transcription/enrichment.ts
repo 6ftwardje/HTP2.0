@@ -15,6 +15,54 @@ const MAX_SUMMARY_LENGTH = 600;
 const MAX_TAKEAWAYS = 5;
 const MAX_TAKEAWAY_LENGTH = 240;
 const MAX_CHAPTERS = 12;
+const MIN_SPOKEN_CHARACTERS = 120;
+const MAX_UNCLEAR_RATIO = 0.25;
+
+export type TranscriptQuality =
+  | { usable: true; spokenCharacters: number; unclearRatio: number }
+  | { usable: false; reason: "empty" | "too_short" | "too_unclear" };
+
+export type EnrichmentSourceSegment = {
+  startSeconds: number;
+  endSeconds: number;
+  text: string;
+};
+
+export function assessTranscriptQuality(
+  segments: EnrichmentSourceSegment[]
+): TranscriptQuality {
+  const text = segments.map((segment) => segment.text.trim()).filter(Boolean).join(" ");
+  if (!text) return { usable: false, reason: "empty" };
+  const spokenCharacters = text.replace(/\s/g, "").length;
+  if (spokenCharacters < MIN_SPOKEN_CHARACTERS) {
+    return { usable: false, reason: "too_short" };
+  }
+  const unclearMatches = text.match(/\[(?:onverstaanbaar|stilte|inaudible|silence)\]/gi) ?? [];
+  const unclearCharacters = unclearMatches.reduce((total, match) => total + match.length, 0);
+  const unclearRatio = unclearCharacters / Math.max(text.length, 1);
+  if (unclearRatio > MAX_UNCLEAR_RATIO) {
+    return { usable: false, reason: "too_unclear" };
+  }
+  return { usable: true, spokenCharacters, unclearRatio };
+}
+
+function numericClaims(text: string): Set<string> {
+  return new Set(text.match(/(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?%?/gu) ?? []);
+}
+
+export function validateNumericGrounding(
+  enrichment: TranscriptEnrichment,
+  transcriptText: string
+): { ok: true } | { ok: false; novelClaims: string[] } {
+  const sourceClaims = numericClaims(transcriptText);
+  const output = [
+    enrichment.summary,
+    ...enrichment.keyTakeaways,
+    ...enrichment.chapters.map((chapter) => chapter.title),
+  ].join(" ");
+  const novelClaims = [...numericClaims(output)].filter((claim) => !sourceClaims.has(claim));
+  return novelClaims.length ? { ok: false, novelClaims } : { ok: true };
+}
 
 function stringList(value: unknown): string[] | null {
   if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) return null;
@@ -80,4 +128,31 @@ export function validateTranscriptEnrichment(
   };
 }
 
-export const TRANSCRIPT_ENRICHMENT_INSTRUCTION = `Maak uitsluitend op basis van het aangeleverde Nederlandse transcript een korte samenvatting, maximaal vijf aandachtspunten en maximaal twaalf hoofdstukken. Voeg geen marktfeiten, cijfers, prijsniveaus, voorspellingen of advies toe die niet letterlijk door het transcript worden ondersteund. Presenteer uitspraken uit het transcript als besproken scenario's, niet als vaststaande toekomstige uitkomsten. Als het transcript leeg, tegenstrijdig of onvoldoende verstaanbaar is, retourneer dan geen inhoud maar markeer de output voor menselijke review. Hoofdstuktijden zijn gehele seconden, strikt oplopend en vallen binnen de videoduur. Outputcontract: { summary: string, keyTakeaways: string[], chapters: { title: string, seconds: number }[] }.`;
+export const TRANSCRIPT_ENRICHMENT_OUTPUT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    summary: { type: "string", maxLength: MAX_SUMMARY_LENGTH },
+    keyTakeaways: {
+      type: "array",
+      maxItems: MAX_TAKEAWAYS,
+      items: { type: "string", maxLength: MAX_TAKEAWAY_LENGTH },
+    },
+    chapters: {
+      type: "array",
+      maxItems: MAX_CHAPTERS,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          title: { type: "string", maxLength: 120 },
+          seconds: { type: "integer", minimum: 0 },
+        },
+        required: ["title", "seconds"],
+      },
+    },
+  },
+  required: ["summary", "keyTakeaways", "chapters"],
+} as const;
+
+export const TRANSCRIPT_ENRICHMENT_INSTRUCTION = `Contractversie: ${TRANSCRIPT_ENRICHMENT_PROMPT_VERSION}. Maak uitsluitend op basis van het aangeleverde Nederlandse transcript een korte samenvatting, maximaal vijf aandachtspunten en maximaal twaalf hoofdstukken. Voeg geen marktfeiten, cijfers, prijsniveaus, voorspellingen of advies toe die niet letterlijk door het transcript worden ondersteund. Los tegenstrijdige cijfers niet zelf op: benoem neutraal dat het transcript verschillende waarden noemt en laat de admin dit controleren. Presenteer uitspraken uit het transcript als besproken scenario's, niet als vaststaande toekomstige uitkomsten. Een leeg, te kort of grotendeels onverstaanbaar transcript wordt vóór de modelcall geblokkeerd voor menselijke review. Hoofdstuktijden zijn gehele seconden, strikt oplopend en vallen binnen de videoduur.`;

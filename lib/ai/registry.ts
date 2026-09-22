@@ -4,7 +4,7 @@
  * (bv. claude-sonnet-4-6 naar een Haiku-model). Zie docs/ai/README.md.
  */
 
-export type AiFeatureKey = "mentor_summary";
+export type AiFeatureKey = "mentor_summary" | "market_insight_enrichment";
 
 export type AiFeatureConfig = {
   key: AiFeatureKey;
@@ -33,6 +33,19 @@ export const AI_FEATURES: Record<AiFeatureKey, AiFeatureConfig> = {
     ],
     cacheTable: "ai_student_summaries",
     description: "Admin-samenvatting per student voor mentor-calls.",
+  },
+  market_insight_enrichment: {
+    key: "market_insight_enrichment",
+    model: DEFAULT_MODEL,
+    knowledgeFiles: [
+      "ai/global/system-rules.md",
+      "ai/global/safety-disclaimer.md",
+      "ai/global/forbidden-advice.md",
+      "ai/market-insight-enrichment/policy.md",
+    ],
+    cacheTable: "ai_video_enrichments",
+    description:
+      "Admin-only concepten voor samenvatting, aandachtspunten en hoofdstukken uit een transcript.",
   },
 };
 

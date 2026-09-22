@@ -17,6 +17,7 @@ Diepere uitleg: zie [AI_ARCHITECTURE.md](./AI_ARCHITECTURE.md), [AI_DATA_STRATEG
 | Feature | Status | Model (default) | Knowledge | Cache-tabel | Doel |
 |---------|--------|-----------------|-----------|-------------|------|
 | Mentor Copilot (`mentor_summary`) | In aanbouw | `claude-sonnet-4-6` | `global` + `mentor-copilot` | `ai_student_summaries` | Admin-samenvatting per student voor mentor-calls. Zie [features/mentor-copilot.md](./features/mentor-copilot.md). |
+| Marktinzicht-enrichment (`market_insight_enrichment`) | Contract gevalideerd | `claude-sonnet-4-6` | `global` + `market-insight-enrichment` | `ai_video_enrichments` | Admin-only concept uit transcript. Zie [features/market-insight-enrichment.md](./features/market-insight-enrichment.md). |
 
 Elke AI-call wordt gelogd in de tabel `ai_interactions` (model, tokens, status). Dat is de bron voor kostenrapportage.
 
