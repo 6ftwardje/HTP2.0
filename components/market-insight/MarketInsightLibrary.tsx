@@ -3,20 +3,19 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
-import type { LiveSessionWithMentor, Market, WeeklyUpdate } from "@/lib/types";
+import type { Market, WeeklyUpdate } from "@/lib/types";
 
 type Update = WeeklyUpdate & {
   mentor: { id: string; name: string | null; email: string } | null;
 };
-type FormatFilter = "all" | "weekly_outlook" | "market_breakdown" | "live_session";
+type FormatFilter = "all" | "weekly_outlook" | "market_breakdown";
 type MarketFilter = "all" | Market | "macro";
-type StatusFilter = "all" | "current" | "upcoming" | "replay" | "archive";
+type StatusFilter = "all" | "current" | "archive";
 
 const formats: Array<{ value: FormatFilter; label: string }> = [
   { value: "all", label: "Alles" },
   { value: "weekly_outlook", label: "Weekvooruitblikken" },
   { value: "market_breakdown", label: "Marktbreakdowns" },
-  { value: "live_session", label: "Live marktsessies" },
 ];
 const markets: Array<{ value: MarketFilter; label: string }> = [
   { value: "all", label: "Alle markten" },
@@ -37,7 +36,7 @@ type Item = {
   thumbnail: string | null;
   markets: Array<Market | "macro">;
   host: string;
-  status: Exclude<StatusFilter, "all"> | "live";
+  status: Exclude<StatusFilter, "all">;
   href: string;
   action: string;
   reason?: string;
@@ -46,13 +45,10 @@ type Item = {
 function formatLabel(value: Item["format"]) {
   if (value === "weekly_outlook") return "Weekvooruitblik";
   if (value === "market_breakdown") return "Marktbreakdown";
-  return "Live marktsessie";
+  return "Marktbreakdown";
 }
 
 function statusLabel(value: Item["status"]) {
-  if (value === "upcoming") return "Aankomend";
-  if (value === "live") return "Live";
-  if (value === "replay") return "Terugkijken";
   if (value === "archive") return "Archief";
   return "Actueel";
 }
@@ -96,7 +92,7 @@ function ContentCard({ item, featured = false }: { item: Item; featured?: boolea
         {item.reason ? <p className="mt-3 text-sm font-semibold text-[var(--accent)]">{item.reason}</p> : null}
         <h2 className={`${featured ? "mt-2 text-2xl sm:text-3xl" : "mt-2 text-lg"} font-extrabold leading-tight text-[var(--foreground)]`}>{item.title}</h2>
         <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[var(--muted)]">
-          <time dateTime={item.date}>{dateLabel(item.date, item.format === "live_session" || item.format === "market_breakdown")}</time>
+          <time dateTime={item.date}>{dateLabel(item.date, item.format === "market_breakdown")}</time>
           {durationLabel(item.duration) ? <span>{durationLabel(item.duration)}</span> : null}
           <span>{item.host}</span>
         </p>
@@ -115,14 +111,13 @@ function SelectChevron() {
   );
 }
 
-export function MarketInsightLibrary({ updates, sessions }: { updates: Update[]; sessions: LiveSessionWithMentor[] }) {
+export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
   const [format, setFormat] = useState<FormatFilter>("all");
   const [market, setMarket] = useState<MarketFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const items = useMemo<Item[]>(() => {
-    const now = Date.now();
-    const videoItems = updates.map((update): Item => {
-      const itemFormat = update.type === "weekly_outlook" ? "weekly_outlook" : update.type === "live_session" ? "live_session" : "market_breakdown";
+    const videoItems = updates.filter((update) => update.type !== "live_session").map((update): Item => {
+      const itemFormat = update.type === "weekly_outlook" ? "weekly_outlook" : "market_breakdown";
       const actuality = update.actuality_status ?? "current";
       return {
         id: `video-${update.id}`,
@@ -134,35 +129,16 @@ export function MarketInsightLibrary({ updates, sessions }: { updates: Update[];
         thumbnail: update.thumbnail_url,
         markets: itemMarkets(update),
         host: update.mentor?.name ?? update.mentor?.email ?? "Cryptoriez mentor",
-        status: itemFormat === "live_session" ? "replay" : actuality === "archive" ? "archive" : "current",
+        status: actuality === "archive" ? "archive" : "current",
         href: `/market-analysis/${update.slug}`,
-        action: itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : itemFormat === "live_session" ? "Terugkijken" : "Bekijk breakdown",
+        action: itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown",
       };
     });
-    const liveItems = sessions.filter((session) => session.status !== "cancelled").map((session): Item => {
-      const start = new Date(session.starts_at).getTime();
-      const end = new Date(session.ends_at).getTime();
-      const liveStatus: Item["status"] = session.status === "live" || (start <= now && end >= now) ? "live" : session.status === "completed" ? "replay" : "upcoming";
-      return {
-        id: `live-${session.id}`,
-        format: "live_session",
-        title: session.title,
-        summary: session.summary ?? session.description,
-        date: session.starts_at,
-        duration: Math.max(0, Math.round((end - start) / 1000)),
-        thumbnail: session.thumbnail_url ?? null,
-        markets: session.markets ?? [],
-        host: session.mentor?.name ?? session.mentor?.email ?? "Cryptoriez mentor",
-        status: liveStatus,
-        href: liveStatus === "replay" && session.replay ? `/market-analysis/${session.replay.slug}` : "/live-sessions",
-        action: liveStatus === "live" ? "Deelnemen" : liveStatus === "upcoming" ? "Bekijk sessie" : "Terugkijken",
-      };
-    });
-    return [...liveItems, ...videoItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [updates, sessions]);
+    return videoItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [updates]);
 
-  const featuredBase = items.find((item) => item.status === "live") ?? items.filter((item) => item.status === "upcoming").sort((a, b) => +new Date(a.date) - +new Date(b.date))[0] ?? items.find((item) => item.format === "weekly_outlook") ?? null;
-  const featured = featuredBase ? { ...featuredBase, reason: featuredBase.status === "live" ? "Nu live" : featuredBase.status === "upcoming" ? "Eerstvolgende sessie" : "Meest recente voorbereiding" } : null;
+  const featuredBase = items.find((item) => item.format === "weekly_outlook") ?? items[0] ?? null;
+  const featured = featuredBase ? { ...featuredBase, reason: featuredBase.format === "weekly_outlook" ? "Meest recente voorbereiding" : "Meest recente analyse" } : null;
   const filtered = items.filter((item) => (format === "all" || item.format === format) && (market === "all" || item.markets.includes(market)) && (status === "all" || item.status === status));
   const reset = () => { setFormat("all"); setMarket("all"); setStatus("all"); };
 
@@ -177,7 +153,7 @@ export function MarketInsightLibrary({ updates, sessions }: { updates: Update[];
         </div>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <label className="relative text-sm font-semibold text-[var(--muted)]"><span className="sr-only">Markt</span><select value={market} onChange={(e) => setMarket(e.target.value as MarketFilter)} className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--background)] py-2.5 pl-3 pr-10 text-[var(--foreground)] sm:w-auto">{markets.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><SelectChevron /></label>
-          <label className="relative text-sm font-semibold text-[var(--muted)]"><span className="sr-only">Status</span><select value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)} className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--background)] py-2.5 pl-3 pr-10 text-[var(--foreground)] sm:w-auto"><option value="all">Alle statussen</option><option value="current">Actueel</option><option value="upcoming">Aankomend</option><option value="replay">Terugkijken</option><option value="archive">Archief</option></select><SelectChevron /></label>
+          <label className="relative text-sm font-semibold text-[var(--muted)]"><span className="sr-only">Status</span><select value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)} className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--background)] py-2.5 pl-3 pr-10 text-[var(--foreground)] sm:w-auto"><option value="all">Alle statussen</option><option value="current">Actueel</option><option value="archive">Archief</option></select><SelectChevron /></label>
         </div>
         <h2 id="market-insight-feed" className="mt-8 text-xl font-extrabold">Alle marktinzichten <span className="ml-2 text-sm font-medium text-[var(--muted)]">{filtered.length}</span></h2>
         {filtered.length ? <div className="mt-2">{filtered.map((item) => <ContentCard key={item.id} item={item} />)}</div> : <div className="mt-5 rounded-xl border border-dashed border-[var(--border)] p-8 text-center"><h3 className="font-bold">Geen marktinzichten gevonden</h3><p className="mt-2 text-sm text-[var(--muted)]">Pas je filters aan om andere content te bekijken.</p><button type="button" onClick={reset} className="mt-4 cb-btn cb-btn-secondary">Filters wissen</button></div>}

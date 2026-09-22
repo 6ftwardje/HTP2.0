@@ -111,7 +111,7 @@ export default async function LiveSessionsPage() {
           <section className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-8 text-center">
             <h2 className="cb-section-title">Nog geen nieuwe livesessie gepland</h2>
             <p className="mt-3 cb-body">
-              Zodra de volgende Weekly Outlook is ingepland, verschijnt die hier en op je dashboard.
+              Zodra de volgende live marktsessie is ingepland, verschijnt die hier en op je dashboard.
             </p>
           </section>
         )}

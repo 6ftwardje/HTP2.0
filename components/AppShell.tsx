@@ -100,6 +100,21 @@ const updatesNav = [
     label: "Marktinzicht",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M4 19V5M4 19h16M7 15l4-4 3 2 5-6"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/live-sessions",
+    label: "Live marktsessies",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
         <path
           d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a9.9 9.9 0 0 0 0 14M19 5a9.9 9.9 0 0 1 0 14"
@@ -153,7 +168,7 @@ function SidebarContent({
 
   function isNavItemActive(href: string) {
     if (href === "/market-analysis") {
-      return pathname.startsWith("/market-analysis") || pathname.startsWith("/updates") || pathname.startsWith("/live-sessions");
+      return pathname.startsWith("/market-analysis") || pathname.startsWith("/updates");
     }
     return (
       pathname === href ||
