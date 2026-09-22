@@ -10,6 +10,7 @@ import {
   adminCreateWeeklyUpdateWithMuxUpload,
   adminDeleteWeeklyUpdate,
   adminSyncWeeklyUpdateMuxUpload,
+  adminStartWeeklyUpdateTranscript,
   adminUpdateWeeklyUpdate,
   adminUpdateWeeklyUpdateThumbnail,
 } from "@/app/actions/admin/weekly-updates";
@@ -28,6 +29,7 @@ import type {
   Student,
   WeeklyUpdateAccessTier,
 } from "@/lib/types";
+import type { VideoTranscriptSummary } from "@/lib/types";
 import {
   getWeeklyUpdateAccessLabel,
   WEEKLY_UPDATE_ACCESS_OPTIONS,
@@ -148,6 +150,23 @@ function statusBadge(update: AdminWeeklyUpdateRow) {
     return <span className="cb-badge cb-badge-available">Processing</span>;
   }
   return <span className="cb-badge cb-badge-locked">No video</span>;
+}
+
+function latestTranscript(update: AdminWeeklyUpdateRow): VideoTranscriptSummary | null {
+  return [...(update.transcripts ?? [])].sort((a, b) =>
+    b.updated_at.localeCompare(a.updated_at)
+  )[0] ?? null;
+}
+
+function transcriptBadge(transcript: VideoTranscriptSummary | null) {
+  if (!transcript) return <span className="cb-badge cb-badge-locked">Geen transcript</span>;
+  if (transcript.status === "ready") {
+    return <span className="cb-badge cb-badge-completed">Transcript klaar</span>;
+  }
+  if (transcript.status === "failed") {
+    return <span className="cb-badge cb-badge-locked">Transcript mislukt</span>;
+  }
+  return <span className="cb-badge cb-badge-available">Transcript in verwerking</span>;
 }
 
 function accessLabel(value: WeeklyUpdateAccessTier) {
@@ -748,6 +767,23 @@ export function AdminWeeklyUpdatesManager({
     });
   }
 
+  function startTranscript(update: AdminWeeklyUpdateRow) {
+    resetFeedback();
+    const confirmed = window.confirm(
+      "Dit start een externe Mux-captionverwerking voor deze video. De captionstap wordt momenteel door Mux zonder extra toeslag aangeboden, maar telt wel als providerwrite. Doorgaan?"
+    );
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      const result = await adminStartWeeklyUpdateTranscript(update.id, true);
+      if (!result.success) {
+        setError(result.error ?? "Transcriptie kon niet worden gestart.");
+        return;
+      }
+      refresh("Transcriptie is gestart. Mux meldt de status via de beveiligde webhook.");
+    });
+  }
+
   function deleteUpdate(update: AdminWeeklyUpdateRow) {
     resetFeedback();
     startTransition(async () => {
@@ -853,6 +889,7 @@ export function AdminWeeklyUpdatesManager({
                         {update.title}
                       </h3>
                       {statusBadge(update)}
+                      {transcriptBadge(latestTranscript(update))}
                       <span className={update.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                         {update.is_published ? "Published" : "Draft"}
                       </span>
@@ -999,6 +1036,40 @@ export function AdminWeeklyUpdatesManager({
                   <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Replace/upload video</span>
                   <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
                 </label>
+              </div>
+              <div className="rounded-xl border border-[var(--border)] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="cb-eyebrow">AI-transcriptie</div>
+                    <div className="mt-1">{transcriptBadge(latestTranscript(selectedUpdate))}</div>
+                  </div>
+                  {(() => {
+                    const transcript = latestTranscript(selectedUpdate);
+                    const canStart =
+                      selectedUpdate.video_provider === "mux" &&
+                      selectedUpdate.mux_status === "ready" &&
+                      (!transcript ||
+                        (transcript.status === "failed" && transcript.failure_retryable));
+                    return canStart ? (
+                      <button
+                        type="button"
+                        className="cb-btn cb-btn-secondary text-sm"
+                        disabled={pending}
+                        onClick={() => startTranscript(selectedUpdate)}
+                      >
+                        {transcript ? "Opnieuw proberen" : "Transcriptie starten"}
+                      </button>
+                    ) : null;
+                  })()}
+                </div>
+                <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
+                  Handmatige pilot · Nederlands · menselijke review verplicht · geen automatische publicatie.
+                </p>
+                {latestTranscript(selectedUpdate)?.failure_code ? (
+                  <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-300">
+                    Veilige foutcode: {latestTranscript(selectedUpdate)?.failure_code}
+                  </p>
+                ) : null}
               </div>
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">

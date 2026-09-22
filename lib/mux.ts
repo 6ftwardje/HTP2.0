@@ -19,6 +19,12 @@ type MuxAsset = {
     id: string;
     policy: MuxPlaybackPolicy;
   }>;
+  tracks?: Array<{
+    id: string;
+    type?: "video" | "audio" | "text";
+    primary?: boolean;
+    status?: "preparing" | "ready" | "errored";
+  }>;
   errors?: {
     type?: string;
     messages?: string[];

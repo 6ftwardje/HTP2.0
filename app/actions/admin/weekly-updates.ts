@@ -19,6 +19,10 @@ import {
   getMuxThumbnailUrl,
   getMuxUpload,
 } from "@/lib/mux";
+import { MuxCaptionProvider } from "@/lib/transcription/mux-captions";
+import { canStartTranscript } from "@/lib/transcription/start-policy";
+import { evaluateCostGate } from "@/lib/transcription/cost-policy";
+import type { VideoTranscriptSummary } from "@/lib/types";
 import { SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS } from "@/lib/weekly-update-access";
 import { getMondayDate } from "@/lib/market-analysis";
 import type {
@@ -598,6 +602,133 @@ export async function adminSyncWeeklyUpdateMuxUpload(
     return {
       success: false,
       error: getWeeklyUpdateSyncError(error),
+    };
+  }
+}
+
+export async function adminStartWeeklyUpdateTranscript(
+  weeklyUpdateIdRaw: unknown,
+  confirmedExternalWrite: boolean
+): Promise<ActionResult<{ status?: VideoTranscriptSummary["status"] }>> {
+  const { actorStudent } = await requireAdmin();
+  const weeklyUpdateId = parsePositiveInteger(weeklyUpdateIdRaw);
+  if (!weeklyUpdateId) return { success: false, error: "Ongeldige marktanalyse." };
+  if (!confirmedExternalWrite) {
+    return {
+      success: false,
+      error: "Bevestig eerst dat deze actie een externe Mux-verwerking start.",
+    };
+  }
+  if (process.env.ALLOW_TRANSCRIPTION_PROVIDER_WRITES !== "1") {
+    return {
+      success: false,
+      error:
+        "Transcriptiestart is veilig geblokkeerd. Zet ALLOW_TRANSCRIPTION_PROVIDER_WRITES=1 alleen tijdens de goedgekeurde pilot.",
+    };
+  }
+
+  const costGate = evaluateCostGate({
+    estimatedEuro: 0,
+    monthSpendEuro: 0,
+    priceConfigurationCurrent: true,
+  });
+  if (!costGate.allowed) return { success: false, error: costGate.reason };
+
+  const weeklyUpdate = await getWeeklyUpdateAdmin(weeklyUpdateId);
+  if (!weeklyUpdate) return { success: false, error: "Marktanalyse niet gevonden." };
+
+  const db = await createClient();
+  const { data: existingData, error: existingError } = await db
+    .from("ai_video_transcripts")
+    .select("id, weekly_update_id, source_version, source_language, provider, provider_track_id, status, attempt_count, failure_code, failure_retryable, started_at, ready_at, failed_at, created_at, updated_at")
+    .eq("weekly_update_id", weeklyUpdateId)
+    .eq("source_version", weeklyUpdate.mux_asset_id ?? "")
+    .maybeSingle();
+  if (existingError) return { success: false, error: existingError.message };
+
+  const existing = (existingData as VideoTranscriptSummary | null) ?? null;
+  const decision = canStartTranscript(weeklyUpdate, existing);
+  if (!decision.allowed) return { success: false, error: decision.reason };
+
+  const tokenId = process.env.MUX_TOKEN_ID;
+  const tokenSecret = process.env.MUX_TOKEN_SECRET;
+  if (!tokenId || !tokenSecret || !weeklyUpdate.mux_asset_id) {
+    return { success: false, error: "Mux-transcriptie is niet volledig geconfigureerd." };
+  }
+
+  const asset = await getMuxAsset(weeklyUpdate.mux_asset_id);
+  const audioTrack =
+    asset.tracks?.find((track) => track.type === "audio" && track.primary) ??
+    asset.tracks?.find((track) => track.type === "audio");
+  if (!audioTrack?.id) {
+    return { success: false, error: "Mux heeft geen geschikte audiotrack gevonden." };
+  }
+
+  const attemptCount = (existing?.attempt_count ?? 0) + 1;
+  const startedAt = new Date().toISOString();
+  const { data: transcriptData, error: persistError } = await db
+    .from("ai_video_transcripts")
+    .upsert(
+      {
+        weekly_update_id: weeklyUpdateId,
+        source_version: weeklyUpdate.mux_asset_id,
+        source_language: "nl",
+        provider: "mux",
+        status: "pending",
+        attempt_count: attemptCount,
+        failure_code: null,
+        failure_retryable: false,
+        failed_at: null,
+        started_at: startedAt,
+        created_by: actorStudent.id,
+      },
+      { onConflict: "weekly_update_id,source_version" }
+    )
+    .select("id")
+    .single();
+  if (persistError || !transcriptData) {
+    return { success: false, error: persistError?.message ?? "Transcriptstatus kon niet worden opgeslagen." };
+  }
+
+  try {
+    const provider = new MuxCaptionProvider(tokenId, tokenSecret);
+    const track = await provider.requestGeneratedCaptions({
+      assetId: weeklyUpdate.mux_asset_id,
+      audioTrackId: audioTrack.id,
+      languageCode: "nl",
+      name: "Nederlands (automatisch)",
+      passthrough: `transcript:${transcriptData.id}`,
+    });
+    const { error: updateError } = await db
+      .from("ai_video_transcripts")
+      .update({ provider_track_id: track.id, status: "processing" })
+      .eq("id", transcriptData.id);
+    if (updateError) return { success: false, error: updateError.message };
+
+    logAdminAction("weekly_update.transcript_started", {
+      actorStudentId: actorStudent.id,
+      metadata: { weeklyUpdateId, attemptCount },
+    });
+    revalidateWeeklyUpdatePaths(weeklyUpdate.slug);
+    return { success: true, status: "processing" };
+  } catch (error) {
+    const providerError = error as { code?: string; retryable?: boolean };
+    await db
+      .from("ai_video_transcripts")
+      .update({
+        status: "failed",
+        failure_code: providerError.code ?? "provider_error",
+        failure_retryable: providerError.retryable === true,
+        failed_at: new Date().toISOString(),
+      })
+      .eq("id", transcriptData.id);
+    revalidateWeeklyUpdatePaths(weeklyUpdate.slug);
+    return {
+      success: false,
+      error:
+        providerError.retryable === true
+          ? "Mux is tijdelijk niet beschikbaar. Je kunt deze transcriptie veilig opnieuw proberen."
+          : "Mux kon de transcriptie niet starten. Controleer de video en configuratie.",
     };
   }
 }

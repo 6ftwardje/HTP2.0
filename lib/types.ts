@@ -195,6 +195,24 @@ export type WeeklyUpdate = {
   needs_review?: boolean;
 };
 
+export type VideoTranscriptSummary = {
+  id: string;
+  weekly_update_id: number;
+  source_version: string;
+  source_language: string;
+  provider: "mux";
+  provider_track_id: string | null;
+  status: "pending" | "processing" | "ready" | "failed";
+  attempt_count: number;
+  failure_code: string | null;
+  failure_retryable: boolean;
+  started_at: string | null;
+  ready_at: string | null;
+  failed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type LiveSessionStatus =
   | "draft"
   | "scheduled"
