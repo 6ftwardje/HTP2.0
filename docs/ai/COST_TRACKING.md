@@ -12,6 +12,8 @@ Elke call wordt gelogd in `public.ai_interactions` met:
 - `input_tokens`, `output_tokens`
 - `status` (success of error)
 - `created_at`
+- `prompt_version`, `transcript_id` (voor transcript-enrichment)
+- `estimated_cost_eur`, berekend met een gedateerde serverconfiguratie
 
 Daarmee kun je kosten per feature en per periode reconstrueren. Voorbeeldquery (read-only):
 
@@ -38,3 +40,16 @@ Vul hier de actuele Anthropic-prijzen in per model dat we gebruiken, zodat token
 | Model | Input ($/Mtok) | Output ($/Mtok) | Gebruikt door |
 |-------|----------------|-----------------|---------------|
 | claude-sonnet-4-6 | (vul in) | (vul in) | Mentor Copilot |
+| claude-sonnet-4-6 | via environment | via environment | Marktinzicht-enrichment |
+
+## Fail-closed prijsconfiguratie voor transcript-enrichment
+
+Een enrichmentcall start alleen wanneer deze servervariabelen geldig zijn:
+
+- `AI_ENRICHMENT_INPUT_EUR_PER_MILLION`
+- `AI_ENRICHMENT_OUTPUT_EUR_PER_MILLION`
+- `AI_ENRICHMENT_PRICING_VALID_UNTIL` (`YYYY-MM-DD`)
+- `ALLOW_AI_PROVIDER_CALLS=1`
+
+Een ontbrekende of verlopen prijsconfiguratie blokkeert vóór de providercall.
+De limieten uit het MVP-besluit blijven €2 per video en €50 per kalendermaand.
