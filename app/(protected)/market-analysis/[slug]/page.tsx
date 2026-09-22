@@ -12,6 +12,7 @@ import { ensureCurrentStudent } from "@/lib/students";
 import {
   canAccessSubscriberContent,
   getBillingOverview,
+  paidProductsEnabled,
 } from "@/lib/billing";
 import { SubscriptionPaywall } from "@/components/billing/SubscriptionPaywall";
 import { getMuxPlaybackTokens } from "@/lib/mux-signing";
@@ -38,6 +39,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
   if (!student) return null;
   const billingOverview = await getBillingOverview(student.id);
   if (!canAccessSubscriberContent(student, billingOverview)) {
+    if (!paidProductsEnabled()) notFound();
     return <SubscriptionPaywall overview={billingOverview} title="Ontgrendel deze analyse" />;
   }
   const update = await getPublishedWeeklyUpdateBySlug(slug);

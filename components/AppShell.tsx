@@ -213,10 +213,14 @@ function SidebarContent({
       >
         {nav.slice(0, 3).map(renderNavItem)}
 
-        <div className="mb-1 mt-6 px-3 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
-          Updates
-        </div>
-        {updatesNav.map(renderNavItem)}
+        {accessLevel !== null && accessLevel >= 2 ? (
+          <>
+            <div className="mb-1 mt-6 px-3 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
+              Updates
+            </div>
+            {updatesNav.map(renderNavItem)}
+          </>
+        ) : null}
 
         <div className="mt-5 flex flex-col gap-1">
           {nav.slice(3).map(renderNavItem)}

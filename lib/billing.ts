@@ -11,6 +11,15 @@ import type {
 
 export const SUBSCRIBER_CONTENT_ENTITLEMENT = "subscriber_content";
 
+/**
+ * Keeps the prepared billing system dormant until the public rollout.
+ * Server-side only on purpose: users should not receive billing UI/configuration
+ * in the client bundle while the feature is disabled.
+ */
+export function paidProductsEnabled() {
+  return process.env.PAID_PRODUCTS_ENABLED === "1";
+}
+
 const ACCESS_STATUSES = new Set(["active", "trialing"]);
 const MANAGEABLE_STATUSES = new Set([
   "active",
@@ -59,12 +68,23 @@ export function canAccessSubscriberContent(
   student: Pick<Student, "access_level">,
   overview: Pick<BillingOverview, "hasAccess">
 ) {
+  if (!paidProductsEnabled()) return student.access_level >= 2;
   return student.access_level === 3 || overview.hasAccess;
 }
 
 export async function getBillingOverview(
   studentId: string
 ): Promise<BillingOverview> {
+  if (!paidProductsEnabled()) {
+    return {
+      subscription: null,
+      entitlement: null,
+      expiredBonus: null,
+      hasAccess: false,
+      accessSource: null,
+    };
+  }
+
   const db = await createClient();
   const now = new Date();
 

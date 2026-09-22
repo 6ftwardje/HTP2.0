@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/access";
 import { logAdminAction } from "@/lib/admin/audit";
 import { createServiceClient } from "@/lib/supabase/service";
+import { paidProductsEnabled } from "@/lib/billing";
 import type { LiveSession } from "@/lib/types";
 
 const DISPLAY_TIMEZONE = "Europe/Brussels";
@@ -34,6 +35,15 @@ function slugify(value: string) {
 
 async function subscriberIds() {
   const db = createServiceClient();
+  if (!paidProductsEnabled()) {
+    const { data, error } = await db
+      .from("students")
+      .select("id")
+      .gte("access_level", 2);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((student) => student.id);
+  }
+
   const now = new Date().toISOString();
   const { data, error } = await db
     .from("student_entitlements")

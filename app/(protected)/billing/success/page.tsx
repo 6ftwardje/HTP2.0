@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { paidProductsEnabled } from "@/lib/billing";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 type Props = { searchParams: Promise<{ product?: string }> };
 
 export default async function BillingSuccessPage({ searchParams }: Props) {
+  if (!paidProductsEnabled()) notFound();
   const { product } = await searchParams;
   const academy = product === "academy";
   return (

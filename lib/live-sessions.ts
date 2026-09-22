@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import { paidProductsEnabled } from "@/lib/billing";
 import type { LiveSessionWithMentor } from "@/lib/types";
 
 const LIVE_SESSION_SELECT = `
@@ -15,8 +17,12 @@ const LIVE_SESSION_SELECT = `
   )
 `;
 
+async function contentClient() {
+  return paidProductsEnabled() ? await createClient() : createServiceClient();
+}
+
 export async function listUpcomingLiveSessions(limit = 6) {
-  const db = await createClient();
+  const db = await contentClient();
   const { data, error } = await db
     .from("live_sessions")
     .select(LIVE_SESSION_SELECT)
@@ -34,7 +40,7 @@ export async function listUpcomingLiveSessions(limit = 6) {
 }
 
 export async function listPastLiveSessions(limit = 24) {
-  const db = await createClient();
+  const db = await contentClient();
   const { data, error } = await db
     .from("live_sessions")
     .select(LIVE_SESSION_SELECT)

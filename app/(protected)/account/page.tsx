@@ -11,7 +11,7 @@ import {
   formatIntakeChoice,
   formatWeeklyTimeCommitment,
 } from "@/lib/intake";
-import { getBillingOverview } from "@/lib/billing";
+import { getBillingOverview, paidProductsEnabled } from "@/lib/billing";
 import { SubscriptionCard } from "@/components/billing/SubscriptionCard";
 import { AcademyCard } from "@/components/billing/AcademyCard";
 
@@ -26,7 +26,10 @@ export default async function AccountPage({ searchParams }: Props) {
   const onboarding = student
     ? await getStudentOnboardingResponse(student.id)
     : null;
-  const billingOverview = await getBillingOverview(student.id);
+  const showPaidProducts = paidProductsEnabled();
+  const billingOverview = showPaidProducts
+    ? await getBillingOverview(student.id)
+    : null;
   const intakeComplete = onboardingIsComplete(onboarding);
 
   const initials = student?.name
@@ -40,12 +43,12 @@ export default async function AccountPage({ searchParams }: Props) {
 
   const main = (
     <div className="space-y-6">
-      {billing === "error" ? (
+      {showPaidProducts && billing === "error" ? (
         <div className="rounded-lg border border-red-300 bg-red-50 px-5 py-4 text-sm font-semibold text-red-800">
           De betaalpagina kon niet worden geopend. Probeer opnieuw of neem contact op met support.
         </div>
       ) : null}
-      {billing === "cancelled" ? (
+      {showPaidProducts && billing === "cancelled" ? (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-5 py-4 text-sm text-[var(--foreground)]">
           De aankoop is geannuleerd. Er werd niets gewijzigd aan je toegang.
         </div>
@@ -74,9 +77,12 @@ export default async function AccountPage({ searchParams }: Props) {
 
       </section>
 
-      <SubscriptionCard overview={billingOverview} />
-
-      <AcademyCard hasAcademyAccess={student.access_level >= 2} />
+      {showPaidProducts && billingOverview ? (
+        <>
+          <SubscriptionCard overview={billingOverview} />
+          <AcademyCard hasAcademyAccess={student.access_level >= 2} />
+        </>
+      ) : null}
 
       <section className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)] p-6 sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -153,7 +159,7 @@ export default async function AccountPage({ searchParams }: Props) {
         breadcrumbs={[{ label: "Academy", href: "/modules" }, { label: "Profiel" }]}
         eyebrow="Profiel"
         title="Jouw profiel"
-        description="Je persoonlijke gegevens, Academy-toegang en subscription."
+        description="Je persoonlijke gegevens en mentorcontext."
       />
       <AppPageLayout main={main} />
     </div>

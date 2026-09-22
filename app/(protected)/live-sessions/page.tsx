@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { SubscriptionPaywall } from "@/components/billing/SubscriptionPaywall";
 import {
   canAccessSubscriberContent,
   getBillingOverview,
+  paidProductsEnabled,
 } from "@/lib/billing";
 import {
   listPastLiveSessions,
@@ -36,6 +38,7 @@ export default async function LiveSessionsPage() {
 
   const billingOverview = await getBillingOverview(student.id);
   if (!canAccessSubscriberContent(student, billingOverview)) {
+    if (!paidProductsEnabled()) notFound();
     return (
       <SubscriptionPaywall
         overview={billingOverview}

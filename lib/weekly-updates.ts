@@ -1,14 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import { paidProductsEnabled } from "@/lib/billing";
 import type { Market, Student, WeeklyUpdate, WeeklyUpdateView } from "@/lib/types";
 
 export type WeeklyUpdateWithMentor = WeeklyUpdate & {
   mentor: Pick<Student, "id" | "name" | "email"> | null;
 };
 
+async function contentClient() {
+  return paidProductsEnabled() ? await createClient() : createServiceClient();
+}
+
 export async function listPublishedWeeklyUpdates(
   limit = 48
 ): Promise<WeeklyUpdateWithMentor[]> {
-  const db = await createClient();
+  const db = await contentClient();
   const { data, error } = await db
     .from("weekly_updates")
     .select(
@@ -37,7 +43,7 @@ export async function listPublishedWeeklyUpdates(
 export async function listPublishedWeeklyOutlooks(
   limit = 12
 ): Promise<WeeklyUpdateWithMentor[]> {
-  const db = await createClient();
+  const db = await contentClient();
   const { data, error } = await db
     .from("weekly_updates")
     .select(
@@ -66,7 +72,7 @@ export async function listPublishedWeeklyOutlooks(
 export async function listPublishedMarketUpdates(
   limit = 60
 ): Promise<WeeklyUpdateWithMentor[]> {
-  const db = await createClient();
+  const db = await contentClient();
   const { data, error } = await db
     .from("weekly_updates")
     .select(
@@ -97,7 +103,7 @@ export async function listPublishedMarketUpdatesByMarket(
   market: Market,
   limit = 60
 ): Promise<WeeklyUpdateWithMentor[]> {
-  const db = await createClient();
+  const db = await contentClient();
   const { data, error } = await db
     .from("weekly_updates")
     .select(
@@ -128,7 +134,7 @@ export async function listPublishedMarketUpdatesByMarket(
 export async function getPublishedWeeklyUpdateBySlug(
   slug: string
 ): Promise<WeeklyUpdateWithMentor | null> {
-  const db = await createClient();
+  const db = await contentClient();
   const { data, error } = await db
     .from("weekly_updates")
     .select(
@@ -155,7 +161,7 @@ export async function getWeeklyUpdateViewsByIds(
 ): Promise<Map<number, WeeklyUpdateView>> {
   if (weeklyUpdateIds.length === 0) return new Map();
 
-  const db = await createClient();
+  const db = await contentClient();
   const { data, error } = await db
     .from("weekly_update_views")
     .select("*")

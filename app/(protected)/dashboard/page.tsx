@@ -7,6 +7,7 @@ import { asText } from "@/lib/as-text";
 import {
   canAccessSubscriberContent,
   getBillingOverview,
+  paidProductsEnabled,
 } from "@/lib/billing";
 import {
   getDashboardOverview,
@@ -44,6 +45,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const firstName = student.name?.split(" ")[0] ?? null;
   const title = firstName ? `Welkom terug, ${firstName}` : "Welkom terug";
   const hasSubscriberAccess = canAccessSubscriberContent(student, billingOverview);
+  const showPaidProducts = paidProductsEnabled();
   const nextLiveSession = upcomingLiveSessions[0] ?? null;
 
   const stepTitle =
@@ -305,7 +307,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         </section>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
-          <section
+          {hasSubscriberAccess || showPaidProducts ? <section
             id="live-sessions"
             className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-6"
           >
@@ -363,7 +365,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 </p>
               </div>
             )}
-          </section>
+          </section> : null}
 
           <section
             id="mentor"

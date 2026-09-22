@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureBillingCustomer } from "@/lib/billing";
+import { ensureBillingCustomer, paidProductsEnabled } from "@/lib/billing";
 import { requestHasTrustedOrigin } from "@/lib/request-security";
 import {
   assertAcademyPriceConfiguration,
@@ -10,6 +10,9 @@ import {
 import { ensureCurrentStudent } from "@/lib/students";
 
 export async function POST(request: NextRequest) {
+  if (!paidProductsEnabled()) {
+    return new NextResponse(null, { status: 404 });
+  }
   const siteUrl = getSiteUrl();
   if (!requestHasTrustedOrigin(request)) {
     return NextResponse.json({ error: "Ongeldige aanvraag." }, { status: 403 });
