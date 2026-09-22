@@ -25,7 +25,7 @@ export async function notifyWeeklyUpdatePublished({
   actorStudentId: string;
 }): Promise<{ notified: number; skipped: boolean; error: string | null }> {
   const accessOption = getWeeklyUpdateAccessOption(weeklyUpdate.access_tier);
-  if (!accessOption.selectable || accessOption.minAccessLevel === null) {
+  if (!accessOption.selectable) {
     return { notified: 0, skipped: true, error: null };
   }
 
@@ -51,19 +51,32 @@ export async function notifyWeeklyUpdatePublished({
     return { notified: 0, skipped: true, error: null };
   }
 
-  let studentsQuery = db
-    .from("students")
-    .select("id")
-    .gte("access_level", accessOption.minAccessLevel);
-
-  const students = await studentsQuery;
-  if (students.error) {
-    return { notified: 0, skipped: false, error: students.error.message };
+  let recipients: string[] = [];
+  if (accessOption.entitlementKey) {
+    const now = new Date().toISOString();
+    const entitlements = await db
+      .from("student_entitlements")
+      .select("student_id")
+      .eq("entitlement_key", accessOption.entitlementKey)
+      .is("revoked_at", null)
+      .lte("starts_at", now)
+      .or(`ends_at.is.null,ends_at.gt.${now}`);
+    if (entitlements.error) {
+      return { notified: 0, skipped: false, error: entitlements.error.message };
+    }
+    recipients = Array.from(
+      new Set((entitlements.data ?? []).map((row) => row.student_id).filter(Boolean))
+    );
+  } else if (accessOption.minAccessLevel !== null) {
+    const students = await db
+      .from("students")
+      .select("id")
+      .gte("access_level", accessOption.minAccessLevel);
+    if (students.error) {
+      return { notified: 0, skipped: false, error: students.error.message };
+    }
+    recipients = (students.data ?? []).map((student) => student.id).filter(Boolean);
   }
-
-  const recipients = (students.data ?? [])
-    .map((student) => student.id)
-    .filter(Boolean);
 
   if (recipients.length === 0) {
     return { notified: 0, skipped: false, error: null };
@@ -81,7 +94,10 @@ export async function notifyWeeklyUpdatePublished({
           ? "Nieuwe weekly outlook"
           : "Nieuwe markt update",
       body: weeklyUpdate.title,
-      href: `/market-analysis/${weeklyUpdate.slug}`,
+      href:
+        weeklyUpdate.type === "market_update"
+          ? `/updates/watch/${weeklyUpdate.slug}`
+          : `/market-analysis/${weeklyUpdate.slug}`,
       metadata: {
         type: weeklyUpdate.type,
         market: weeklyUpdate.market,
@@ -132,5 +148,5 @@ export function isWeeklyUpdateNotificationTarget(
   accessTier: WeeklyUpdateAccessTier
 ) {
   const option = getWeeklyUpdateAccessOption(accessTier);
-  return option.selectable && option.minAccessLevel !== null;
+  return option.selectable;
 }

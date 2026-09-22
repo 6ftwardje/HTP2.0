@@ -46,7 +46,7 @@ const MARKET_ANALYSIS_TYPES: Array<Exclude<MarketAnalysisType, "live_session">> 
   "weekly_outlook",
   "market_update",
 ];
-const MARKETS: Market[] = ["stocks", "forex", "crypto"];
+const MARKETS: Market[] = ["stocks", "forex", "crypto", "commodities"];
 
 type ThumbnailUploadInput = {
   name?: string;
@@ -81,6 +81,27 @@ function asLineList(value: unknown): string[] {
     .filter(Boolean);
 }
 
+function asChapters(value: unknown) {
+  return asLineList(value).flatMap((line) => {
+    const match = line.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})\s+(.+)$/);
+    if (!match) return [];
+    return [{
+      title: match[4].trim(),
+      seconds: Number(match[1] ?? 0) * 3600 + Number(match[2]) * 60 + Number(match[3]),
+    }];
+  });
+}
+
+function asRelatedContent(value: unknown) {
+  return asLineList(value).flatMap((line) => {
+    const separator = line.indexOf("|");
+    if (separator < 1) return [];
+    const label = line.slice(0, separator).trim();
+    const href = line.slice(separator + 1).trim();
+    return label && href.startsWith("/") ? [{ label, href }] : [];
+  });
+}
+
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -102,6 +123,7 @@ function revalidateWeeklyUpdatePaths(slug?: string) {
   revalidatePath("/dashboard");
   revalidatePath("/weekly-updates");
   revalidatePath("/market-analysis");
+  revalidatePath("/updates", "layout");
   if (slug) {
     revalidatePath(`/weekly-updates/${slug}`);
     revalidatePath(`/market-analysis/${slug}`);
@@ -180,6 +202,10 @@ function readWeeklyUpdateInput(
   const market = MARKETS.includes(marketRaw as Market)
     ? (marketRaw as Market)
     : null;
+  const markets = formData
+    .getAll("markets")
+    .map(asString)
+    .filter((value): value is Market | "macro" => [...MARKETS, "macro"].includes(value as Market | "macro"));
   const automaticDate = new Date().toISOString().slice(0, 10);
   const weekStartDate =
     type === "weekly_outlook"
@@ -198,8 +224,8 @@ function readWeeklyUpdateInput(
   if (!title) return { error: "Title is required." as const };
   if (!slug) return { error: "Slug is required." as const };
   if (!type) return { error: "Kies verplicht een videotype." as const };
-  if (type === "market_update" && !market) {
-    return { error: "Kies verplicht een markt voor deze markt update." as const };
+  if (type === "market_update" && markets.length === 0 && !market) {
+    return { error: "Kies minimaal één markt voor deze marktbreakdown." as const };
   }
   if (!weekStartDate || Number.isNaN(Date.parse(weekStartDate))) {
     return { error: "Choose a valid week date." as const };
@@ -213,7 +239,14 @@ function readWeeklyUpdateInput(
       summary: asNullableString(formData.get("summary")),
       key_takeaways: asLineList(formData.get("key_takeaways")),
       type,
-      market: type === "market_update" ? market : null,
+      market: type === "market_update" ? (markets.find((value): value is Market => value !== "macro") ?? market) : null,
+      markets,
+      actuality_status: (["current", "still_relevant", "archive"].includes(asString(formData.get("actuality_status"))) ? asString(formData.get("actuality_status")) : "current") as "current" | "still_relevant" | "archive",
+      event_context: asNullableString(formData.get("event_context")),
+      period_label: asNullableString(formData.get("period_label")),
+      chapters: asChapters(formData.get("chapters")),
+      related_content: asRelatedContent(formData.get("related_content")),
+      needs_review: false,
       week_start_date: weekStartDate,
       mentor_student_id: asNullableString(formData.get("mentor_student_id")),
       access_tier: accessTier,

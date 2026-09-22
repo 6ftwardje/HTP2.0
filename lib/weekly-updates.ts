@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Student, WeeklyUpdate, WeeklyUpdateView } from "@/lib/types";
+import type { Market, Student, WeeklyUpdate, WeeklyUpdateView } from "@/lib/types";
 
 export type WeeklyUpdateWithMentor = WeeklyUpdate & {
   mentor: Pick<Student, "id" | "name" | "email"> | null;
@@ -22,7 +22,6 @@ export async function listPublishedWeeklyUpdates(
       `
     )
     .eq("is_published", true)
-    .in("type", ["weekly_outlook", "market_update"])
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -94,6 +93,38 @@ export async function listPublishedMarketUpdates(
   return (data ?? []) as WeeklyUpdateWithMentor[];
 }
 
+export async function listPublishedMarketUpdatesByMarket(
+  market: Market,
+  limit = 60
+): Promise<WeeklyUpdateWithMentor[]> {
+  const db = await createClient();
+  const { data, error } = await db
+    .from("weekly_updates")
+    .select(
+      `
+        *,
+        mentor:students!weekly_updates_mentor_student_id_fkey (
+          id,
+          name,
+          email
+        )
+      `
+    )
+    .eq("is_published", true)
+    .eq("type", "market_update")
+    .eq("market", market)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("listPublishedMarketUpdatesByMarket", error.message);
+    return [];
+  }
+
+  return (data ?? []) as WeeklyUpdateWithMentor[];
+}
+
 export async function getPublishedWeeklyUpdateBySlug(
   slug: string
 ): Promise<WeeklyUpdateWithMentor | null> {
@@ -112,7 +143,6 @@ export async function getPublishedWeeklyUpdateBySlug(
     )
     .eq("slug", slug)
     .eq("is_published", true)
-    .in("type", ["weekly_outlook", "market_update"])
     .maybeSingle();
 
   if (error || !data) return null;

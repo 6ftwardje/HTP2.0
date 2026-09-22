@@ -26,12 +26,12 @@
                 <table role="presentation" cellspacing="0" cellpadding="0" style="margin:28px 0;">
                   <tr>
                     <td style="border-radius:8px;background:#8ea7ff;">
-                      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:800;color:#07090d;text-decoration:none;border-radius:8px;">Account bevestigen</a>
+                      <a href="{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:800;color:#07090d;text-decoration:none;border-radius:8px;">Account bevestigen</a>
                     </td>
                   </tr>
                 </table>
                 <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#9ca3af;">Deze link is tijdelijk geldig. Heb jij dit account niet aangemaakt? Dan mag je deze e-mail negeren.</p>
-                <p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#6b7280;">Werkt de knop niet? Kopieer deze link naar je browser:<br><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard" style="color:#8ea7ff;word-break:break-all;text-decoration:none;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard</a></p>
+                <p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#6b7280;">Werkt de knop niet? Kopieer deze link naar je browser:<br><a href="{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard" style="color:#8ea7ff;word-break:break-all;text-decoration:none;">{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=signup&amp;next=/dashboard</a></p>
               </td>
             </tr>
             <tr>

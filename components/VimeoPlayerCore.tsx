@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { extractVimeoId, getVimeoEmbedUrl } from "@/lib/vimeo";
 import { useEffect, useMemo, useRef } from "react";
+import type { MuxPlaybackTokens } from "@/lib/types";
 
 const MuxLessonPlayer = dynamic(
   () => import("@/components/MuxLessonPlayer").then((mod) => mod.MuxLessonPlayer),
@@ -25,6 +26,7 @@ type Props = {
   muxPlaybackPolicy?: "public" | "signed";
   title?: string;
   onEnded?: (() => void) | null;
+  muxTokens?: MuxPlaybackTokens | null;
 };
 
 function extractMuxPlaybackId(
@@ -51,6 +53,7 @@ export function VimeoPlayer({
   muxPlaybackPolicy = "public",
   title,
   onEnded = null,
+  muxTokens = null,
 }: Props) {
   const muxId =
     videoProvider === "mux" ? extractMuxPlaybackId(videoUrl, muxPlaybackId) : null;
@@ -118,14 +121,23 @@ export function VimeoPlayer({
     };
   }, [onEnded, shouldListen, videoId]);
 
-  if (muxId && muxPlaybackPolicy === "public") {
+  if (muxId && (muxPlaybackPolicy === "public" || muxTokens?.playback)) {
     return (
       <div className="aspect-video w-full overflow-hidden rounded-2xl border border-[color-mix(in_oklab,#f50101_34%,var(--border)_66%)] bg-stone-950 shadow-[0_0_0_1px_rgba(245,1,1,0.06),0_16px_42px_rgba(28,25,23,0.14)]">
         <MuxLessonPlayer
           playbackId={muxId}
           title={title}
           onEnded={onEnded}
+          tokens={muxTokens}
         />
+      </div>
+    );
+  }
+
+  if (muxId && muxPlaybackPolicy === "signed") {
+    return (
+      <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-[var(--border)] bg-stone-950 px-6 text-center text-sm font-semibold text-white/70">
+        De beveiligde video is tijdelijk niet beschikbaar. Probeer later opnieuw.
       </div>
     );
   }

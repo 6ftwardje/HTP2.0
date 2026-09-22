@@ -154,16 +154,11 @@ enabled = true
 site_url = "http://127.0.0.1:3000"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
-  "http://localhost:3000/auth/callback**",
-  "http://localhost:3000/auth/confirm**",
-  "http://127.0.0.1:3000/auth/callback**",
-  "http://127.0.0.1:3000/auth/confirm**",
-  "https://htp2.netlify.app/auth/callback**",
-  "https://htp2.netlify.app/auth/confirm**",
-  "https://hettradeplatform.be/auth/callback**",
-  "https://hettradeplatform.be/auth/confirm**",
-  "https://www.hettradeplatform.be/auth/callback**",
-  "https://www.hettradeplatform.be/auth/confirm**"
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://htp2.netlify.app",
+  "https://hettradeplatform.be",
+  "https://www.hettradeplatform.be"
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600

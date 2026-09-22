@@ -25,6 +25,9 @@ Styled templates for Het Trade Platform authentication emails. Paste each HTML f
 ## Notes
 
 - Templates use inline CSS and table layout for email-client compatibility.
-- CTA links point to `/auth/confirm` with `{{ .TokenHash }}`. The app verifies the token with Supabase and sets the session cookie before redirecting to the right page.
+- Registration and recovery CTA links use `{{ .RedirectTo }}` as their
+  allowlisted base and point to `/auth/confirm` with `{{ .TokenHash }}`. The app
+  verifies the token with Supabase and sets the session cookie before
+  redirecting to the right page.
 - The Magic link or OTP template also shows `{{ .Token }}` for future OTP support.
 - Keep auth emails transactional: no marketing copy, no tracking pixels, no large images.

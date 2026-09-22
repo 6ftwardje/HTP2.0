@@ -10,6 +10,7 @@ const PROTECTED_PREFIXES = [
   "/modules",
   "/onboarding",
   "/market-analysis",
+  "/updates",
   "/weekly-updates",
 ];
 

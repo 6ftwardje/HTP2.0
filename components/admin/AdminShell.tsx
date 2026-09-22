@@ -88,8 +88,18 @@ const adminNav = [
     ),
   },
   {
+    href: "/admin/live-sessions",
+    label: "Live marktsessies",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/market-analysis",
-    label: "Marktanalyse",
+    label: "Marktinzicht",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path

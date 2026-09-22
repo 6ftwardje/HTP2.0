@@ -49,28 +49,27 @@ Voor lokaal ontwikkelen:
 | Instelling | Waarde |
 | --- | --- |
 | **Site URL** | `http://localhost:3000` |
-| **Redirect URLs** | `http://localhost:3000/auth/callback**` |
+| **Redirect URLs** | `http://localhost:3000` |
 
 Voeg bij een productieomgeving ook toe:
 
 ```text
-https://jouw-domein.nl/auth/callback**
+https://jouw-domein.nl
 ```
 
 Zet de **Site URL** in productie op je echte domein. De app gebruikt
-`/auth/confirm` voor e-mailtokens en behoudt `/auth/callback` als PKCE-callback.
+`/auth/confirm` voor e-mailtokens en behoudt `/auth/callback` voor eventuele
+OAuth/PKCE-flows.
 
 Voor `hettradeplatform.be`:
 
 | Instelling | Waarde |
 | --- | --- |
 | **Site URL** | `https://hettradeplatform.be` |
-| **Redirect URLs** | `https://hettradeplatform.be/auth/callback**` |
-| **Redirect URLs** | `https://hettradeplatform.be/auth/confirm**` |
-| **Redirect URLs** | `https://www.hettradeplatform.be/auth/callback**` |
-| **Redirect URLs** | `https://www.hettradeplatform.be/auth/confirm**` |
-| **Redirect URLs** | `http://localhost:3000/auth/callback**` |
-| **Redirect URLs** | `http://localhost:3000/auth/confirm**` |
+| **Redirect URLs** | `https://hettradeplatform.be` |
+| **Redirect URLs** | `https://www.hettradeplatform.be` |
+| **Redirect URLs** | `https://htp2.netlify.app` |
+| **Redirect URLs** | `http://localhost:3000` |
 
 Zet in je productie-environment ook:
 
@@ -98,14 +97,14 @@ De app gebruikt deze waarde om de bevestigingslink na registratie en de
 resetlink voor wachtwoordherstel naar het live domein te laten wijzen.
 
 Als je aangepaste Supabase e-mailtemplates gebruikt, controleer dan dat de link
-naar `/auth/confirm` wijst en `{{ .TokenHash }}` meestuurt. Dat vermijdt dat de
-e-mailbevestiging afhankelijk is van de PKCE code-verifier-cookie van dezelfde
-browser.
+`{{ .RedirectTo }}` als allowlisted basis gebruikt, naar `/auth/confirm` wijst
+en `{{ .TokenHash }}` meestuurt. Dat vermijdt dat de e-mailbevestiging
+afhankelijk is van de PKCE code-verifier-cookie van dezelfde browser.
 
 Voor bevestiging na registratie:
 
 ```html
-{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/dashboard
+{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/dashboard
 ```
 
 ### Wachtwoord vergeten correct laten redirecten
@@ -124,16 +123,14 @@ Controleer in **Authentication** -> **URL Configuration**:
 | Instelling | Productiewaarde |
 | --- | --- |
 | **Site URL** | `https://hettradeplatform.be` |
-| **Redirect URL** | `https://hettradeplatform.be/auth/callback**` |
-| **Redirect URL** | `https://hettradeplatform.be/auth/confirm**` |
-| **Redirect URL** | `https://www.hettradeplatform.be/auth/callback**` |
-| **Redirect URL** | `https://www.hettradeplatform.be/auth/confirm**` |
-| **Redirect URL** | `http://localhost:3000/auth/callback**` |
-| **Redirect URL** | `http://localhost:3000/auth/confirm**` |
+| **Redirect URL** | `https://hettradeplatform.be` |
+| **Redirect URL** | `https://www.hettradeplatform.be` |
+| **Redirect URL** | `https://htp2.netlify.app` |
+| **Redirect URL** | `http://localhost:3000` |
 
 Controleer in **Authentication** -> **Email Templates** -> **Reset Password**:
 
-1. De knop/link moet `/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/account/update-password` gebruiken.
+1. De knop/link moet `{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/account/update-password` gebruiken.
 2. Gebruik geen hardcoded link naar `/account/update-password`.
 
 De gebruiker klikt dus op de app-link, de app valideert de token via Supabase,

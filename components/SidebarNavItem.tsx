@@ -2,8 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * Nav row: matches premium members UI — light mode solid active bar,
- * dark mode subtle white/5 + light text (same idea as pre-redesign AppShell).
+ * Shared navigation row. Updates uses the same row and exact active treatment.
  */
 export function SidebarNavItem({
   href,
@@ -26,7 +25,7 @@ export function SidebarNavItem({
         "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors",
         active
           ? [
-              "bg-[var(--surface-hover)] text-[var(--foreground)]",
+              "bg-[color-mix(in_oklab,var(--accent)_13%,var(--card))] text-[var(--accent)]",
               "before:absolute before:-left-5 before:top-0 before:h-full before:w-[3px] before:bg-[var(--accent)]",
             ].join(" ")
           : [

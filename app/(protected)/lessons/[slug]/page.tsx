@@ -26,6 +26,7 @@ import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
 } from "@/lib/onboarding";
+import { getMuxPlaybackTokens } from "@/lib/mux-signing";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -258,6 +259,12 @@ export default async function LessonPage({ params }: Props) {
     );
   }
 
+  const muxTokens = getMuxPlaybackTokens({
+    playbackId: lesson.mux_playback_id,
+    playbackPolicy: lesson.mux_playback_policy,
+    durationSeconds: lesson.video_duration_seconds,
+  });
+
   const rail = (
     <>
       <RightRailCard title="Module">
@@ -308,6 +315,7 @@ export default async function LessonPage({ params }: Props) {
               videoProvider={lesson.video_provider}
               muxPlaybackId={lesson.mux_playback_id}
               muxPlaybackPolicy={lesson.mux_playback_policy}
+              muxTokens={muxTokens}
               title={lesson.title}
             />
           ) : (
@@ -317,6 +325,7 @@ export default async function LessonPage({ params }: Props) {
               videoProvider={lesson.video_provider}
               muxPlaybackId={lesson.mux_playback_id}
               muxPlaybackPolicy={lesson.mux_playback_policy}
+              muxTokens={muxTokens}
               title={lesson.title}
               isCompleted={isCompleted}
             />

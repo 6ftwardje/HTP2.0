@@ -5,22 +5,31 @@ export type WeeklyUpdateAccessOption = {
   label: string;
   description: string;
   minAccessLevel: number | null;
+  entitlementKey?: string;
   selectable: boolean;
 };
 
 export const WEEKLY_UPDATE_ACCESS_OPTIONS: WeeklyUpdateAccessOption[] = [
   {
     value: "free",
-    label: "Iedereen",
-    description: "Alle ingelogde accounts, inclusief gratis accounts.",
+    label: "Iedereen (legacy)",
+    description: "Oude publieke doelgroep; niet gebruiken voor nieuwe marktcontent.",
     minAccessLevel: 0,
-    selectable: true,
+    selectable: false,
   },
   {
     value: "full_course",
-    label: "Full course en hoger",
-    description: "Alle accounts met access level 2 of hoger.",
+    label: "Academy (legacy)",
+    description: "Oude Academy-doelgroep; subscription staat los van Academy.",
     minAccessLevel: 2,
+    selectable: false,
+  },
+  {
+    value: "subscription",
+    label: "Subscription",
+    description: "Actieve betalende subscription of geldige Academybonus.",
+    minAccessLevel: null,
+    entitlementKey: "subscriber_content",
     selectable: true,
   },
   {
@@ -62,8 +71,9 @@ export function canStudentAccessWeeklyUpdate(
   student: Pick<Student, "access_level"> | null
 ) {
   const option = getWeeklyUpdateAccessOption(accessTier);
-  if (!option.selectable || option.minAccessLevel === null) return false;
+  if (option.entitlementKey || !option.selectable || option.minAccessLevel === null) {
+    return false;
+  }
   if (!student) return false;
   return student.access_level >= option.minAccessLevel;
 }
-

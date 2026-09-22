@@ -3,6 +3,7 @@
 import { useCallback, useTransition } from "react";
 import { markWeeklyUpdateWatched } from "@/app/actions/weekly-updates";
 import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
+import type { MuxPlaybackTokens } from "@/lib/types";
 
 export function WeeklyUpdateAutoCompleteVideo({
   weeklyUpdateId,
@@ -11,6 +12,7 @@ export function WeeklyUpdateAutoCompleteVideo({
   muxPlaybackId,
   muxPlaybackPolicy,
   title,
+  muxTokens,
 }: {
   weeklyUpdateId: number;
   videoUrl: string | null;
@@ -18,6 +20,7 @@ export function WeeklyUpdateAutoCompleteVideo({
   muxPlaybackId?: string | null;
   muxPlaybackPolicy?: "public" | "signed";
   title?: string;
+  muxTokens?: MuxPlaybackTokens | null;
 }) {
   const [, startTransition] = useTransition();
 
@@ -34,6 +37,7 @@ export function WeeklyUpdateAutoCompleteVideo({
       muxPlaybackId={muxPlaybackId}
       muxPlaybackPolicy={muxPlaybackPolicy}
       title={title}
+      muxTokens={muxTokens}
       onEnded={onEnded}
     />
   );

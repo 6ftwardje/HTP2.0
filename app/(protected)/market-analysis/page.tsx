@@ -1,39 +1,31 @@
-import { MarketAnalysisLibrary } from "@/components/MarketAnalysisLibrary";
 import { PageHeader } from "@/components/layout/PageHeader";
-import {
-  getWeeklyUpdateViewsByIds,
-  listPublishedMarketUpdates,
-  listPublishedWeeklyOutlooks,
-} from "@/lib/weekly-updates";
+import { MarketInsightLibrary } from "@/components/market-insight/MarketInsightLibrary";
+import { SubscriptionPaywall } from "@/components/billing/SubscriptionPaywall";
+import { canAccessSubscriberContent, getBillingOverview } from "@/lib/billing";
+import { listPastLiveSessions, listUpcomingLiveSessions } from "@/lib/live-sessions";
 import { ensureCurrentStudent } from "@/lib/students";
+import { listPublishedWeeklyUpdates } from "@/lib/weekly-updates";
 
 export default async function MarketAnalysisPage() {
   const { student } = await ensureCurrentStudent();
   if (!student) return null;
-
-  const [outlooks, marketUpdates] = await Promise.all([
-    listPublishedWeeklyOutlooks(24),
-    listPublishedMarketUpdates(72),
+  const billing = await getBillingOverview(student.id);
+  if (!canAccessSubscriberContent(student, billing)) {
+    return <SubscriptionPaywall overview={billing} title="Ontgrendel Marktinzicht" />;
+  }
+  const [updates, upcoming, past] = await Promise.all([
+    listPublishedWeeklyUpdates(100),
+    listUpcomingLiveSessions(20),
+    listPastLiveSessions(40),
   ]);
-  const updates = [...outlooks, ...marketUpdates];
-  const viewMap = await getWeeklyUpdateViewsByIds(
-    student.id,
-    updates.map((update) => update.id)
-  );
-
   return (
     <div>
       <PageHeader
-        eyebrow="Videoanalyses"
-        title="Marktanalyse"
-        description="Begin je week met de weekly outlook en volg tussentijdse ontwikkelingen per markt."
+        eyebrow="Voorbereiden · Begrijpen · Deelnemen"
+        title="Marktinzicht"
+        description="Bereid je voor op de week, begrijp actuele marktbewegingen en neem deel aan live analyses."
       />
-      <MarketAnalysisLibrary
-        updates={updates}
-        watchedIds={Array.from(viewMap.values())
-          .filter((view) => view.watched)
-          .map((view) => view.weekly_update_id)}
-      />
+      <MarketInsightLibrary updates={updates} sessions={[...upcoming, ...past]} />
     </div>
   );
 }

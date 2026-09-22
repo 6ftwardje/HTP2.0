@@ -57,15 +57,108 @@ export type Lesson = {
 export type WeeklyUpdateAccessTier =
   | "free"
   | "full_course"
+  | "subscription"
   | "premium"
   | "mentor_membership";
+
+export type MuxPlaybackTokens = {
+  playback: string;
+  thumbnail: string;
+  storyboard: string;
+};
+
+export type PlatformRole = "student" | "mentor" | "content_manager" | "admin";
+
+export type SubscriptionStatus =
+  | "incomplete"
+  | "incomplete_expired"
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "unpaid"
+  | "paused";
+
+export type BillingCustomer = {
+  student_id: string;
+  stripe_customer_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Subscription = {
+  id: string;
+  student_id: string;
+  stripe_subscription_id: string;
+  stripe_customer_id: string;
+  stripe_price_id: string;
+  status: SubscriptionStatus;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  cancel_at: string | null;
+  canceled_at: string | null;
+  ended_at: string | null;
+  trial_end: string | null;
+  latest_invoice_id: string | null;
+  last_stripe_event_created_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudentEntitlement = {
+  id: string;
+  student_id: string;
+  entitlement_key: string;
+  source_type:
+    | "stripe_subscription"
+    | "academy_bonus"
+    | "legacy_academy_bonus"
+    | "manual";
+  source_id: string;
+  starts_at: string;
+  ends_at: string | null;
+  revoked_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OneTimePurchase = {
+  id: string;
+  student_id: string;
+  product_key: "academy";
+  stripe_checkout_session_id: string;
+  stripe_payment_intent_id: string | null;
+  stripe_customer_id: string;
+  stripe_price_id: string;
+  amount_total: number;
+  currency: string;
+  payment_status: "paid" | "refunded" | "disputed";
+  purchased_at: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
 
 export type MarketAnalysisType =
   | "weekly_outlook"
   | "market_update"
   | "live_session";
 
-export type Market = "stocks" | "forex" | "crypto";
+export type Market = "stocks" | "forex" | "crypto" | "commodities";
+
+export type MarketInsightFormat =
+  | "weekly_outlook"
+  | "market_breakdown"
+  | "live_session";
+
+export type MarketInsightActuality = "current" | "still_relevant" | "archive";
+
+export type MarketInsightChapter = {
+  title: string;
+  seconds: number;
+};
 
 export type WeeklyUpdate = {
   id: number;
@@ -93,6 +186,53 @@ export type WeeklyUpdate = {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  markets?: Array<Market | "macro">;
+  actuality_status?: MarketInsightActuality;
+  event_context?: string | null;
+  period_label?: string | null;
+  chapters?: MarketInsightChapter[];
+  related_content?: Array<{ label: string; href: string }>;
+  needs_review?: boolean;
+};
+
+export type LiveSessionStatus =
+  | "draft"
+  | "scheduled"
+  | "live"
+  | "completed"
+  | "cancelled";
+
+export type LiveSession = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string;
+  display_timezone: string;
+  mentor_student_id: string | null;
+  created_by_student_id: string | null;
+  provider: "clickmeeting" | "external";
+  provider_event_id: string | null;
+  status: LiveSessionStatus;
+  is_published: boolean;
+  published_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  replay_weekly_update_id: number | null;
+  replay_available_from: string | null;
+  replay_available_until: string | null;
+  created_at: string;
+  updated_at: string;
+  markets?: Array<Market | "macro">;
+  summary?: string | null;
+  chapters?: MarketInsightChapter[];
+  thumbnail_url?: string | null;
+};
+
+export type LiveSessionWithMentor = LiveSession & {
+  mentor: Pick<Student, "id" | "name" | "email"> | null;
+  replay: Pick<WeeklyUpdate, "id" | "title" | "slug"> | null;
 };
 
 export type DashboardStats = {

@@ -54,18 +54,14 @@ function getSiteOrigin() {
   }
 }
 
-function getCallbackUrl(next: string) {
-  const callbackUrl = new URL("/auth/callback", getSiteOrigin());
-  callbackUrl.searchParams.set("next", getSafeRedirect(next));
-  return callbackUrl.toString();
-}
-
 function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFactory }) {
   const searchParams = useSearchParams();
   const redirectedFrom = getSafeRedirect(searchParams.get("redirectedFrom"));
   const callbackFailed = searchParams.get("error") === "auth";
+  const initialMode: AuthMode =
+    searchParams.get("mode") === "reset" ? "reset" : "login";
 
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -170,7 +166,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
             legal_acceptance_scope: LEGAL_ACCEPTANCE_SCOPE,
             legal_acceptance_source: "registration",
           },
-          emailRedirectTo: getCallbackUrl(redirectedFrom),
+          emailRedirectTo: getSiteOrigin(),
         },
       });
 
@@ -202,7 +198,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-      redirectTo: getCallbackUrl("/account/update-password"),
+      redirectTo: getSiteOrigin(),
     });
 
     if (error) {

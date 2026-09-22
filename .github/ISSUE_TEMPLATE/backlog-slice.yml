@@ -1,0 +1,75 @@
+name: Backlog slice
+description: Eén zelfstandig, aantoonbaar resultaat met stabiele taakcode.
+title: "[Sx.y] Concreet resultaat"
+labels:
+  - backlog
+  - status:todo
+body:
+  - type: input
+    id: code
+    attributes:
+      label: Taakcode
+      description: Stabiele unieke code, bijvoorbeeld S1.2.
+      placeholder: S1.2
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Resultaat en zakelijke reden
+      description: Beschrijf waarneembaar resultaat en waarom het waarde levert.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Benoem expliciet wat binnen en buiten deze taak valt.
+      placeholder: |-
+        Binnen scope:
+        - ...
+
+        Buiten scope:
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptatiecriteria
+      description: Objectief controleerbaar gedrag in checklistvorm.
+      placeholder: |-
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Afhankelijkheden en blokkades
+      description: Verwijs naar taakcodes/issues en benoem beslispoorten.
+    validations:
+      required: true
+  - type: dropdown
+    id: estimate
+    attributes:
+      label: Inschatting
+      options:
+        - XS — maximaal een halve dag
+        - S — ongeveer één dag
+        - M — twee tot drie dagen
+        - L — eerst verder opsplitsen
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risico’s, aannames en menselijke beslissingen
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Zelfstandige uitvoerprompt
+      description: Volledige prompt waarmee een nieuwe coding agent zonder chatcontext kan starten.
+    validations:
+      required: true

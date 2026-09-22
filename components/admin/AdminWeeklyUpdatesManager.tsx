@@ -280,7 +280,7 @@ function WeeklyUpdateFields({
       <ThumbnailField update={update} onFileChange={onThumbnailFileChange} />
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Videotype <span className="text-red-600">*</span>
+          Format <span className="text-red-600">*</span>
         </span>
         <select
           name="type"
@@ -291,37 +291,39 @@ function WeeklyUpdateFields({
             setAnalysisType(event.currentTarget.value as MarketAnalysisType | "")
           }
         >
-          <option value="" disabled>Kies videotype</option>
+          <option value="" disabled>Kies format</option>
           {MARKET_ANALYSIS_TYPE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
         <span className="block text-xs leading-5 text-[var(--muted)]">
-          Dit bepaalt automatisch waar de video voor leden verschijnt.
+          Kies Weekvooruitblik of Marktbreakdown. Live marktsessies plan je in het livebeheer.
         </span>
       </label>
+      <fieldset className="space-y-2">
+        <legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+          Markten {analysisType === "market_update" ? <span className="text-red-600">*</span> : null}
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {[...MARKET_OPTIONS, { value: "macro" as const, label: "Macro" }].map((option) => (
+            <label key={option.value} className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm">
+              <input name="markets" type="checkbox" value={option.value} defaultChecked={update?.markets?.includes(option.value) || update?.market === option.value} />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       {analysisType === "market_update" ? (
         <label className="space-y-1.5">
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Markt <span className="text-red-600">*</span>
+            Event of aanleiding
           </span>
-          <select
-            name="market"
-            defaultValue={update?.market ?? ""}
-            required
-            className={fieldClass()}
-          >
-            <option value="" disabled>Kies markt</option>
-            {MARKET_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+          <input name="event_context" defaultValue={update?.event_context ?? ""} placeholder="Bijv. rentebesluit ECB" className={fieldClass()} />
         </label>
-      ) : (
-        <input type="hidden" name="market" value="" />
-      )}
+      ) : <input type="hidden" name="event_context" value={update?.event_context ?? ""} />}
+      <input type="hidden" name="market" value={update?.market ?? ""} />
       {analysisType === "weekly_outlook" ? (
-        <div className="rounded-lg border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_72%,var(--background)_28%)] px-3 py-2.5">
+        <div className="grid gap-3 rounded-lg border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_72%,var(--background)_28%)] px-3 py-2.5">
           <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Week & publicatie</div>
           <p className="mt-1 text-sm text-[var(--foreground)]">
             {update?.week_start_date
@@ -329,11 +331,12 @@ function WeeklyUpdateFields({
               : "Weeknummer en maandagdatum worden automatisch gekoppeld."}
           </p>
           <p className="mt-1 text-xs text-[var(--muted)]">De publicatiedatum wordt vastgelegd bij publiceren.</p>
+          <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Week of periode</span><input name="period_label" defaultValue={update?.period_label ?? ""} placeholder="Bijv. Week 39" className={fieldClass()} /></label>
         </div>
-      ) : null}
+      ) : <input type="hidden" name="period_label" value={update?.period_label ?? ""} />}
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Title
+          Titel
         </span>
         <input name="title" defaultValue={update?.title ?? ""} required className={fieldClass()} />
       </label>
@@ -348,7 +351,7 @@ function WeeklyUpdateFields({
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="space-y-1.5">
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Mentor
+            Host
           </span>
           <select name="mentor_student_id" defaultValue={update?.mentor_student_id ?? ""} className={fieldClass()}>
             <option value="">No mentor</option>
@@ -363,7 +366,7 @@ function WeeklyUpdateFields({
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
             Access
           </span>
-          <select name="access_tier" defaultValue={update?.access_tier ?? "full_course"} className={fieldClass()}>
+          <select name="access_tier" defaultValue={update?.access_tier ?? "subscription"} className={fieldClass()}>
             {WEEKLY_UPDATE_ACCESS_OPTIONS.map((option) => (
               <option
                 key={option.value}
@@ -375,19 +378,25 @@ function WeeklyUpdateFields({
             ))}
           </select>
           <span className="block text-xs leading-5 text-[var(--muted)]">
-            Iedereen = alle ingelogde accounts. Full course en hoger sluit gratis accounts uit.
+            Marktupdates en Weekly Outlook-replays horen altijd bij de subscription.
           </span>
         </label>
       </div>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Summary
+          Korte omschrijving / samenvatting
         </span>
         <textarea name="summary" defaultValue={update?.summary ?? ""} rows={4} className={fieldClass()} />
       </label>
       <label className="space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Actualiteitsstatus</span>
+        <select name="actuality_status" defaultValue={update?.actuality_status ?? "current"} className={fieldClass()}>
+          <option value="current">Actueel</option><option value="still_relevant">Nog relevant</option><option value="archive">Archief</option>
+        </select>
+      </label>
+      <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Key takeaways
+          Belangrijke scenario&apos;s of aandachtspunten
         </span>
         <textarea
           name="key_takeaways"
@@ -397,6 +406,8 @@ function WeeklyUpdateFields({
           className={fieldClass()}
         />
       </label>
+      <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken / timestamps</span><textarea name="chapters" defaultValue={(update?.chapters ?? []).map((chapter) => `${Math.floor(chapter.seconds / 60)}:${String(chapter.seconds % 60).padStart(2, "0")} ${chapter.title}`).join("\n")} rows={4} placeholder="00:00 Introductie" className={fieldClass()} /></label>
+      <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Gerelateerde content</span><textarea name="related_content" defaultValue={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} rows={3} placeholder="Les risicobeheer | /lessons/risicobeheer" className={fieldClass()} /></label>
       <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5">
         <input name="is_published" type="checkbox" defaultChecked={update?.is_published ?? false} className="h-4 w-4" />
         <span className="text-sm font-semibold text-[var(--foreground)]">Published</span>
@@ -474,11 +485,11 @@ export function AdminWeeklyUpdatesManager({
     () => updates.filter((update) => !deletedIds.has(update.id)),
     [updates, deletedIds]
   );
-  const uncategorizedCount = availableUpdates.filter((update) => !update.type).length;
+  const uncategorizedCount = availableUpdates.filter((update) => update.needs_review || !update.type).length;
   const visibleUpdates = useMemo(
     () =>
       archiveFilter === "uncategorized"
-        ? availableUpdates.filter((update) => !update.type)
+        ? availableUpdates.filter((update) => update.needs_review || !update.type)
         : availableUpdates,
     [archiveFilter, availableUpdates]
   );
@@ -772,7 +783,7 @@ export function AdminWeeklyUpdatesManager({
           <div>
             <div className="cb-eyebrow">Bibliotheek</div>
             <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
-              Marktanalyse
+              Marktinzicht
             </h2>
           </div>
           <button
@@ -801,7 +812,7 @@ export function AdminWeeklyUpdatesManager({
             className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-bold ${archiveFilter === "uncategorized" ? "bg-[var(--foreground)] text-[var(--background)]" : "text-[var(--muted)]"}`}
             onClick={() => setArchiveFilter("uncategorized")}
           >
-            Niet gecategoriseerd ({uncategorizedCount})
+            Controle nodig ({uncategorizedCount})
           </button>
         </div>
 
@@ -810,8 +821,8 @@ export function AdminWeeklyUpdatesManager({
             <div className="p-8 text-center">
               <p className="cb-body">
                 {archiveFilter === "uncategorized"
-                  ? "Alle bestaande video’s zijn gecategoriseerd."
-                  : "Nog geen marktanalyses. Voeg de eerste video toe."}
+                  ? "Geen video’s wachten op handmatige classificatie."
+                  : "Nog geen marktinzichten. Voeg de eerste video toe."}
               </p>
             </div>
           ) : (
@@ -851,6 +862,7 @@ export function AdminWeeklyUpdatesManager({
                       <span className={update.type ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                         {getMarketAnalysisTypeLabel(update.type)}
                       </span>
+                      {update.needs_review ? <span className="cb-badge cb-badge-locked">Controle nodig</span> : null}
                       {update.type === "market_update" ? (
                         <span className="cb-badge cb-badge-available">{getMarketLabel(update.market)}</span>
                       ) : null}

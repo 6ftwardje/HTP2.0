@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
 import { markLessonComplete } from "@/app/actions/progress";
+import type { MuxPlaybackTokens } from "@/lib/types";
 
 export function LessonAutoCompleteVideo({
   lessonId,
@@ -13,6 +14,7 @@ export function LessonAutoCompleteVideo({
   muxPlaybackPolicy,
   title,
   isCompleted,
+  muxTokens,
 }: {
   lessonId: number;
   videoUrl: string | null;
@@ -21,6 +23,7 @@ export function LessonAutoCompleteVideo({
   muxPlaybackPolicy?: "public" | "signed";
   title?: string;
   isCompleted: boolean;
+  muxTokens?: MuxPlaybackTokens | null;
 }) {
   const router = useRouter();
   const didMarkRef = useRef(false);
@@ -51,6 +54,7 @@ export function LessonAutoCompleteVideo({
         muxPlaybackId={muxPlaybackId}
         muxPlaybackPolicy={muxPlaybackPolicy}
         title={title}
+        muxTokens={muxTokens}
         onEnded={handleEnded}
       />
       {marking ? (

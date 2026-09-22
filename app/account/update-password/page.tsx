@@ -10,7 +10,7 @@ export default async function UpdatePasswordPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/?error=auth");
+    redirect("/auth/error?reason=recovery_session_missing");
   }
 
   return (

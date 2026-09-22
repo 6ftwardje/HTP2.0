@@ -29,17 +29,42 @@ export default function UpdatePasswordForm() {
     setStatus("loading");
     setMessage("");
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password });
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ password });
 
-    if (error) {
+      if (error) {
+        console.error("[auth.password_update_failed]", {
+          status: error.status,
+          code: error.code,
+        });
+        setStatus("error");
+        setMessage(
+          error.status === 422
+            ? "Kies een ander, sterker wachtwoord dat je nog niet gebruikt."
+            : "Je wachtwoord kon niet worden gewijzigd. Vraag een nieuwe resetlink aan."
+        );
+        return;
+      }
+
+      const { error: signOutError } = await supabase.auth.signOut({
+        scope: "others",
+      });
+      if (signOutError) {
+        console.error("[auth.password_update_other_sessions_signout_failed]", {
+          status: signOutError.status,
+          code: signOutError.code,
+        });
+      }
+
+      setStatus("success");
+      setMessage("Je wachtwoord is gewijzigd. Je kunt terug naar de academy.");
+    } catch {
       setStatus("error");
-      setMessage("Je wachtwoord kon niet worden gewijzigd. Vraag een nieuwe resetlink aan.");
-      return;
+      setMessage(
+        "De verbinding werd onderbroken. Controleer je internetverbinding en probeer opnieuw."
+      );
     }
-
-    setStatus("success");
-    setMessage("Je wachtwoord is gewijzigd. Je kunt terug naar de academy.");
   }
 
   return (

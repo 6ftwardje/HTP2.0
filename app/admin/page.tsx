@@ -81,6 +81,20 @@ export default function AdminHomePage() {
           </span>
         </Link>
 
+        <Link
+          href="/admin/live-sessions"
+          className="cb-panel group block p-6 transition-shadow hover:shadow-md"
+        >
+          <div className="cb-eyebrow">Agenda</div>
+          <h2 className="cb-h2 mt-4">Live sessies</h2>
+          <p className="cb-body mt-2">
+            Plan Weekly Outlooks, publiceer de beveiligde deelname-link en koppel replays.
+          </p>
+          <span className="mt-4 inline-flex items-center text-sm font-bold text-[var(--foreground)] group-hover:underline">
+            Open →
+          </span>
+        </Link>
+
         <div className="cb-panel p-6 opacity-90">
           <div className="cb-eyebrow">{`Progress`}</div>
           <h2 className="cb-h2 mt-4">Progress management</h2>

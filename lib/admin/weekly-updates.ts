@@ -23,6 +23,13 @@ export type WeeklyUpdateInput = {
   mentor_student_id: string | null;
   access_tier: WeeklyUpdateAccessTier;
   thumbnail_url: string | null;
+  markets: Array<Market | "macro">;
+  actuality_status: "current" | "still_relevant" | "archive";
+  event_context: string | null;
+  period_label: string | null;
+  chapters: Array<{ title: string; seconds: number }>;
+  related_content: Array<{ label: string; href: string }>;
+  needs_review: boolean;
   is_published: boolean;
   published_at: string | null;
 };

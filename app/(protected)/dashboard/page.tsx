@@ -5,6 +5,10 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { BrandIcon } from "@/components/ui/Brand";
 import { asText } from "@/lib/as-text";
 import {
+  canAccessSubscriberContent,
+  getBillingOverview,
+} from "@/lib/billing";
+import {
   getDashboardOverview,
   getDashboardOverviewReadModel,
 } from "@/lib/dashboard";
@@ -13,8 +17,8 @@ import {
   onboardingIsComplete,
 } from "@/lib/onboarding";
 import { stripModulePrefix } from "@/lib/module-title";
+import { listUpcomingLiveSessions } from "@/lib/live-sessions";
 import { ensureCurrentStudent } from "@/lib/students";
-import { listPublishedWeeklyOutlooks } from "@/lib/weekly-updates";
 
 type Props = {
   searchParams?: Promise<{ intake?: string }>;
@@ -27,18 +31,20 @@ export default async function DashboardPage({ searchParams }: Props) {
   ]);
   if (!student) return null;
 
-  const [overview, onboarding, weeklyUpdates] = await Promise.all([
+  const [overview, onboarding, billingOverview, upcomingLiveSessions] = await Promise.all([
     process.env.PROJECT_SPEED_DASHBOARD_READ_MODEL === "1"
       ? getDashboardOverviewReadModel(student.id, student.access_level)
       : getDashboardOverview(student.id, student.access_level),
     getStudentOnboardingResponse(student.id),
-    listPublishedWeeklyOutlooks(1),
+    getBillingOverview(student.id),
+    listUpcomingLiveSessions(1),
   ]);
   const { nextStep } = overview;
   const intakeComplete = onboardingIsComplete(onboarding);
   const firstName = student.name?.split(" ")[0] ?? null;
   const title = firstName ? `Welkom terug, ${firstName}` : "Welkom terug";
-  const latestWeeklyUpdate = weeklyUpdates[0] ?? null;
+  const hasSubscriberAccess = canAccessSubscriberContent(student, billingOverview);
+  const nextLiveSession = upcomingLiveSessions[0] ?? null;
 
   const stepTitle =
     nextStep.type === "lesson"
@@ -300,74 +306,60 @@ export default async function DashboardPage({ searchParams }: Props) {
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
           <section
-            id="market-analysis"
+            id="live-sessions"
             className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="cb-eyebrow">Marktanalyse</div>
+                <div className="cb-eyebrow">Weekly Outlook</div>
                 <h2 className="mt-2 text-2xl font-extrabold leading-tight text-[var(--foreground)]">
-                  Marktanalyse van de week
+                  Volgende livesessie
                 </h2>
               </div>
               <Link
-                href="/market-analysis"
+                href="/live-sessions"
                 className="shrink-0 text-sm font-semibold text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
               >
-                Archief →
+                Agenda →
               </Link>
             </div>
 
-            {latestWeeklyUpdate ? (
-              <div className="mt-6 grid gap-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
-                <Link
-                  href={`/market-analysis/${latestWeeklyUpdate.slug}`}
-                  className="relative block overflow-hidden rounded-lg bg-black"
-                >
-                  <CourseThumbnail
-                    src={latestWeeklyUpdate.thumbnail_url}
-                    title={latestWeeklyUpdate.title}
-                    eyebrow="Weekly outlook"
-                    className="aspect-[16/10] w-full"
-                  />
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-black/24 text-white backdrop-blur-sm">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden className="ml-0.5">
-                        <path d="M8 5v14l11-7-11-7Z" fill="currentColor" />
-                      </svg>
-                    </div>
-                  </div>
+            {hasSubscriberAccess && nextLiveSession ? (
+              <div className="mt-6 rounded-lg border border-[var(--border)] bg-[color-mix(in_oklab,var(--accent)_7%,var(--card))] p-5">
+                <p className="text-sm font-semibold capitalize text-[var(--muted)]">
+                  {new Intl.DateTimeFormat("nl-BE", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    timeZone: "Europe/Brussels",
+                  }).format(new Date(nextLiveSession.starts_at))}
+                </p>
+                <h3 className="mt-2 text-lg font-bold text-[var(--foreground)]">
+                  {nextLiveSession.title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+                  Bekijk de details, voeg de sessie toe aan je agenda en neem vanaf 15 minuten vooraf deel.
+                </p>
+                <Link href="/live-sessions" className="mt-4 inline-flex cb-btn cb-btn-secondary px-4 py-2 text-sm">
+                  Bekijk livesessie
                 </Link>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-[var(--muted)]">
-                    Week van{" "}
-                    {new Intl.DateTimeFormat("nl-NL", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    }).format(new Date(latestWeeklyUpdate.week_start_date))}
-                  </p>
-                  <h3 className="mt-2 line-clamp-2 text-lg font-bold text-[var(--foreground)]">
-                    {latestWeeklyUpdate.title}
-                  </h3>
-                  {latestWeeklyUpdate.summary ? (
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
-                      {latestWeeklyUpdate.summary}
-                    </p>
-                  ) : null}
-                  <Link
-                    href={`/market-analysis/${latestWeeklyUpdate.slug}`}
-                    className="mt-4 inline-flex cb-btn cb-btn-secondary px-4 py-2 text-sm"
-                  >
-                    Bekijk analyse
-                  </Link>
-                </div>
+              </div>
+            ) : !hasSubscriberAccess ? (
+              <div className="mt-6 rounded-lg border border-[var(--border)] p-5">
+                <p className="cb-body">
+                  Ontgrendel elke week één Weekly Outlook en minstens twee marktupdates voor €99 per maand, inclusief btw.
+                </p>
+                <Link href="/account#subscription" className="mt-4 inline-flex cb-btn cb-btn-primary px-4 py-2 text-sm">
+                  Bekijk subscription
+                </Link>
               </div>
             ) : (
               <div className="mt-6 rounded-lg border border-dashed border-[var(--border)] p-5">
                 <p className="cb-body">
-                  Er staat nog geen weekly outlook klaar. Zodra een mentor publiceert,
-                  verschijnt de startanalyse van de week hier.
+                  Er staat nog geen Weekly Outlook gepland. Zodra een mentor publiceert,
+                  verschijnt de volgende livesessie hier.
                 </p>
               </div>
             )}

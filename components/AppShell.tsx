@@ -59,21 +59,6 @@ const coreNav = [
     ),
   },
   {
-    href: "/market-analysis",
-    label: "Marktanalyse",
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4 6.5h16M4 12h10M4 17.5h16M17 10l3 2-3 2v-4Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
-  {
     href: "/notifications",
     label: "Meldingen",
     icon: (
@@ -103,6 +88,24 @@ const coreNav = [
           stroke="currentColor"
           strokeWidth="1.6"
           strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+] as const;
+
+const updatesNav = [
+  {
+    href: "/market-analysis",
+    label: "Marktinzicht",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+        <path
+          d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a9.9 9.9 0 0 0 0 14M19 5a9.9 9.9 0 0 1 0 14"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
         />
       </svg>
     ),
@@ -148,6 +151,35 @@ function SidebarContent({
       ? [...coreNav.slice(0, -1), adminNavItem, coreNav[coreNav.length - 1]]
       : coreNav;
 
+  function isNavItemActive(href: string) {
+    if (href === "/market-analysis") {
+      return pathname.startsWith("/market-analysis") || pathname.startsWith("/updates") || pathname.startsWith("/live-sessions");
+    }
+    return (
+      pathname === href ||
+      (href === "/dashboard"
+        ? pathname === "/dashboard"
+        : pathname.startsWith(`${href}/`))
+    );
+  }
+
+  function renderNavItem(item: (typeof nav)[number] | (typeof updatesNav)[number]) {
+    return (
+      <SidebarNavItem
+        key={item.href}
+        href={item.href}
+        label={
+          item.href === "/notifications" && unreadNotificationCount > 0
+            ? `${item.label} (${Math.min(unreadNotificationCount, 99)})`
+            : item.label
+        }
+        active={isNavItemActive(item.href)}
+        icon={item.icon}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="px-1">
@@ -164,31 +196,19 @@ function SidebarContent({
         className="mt-9 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain"
         aria-label="Hoofdnavigatie"
       >
-        {nav.map((item) => {
-          const itemPath = item.href.split("#")[0];
-          const isActive =
-            pathname === item.href ||
-            (item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : !item.href.includes("#") && pathname.startsWith(itemPath));
-          return (
-            <SidebarNavItem
-              key={item.href}
-              href={item.href}
-              label={
-                item.href === "/notifications" && unreadNotificationCount > 0
-                  ? `${item.label} (${Math.min(unreadNotificationCount, 99)})`
-                  : item.label
-              }
-              active={isActive}
-              icon={item.icon}
-              onNavigate={onNavigate}
-            />
-          );
-        })}
+        {nav.slice(0, 3).map(renderNavItem)}
+
+        <div className="mb-1 mt-6 px-3 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
+          Updates
+        </div>
+        {updatesNav.map(renderNavItem)}
+
+        <div className="mt-5 flex flex-col gap-1">
+          {nav.slice(3).map(renderNavItem)}
+        </div>
       </nav>
 
-      <div className="mt-auto border-t border-[var(--border)] pt-5">
+      <div className="mt-auto border-t-[0.5px] border-[var(--border)] pt-5">
         <div className="flex flex-col gap-1">
           <a
             href={`mailto:${BRAND.supportEmail}`}
@@ -254,7 +274,7 @@ export function AppShell({
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       {/* Desktop sidebar: vaste viewporthoogte; alleen main rechts scrollt */}
-      <aside className="relative hidden h-full min-h-0 w-[252px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] md:flex">
+      <aside className="relative hidden h-full min-h-0 w-[252px] shrink-0 flex-col overflow-hidden border-r-[0.5px] border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] text-[var(--foreground)] md:flex">
         <div className="flex h-full min-h-0 flex-col px-5 py-8">
           <SidebarContent
             studentName={studentName}
@@ -274,8 +294,8 @@ export function AppShell({
             className="fixed inset-0 z-40 bg-stone-900/35 backdrop-blur-[2px] md:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] shadow-2xl md:hidden">
-            <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-4 py-3">
+          <aside className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r-[0.5px] border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] text-[var(--foreground)] shadow-2xl md:hidden">
+            <div className="flex shrink-0 items-center justify-between border-b-[0.5px] border-[var(--border)] px-4 py-3">
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
                 Menu
               </span>

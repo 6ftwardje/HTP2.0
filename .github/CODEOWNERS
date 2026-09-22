@@ -1,0 +1,7 @@
+# Kritieke domeinlogica vereist menselijke review zodra branch protection
+# "Require review from Code Owners" inschakelt.
+/lib/ai/ @6ftwardje
+/lib/mux.ts @6ftwardje
+/app/api/mux/ @6ftwardje
+/supabase/migrations/ @6ftwardje
+/knowledge/ai/ @6ftwardje

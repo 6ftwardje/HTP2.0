@@ -8,6 +8,13 @@ import {
   getMarketLabel,
 } from "@/lib/market-analysis";
 import { getPublishedWeeklyUpdateBySlug } from "@/lib/weekly-updates";
+import { ensureCurrentStudent } from "@/lib/students";
+import {
+  canAccessSubscriberContent,
+  getBillingOverview,
+} from "@/lib/billing";
+import { SubscriptionPaywall } from "@/components/billing/SubscriptionPaywall";
+import { getMuxPlaybackTokens } from "@/lib/mux-signing";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -27,8 +34,19 @@ function mentorName(
 
 export default async function MarketAnalysisDetailPage({ params }: Props) {
   const { slug } = await params;
+  const { student } = await ensureCurrentStudent();
+  if (!student) return null;
+  const billingOverview = await getBillingOverview(student.id);
+  if (!canAccessSubscriberContent(student, billingOverview)) {
+    return <SubscriptionPaywall overview={billingOverview} title="Ontgrendel deze analyse" />;
+  }
   const update = await getPublishedWeeklyUpdateBySlug(slug);
   if (!update) notFound();
+  const muxTokens = getMuxPlaybackTokens({
+    playbackId: update.mux_playback_id,
+    playbackPolicy: update.mux_playback_policy,
+    durationSeconds: update.video_duration_seconds,
+  });
 
   const isOutlook = update.type === "weekly_outlook";
   const context = isOutlook
@@ -39,7 +57,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
     <div>
       <PageHeader
         breadcrumbs={[
-          { href: "/market-analysis", label: "Marktanalyse" },
+          { href: "/market-analysis", label: "Marktinzicht" },
           { label: update.title },
         ]}
         eyebrow={
@@ -59,6 +77,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
             videoProvider={update.video_provider}
             muxPlaybackId={update.mux_playback_id}
             muxPlaybackPolicy={update.mux_playback_policy}
+            muxTokens={muxTokens}
             title={update.title}
           />
 
@@ -69,6 +88,25 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
                 {update.summary}
               </p>
             </section>
+          ) : null}
+          {update.event_context ? (
+            <section className="border-t border-[var(--border)] pt-6">
+              <div className="cb-eyebrow">Wat is er gebeurd?</div>
+              <p className="mt-3 cb-body">{update.event_context}</p>
+            </section>
+          ) : null}
+          {(update.chapters?.length ?? 0) > 0 ? (
+            <section className="border-t border-[var(--border)] pt-6">
+              <div className="cb-eyebrow">Hoofdstukken</div>
+              <ol className="mt-3 divide-y divide-[var(--border)]">
+                {update.chapters?.map((chapter) => <li key={`${chapter.seconds}-${chapter.title}`} className="flex gap-4 py-3 text-sm"><span className="font-mono text-[var(--muted)]">{Math.floor(chapter.seconds / 60)}:{String(chapter.seconds % 60).padStart(2, "0")}</span><span className="font-semibold">{chapter.title}</span></li>)}
+              </ol>
+            </section>
+          ) : null}
+          {update.actuality_status === "archive" ? (
+            <aside className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-[var(--foreground)]">
+              Deze analyse is gebaseerd op de marktomstandigheden van {formatDate(update.published_at ?? update.created_at)}. Bekijk recentere inzichten voor de actuele situatie.
+            </aside>
           ) : null}
         </section>
 
@@ -95,7 +133,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
               href="/market-analysis"
               className="mt-5 inline-flex w-full cb-btn cb-btn-secondary justify-between px-5 py-3"
             >
-              Terug naar Marktanalyse <span aria-hidden>→</span>
+              Terug naar Marktinzicht <span aria-hidden>→</span>
             </Link>
           </div>
         </aside>

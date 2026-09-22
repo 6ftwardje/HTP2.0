@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Backlog policy
+        run: node scripts/sync-transcription-backlog.mjs --check
+      - name: Tests
+        run: npm test --if-present
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: synthetic-ci-key
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      - name: Dependency security audit
+        # De repository heeft bij invoering een bestaande high-baseline in
+        # development tooling. Critical regressions blokkeren direct; het
+        # wegwerken/aanscherpen van de baseline hoort in een apart issue.
+        run: npm audit --audit-level=critical

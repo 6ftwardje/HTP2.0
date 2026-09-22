@@ -1,17 +1,18 @@
 import type { Market, MarketAnalysisType } from "@/lib/types";
 
 export const MARKET_OPTIONS: Array<{ value: Market; label: string }> = [
-  { value: "stocks", label: "Stocks" },
   { value: "forex", label: "Forex" },
   { value: "crypto", label: "Crypto" },
+  { value: "stocks", label: "Aandelen" },
+  { value: "commodities", label: "Grondstoffen" },
 ];
 
 export const MARKET_ANALYSIS_TYPE_OPTIONS: Array<{
   value: Exclude<MarketAnalysisType, "live_session">;
   label: string;
 }> = [
-  { value: "weekly_outlook", label: "Weekly outlook" },
-  { value: "market_update", label: "Markt update" },
+  { value: "weekly_outlook", label: "Weekvooruitblik" },
+  { value: "market_update", label: "Marktbreakdown" },
 ];
 
 export function getMarketLabel(market: Market | null): string {
@@ -21,10 +22,10 @@ export function getMarketLabel(market: Market | null): string {
 export function getMarketAnalysisTypeLabel(
   type: MarketAnalysisType | null
 ): string {
-  if (type === "weekly_outlook") return "Weekly outlook";
-  if (type === "market_update") return "Markt update";
-  if (type === "live_session") return "Live sessie";
-  return "Niet gecategoriseerd";
+  if (type === "weekly_outlook") return "Weekvooruitblik";
+  if (type === "market_update") return "Marktbreakdown";
+  if (type === "live_session") return "Live marktsessie";
+  return "Controle nodig";
 }
 
 export function getMondayDate(value = new Date()): string {
