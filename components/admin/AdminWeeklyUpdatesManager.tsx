@@ -22,6 +22,7 @@ import {
   adminSaveEnrichmentReview,
 } from "@/app/actions/admin/transcription-ai";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
+import { LegacyBackfillDryRunPanel } from "@/components/admin/LegacyBackfillDryRunPanel";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
 import {
@@ -992,6 +993,8 @@ export function AdminWeeklyUpdatesManager({
             <Icon name="plus" /> Video toevoegen
           </button>
         </div>
+
+        <LegacyBackfillDryRunPanel />
 
         <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--border)] px-4 py-2" role="tablist" aria-label="Filter beheer">
           <button

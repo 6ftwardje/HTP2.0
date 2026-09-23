@@ -11,6 +11,7 @@
     "perf:verify-boundaries": "node scripts/verify-performance-boundaries.mjs",
     "start": "next start",
     "test": "tsx --test tests/**/*.test.ts",
+    "transcription:backfill-dry-run": "tsx scripts/transcription-backfill-dry-run.ts",
     "lint": "next lint",
     "verify:supabase-target": "node scripts/verify-supabase-target.mjs"
   },
