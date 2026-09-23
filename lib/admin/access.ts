@@ -7,6 +7,7 @@ import {
   ALLOWED_ACCESS_LEVELS,
   type AllowedAccessLevel,
 } from "@/lib/admin/constants";
+import { isPlatformAdmin } from "@/lib/admin/authorization";
 
 export { ADMIN_ACCESS_LEVEL, ALLOWED_ACCESS_LEVELS };
 export type { AllowedAccessLevel };
@@ -41,7 +42,7 @@ export async function requireAdmin(): Promise<{ actorStudent: Student }> {
     if (error || !student) {
       redirect("/?redirectedFrom=" + encodeURIComponent("/admin"));
     }
-    if (student.access_level !== ADMIN_ACCESS_LEVEL) {
+    if (!isPlatformAdmin(student)) {
       notFound();
     }
     return { actorStudent: student };

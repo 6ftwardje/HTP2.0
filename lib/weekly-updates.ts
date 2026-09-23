@@ -1,17 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { paidProductsEnabled } from "@/lib/billing";
+import {
+  projectPublishedVideoEnrichment,
+  type PublishedVideoEnrichment,
+} from "@/lib/transcription/public-enrichment";
 import type { Market, Student, WeeklyUpdate, WeeklyUpdateView } from "@/lib/types";
 
 export type WeeklyUpdateWithMentor = WeeklyUpdate & {
   mentor: Pick<Student, "id" | "name" | "email"> | null;
-};
-
-export type PublishedVideoEnrichment = {
-  summary: string;
-  keyTakeaways: string[];
-  chapters: Array<{ title: string; seconds: number }>;
-  publishedAt: string;
 };
 
 async function contentClient() {
@@ -173,23 +170,14 @@ export async function getPublishedEnrichmentForWeeklyUpdate(
   const db = createServiceClient();
   const { data, error } = await db
     .from("ai_video_enrichments")
-    .select("summary, key_takeaways, chapters, published_at, transcript:ai_video_transcripts!inner(weekly_update_id)")
+    .select("status, summary, key_takeaways, chapters, published_at, transcript:ai_video_transcripts!inner(weekly_update_id)")
     .eq("status", "published")
     .eq("transcript.weekly_update_id", weeklyUpdateId)
     .order("published_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (error || !data || !data.summary || !data.published_at) return null;
-  return {
-    summary: data.summary as string,
-    keyTakeaways: Array.isArray(data.key_takeaways)
-      ? (data.key_takeaways as string[])
-      : [],
-    chapters: Array.isArray(data.chapters)
-      ? (data.chapters as Array<{ title: string; seconds: number }>)
-      : [],
-    publishedAt: data.published_at as string,
-  };
+  if (error || !data) return null;
+  return projectPublishedVideoEnrichment(data);
 }
 
 export async function getWeeklyUpdateViewsByIds(
