@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { extractVimeoId, getVimeoEmbedUrl } from "@/lib/vimeo";
 import { useEffect, useMemo, useRef } from "react";
 import type { MuxPlaybackTokens } from "@/lib/types";
+import type { VideoSeekRequest } from "@/lib/video-seek";
 
 const MuxLessonPlayer = dynamic(
   () => import("@/components/MuxLessonPlayer").then((mod) => mod.MuxLessonPlayer),
@@ -27,6 +28,8 @@ type Props = {
   title?: string;
   onEnded?: (() => void) | null;
   muxTokens?: MuxPlaybackTokens | null;
+  seekRequest?: VideoSeekRequest | null;
+  enableSeeking?: boolean;
 };
 
 function extractMuxPlaybackId(
@@ -54,6 +57,8 @@ export function VimeoPlayer({
   title,
   onEnded = null,
   muxTokens = null,
+  seekRequest = null,
+  enableSeeking = false,
 }: Props) {
   const muxId =
     videoProvider === "mux" ? extractMuxPlaybackId(videoUrl, muxPlaybackId) : null;
@@ -61,7 +66,10 @@ export function VimeoPlayer({
     videoProvider === "vimeo" && videoUrl && videoUrl.trim().length > 0;
   const videoId = canUseVimeo ? extractVimeoId(videoUrl) : null;
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const shouldListen = !!onEnded && !!videoId;
+  const vimeoPlayerRef = useRef<any>(null);
+  const latestSeekRef = useRef<VideoSeekRequest | null>(seekRequest);
+  latestSeekRef.current = seekRequest;
+  const shouldListen = (!!onEnded || enableSeeking) && !!videoId;
 
   const embedUrl = useMemo(() => {
     if (!videoId) return null;
@@ -103,7 +111,12 @@ export function VimeoPlayer({
       const Player = (window as any).Vimeo?.Player;
       if (!Player) return;
       player = new Player(iframeEl);
-      player.on("ended", onEnded);
+      vimeoPlayerRef.current = player;
+      if (onEnded) player.on("ended", onEnded);
+      if (latestSeekRef.current) {
+        await player.setCurrentTime(latestSeekRef.current.seconds);
+        await player.play().catch(() => undefined);
+      }
     }
 
     loadAndBind();
@@ -118,8 +131,17 @@ export function VimeoPlayer({
           // ignore teardown errors
         }
       }
+      vimeoPlayerRef.current = null;
     };
   }, [onEnded, shouldListen, videoId]);
+
+  useEffect(() => {
+    if (!seekRequest || !vimeoPlayerRef.current) return;
+    void vimeoPlayerRef.current
+      .setCurrentTime(seekRequest.seconds)
+      .then(() => vimeoPlayerRef.current?.play())
+      .catch(() => undefined);
+  }, [seekRequest]);
 
   if (muxId && (muxPlaybackPolicy === "public" || muxTokens?.playback)) {
     return (
@@ -129,6 +151,7 @@ export function VimeoPlayer({
           title={title}
           onEnded={onEnded}
           tokens={muxTokens}
+          seekRequest={seekRequest}
         />
       </div>
     );

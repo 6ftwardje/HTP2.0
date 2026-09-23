@@ -7,7 +7,10 @@ import {
   getMarketAnalysisTypeLabel,
   getMarketLabel,
 } from "@/lib/market-analysis";
-import { getPublishedWeeklyUpdateBySlug } from "@/lib/weekly-updates";
+import {
+  getPublishedEnrichmentForWeeklyUpdate,
+  getPublishedWeeklyUpdateBySlug,
+} from "@/lib/weekly-updates";
 import { ensureCurrentStudent } from "@/lib/students";
 import {
   canAccessSubscriberContent,
@@ -44,6 +47,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
   }
   const update = await getPublishedWeeklyUpdateBySlug(slug);
   if (!update) notFound();
+  const enrichment = await getPublishedEnrichmentForWeeklyUpdate(update.id);
   const muxTokens = getMuxPlaybackTokens({
     playbackId: update.mux_playback_id,
     playbackPolicy: update.mux_playback_policy,
@@ -54,6 +58,9 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
   const context = isOutlook
     ? `Week ${getIsoWeekNumber(update.week_start_date)} · ${formatDate(update.week_start_date)}`
     : `${getMarketLabel(update.market)} · ${formatDate(update.published_at ?? update.created_at)}`;
+  const summary = enrichment?.summary ?? update.summary;
+  const keyTakeaways = enrichment?.keyTakeaways ?? update.key_takeaways;
+  const chapters = enrichment?.chapters ?? update.chapters ?? [];
 
   return (
     <div>
@@ -81,13 +88,14 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
             muxPlaybackPolicy={update.mux_playback_policy}
             muxTokens={muxTokens}
             title={update.title}
+            chapters={chapters}
           />
 
-          {update.summary ? (
+          {summary ? (
             <section className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6">
               <div className="cb-eyebrow">Samenvatting</div>
               <p className="mt-4 text-[0.98rem] leading-8 text-[color-mix(in_oklab,var(--foreground)_78%,var(--muted))]">
-                {update.summary}
+                {summary}
               </p>
             </section>
           ) : null}
@@ -95,14 +103,6 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
             <section className="border-t border-[var(--border)] pt-6">
               <div className="cb-eyebrow">Wat is er gebeurd?</div>
               <p className="mt-3 cb-body">{update.event_context}</p>
-            </section>
-          ) : null}
-          {(update.chapters?.length ?? 0) > 0 ? (
-            <section className="border-t border-[var(--border)] pt-6">
-              <div className="cb-eyebrow">Hoofdstukken</div>
-              <ol className="mt-3 divide-y divide-[var(--border)]">
-                {update.chapters?.map((chapter) => <li key={`${chapter.seconds}-${chapter.title}`} className="flex gap-4 py-3 text-sm"><span className="font-mono text-[var(--muted)]">{Math.floor(chapter.seconds / 60)}:{String(chapter.seconds % 60).padStart(2, "0")}</span><span className="font-semibold">{chapter.title}</span></li>)}
-              </ol>
             </section>
           ) : null}
           {update.actuality_status === "archive" ? (
@@ -114,9 +114,9 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
 
         <aside className="h-fit rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6 lg:sticky lg:top-6">
           <div className="cb-eyebrow">Key takeaways</div>
-          {update.key_takeaways.length > 0 ? (
+          {keyTakeaways.length > 0 ? (
             <ol className="mt-5 space-y-3">
-              {update.key_takeaways.map((takeaway, index) => (
+              {keyTakeaways.map((takeaway, index) => (
                 <li key={`${takeaway}-${index}`} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border)] text-xs font-bold text-[var(--muted)]">
                     {index + 1}
