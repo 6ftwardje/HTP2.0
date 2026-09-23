@@ -87,6 +87,18 @@ export async function listWeeklyUpdatesAdmin(): Promise<AdminWeeklyUpdateRow[]> 
           created_at,
           updated_at,
           transcript,
+          workflows:ai_video_workflows (
+            id,
+            transcript_id,
+            step,
+            status,
+            attempt_count,
+            max_attempts,
+            next_attempt_at,
+            last_error_code,
+            last_error_retryable,
+            updated_at
+          ),
           enrichments:ai_video_enrichments (
             id,
             transcript_id,

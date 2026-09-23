@@ -218,6 +218,20 @@ export type VideoTranscriptSummary = {
     text: string;
   }> | null;
   enrichments?: VideoEnrichmentSummary[];
+  workflows?: VideoWorkflowSummary[];
+};
+
+export type VideoWorkflowSummary = {
+  id: string;
+  transcript_id: string;
+  step: "fetch_transcript" | "enrich" | "review" | "complete";
+  status: "pending" | "running" | "waiting_review" | "completed" | "failed" | "dead_letter";
+  attempt_count: number;
+  max_attempts: number;
+  next_attempt_at: string | null;
+  last_error_code: string | null;
+  last_error_retryable: boolean;
+  updated_at: string;
 };
 
 export type VideoEnrichmentSummary = {

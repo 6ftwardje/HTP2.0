@@ -15,6 +15,8 @@ import {
   adminUpdateWeeklyUpdateThumbnail,
 } from "@/app/actions/admin/weekly-updates";
 import {
+  adminRestartTranscriptWorkflow,
+  adminRunTranscriptWorkflow,
   adminPublishEnrichment,
   adminRejectEnrichment,
   adminSaveEnrichmentReview,
@@ -181,6 +183,10 @@ function latestEnrichment(
   return [...(transcript?.enrichments ?? [])].sort((a, b) =>
     b.updated_at.localeCompare(a.updated_at)
   )[0] ?? null;
+}
+
+function transcriptWorkflow(transcript: VideoTranscriptSummary | null) {
+  return transcript?.workflows?.[0] ?? null;
 }
 
 function EnrichmentReviewPanel({
@@ -913,6 +919,33 @@ export function AdminWeeklyUpdatesManager({
     });
   }
 
+  function runTranscriptWorkflow(update: AdminWeeklyUpdateRow, restart = false) {
+    resetFeedback();
+    const transcript = latestTranscript(update);
+    if (!transcript) return;
+    const confirmed = window.confirm(
+      restart
+        ? "Herstart deze vastgelopen workflow? Dit kan een betaalde AI-call uitvoeren, met de ingestelde limiet van maximaal EUR 2 per video."
+        : "Haal het transcript op en genereer een AI-concept? Dit kan een betaalde AI-call uitvoeren, met de ingestelde limiet van maximaal EUR 2 per video."
+    );
+    if (!confirmed) return;
+    startTransition(async () => {
+      const result = restart
+        ? await adminRestartTranscriptWorkflow(transcript.id, update.id, true)
+        : await adminRunTranscriptWorkflow(transcript.id, update.id, true);
+      if (!result.success) {
+        setError(result.error ?? "De AI-verwerking kon niet worden voortgezet.");
+        refresh();
+        return;
+      }
+      refresh(
+        result.state === "completed"
+          ? "De AI-verwerking is afgerond."
+          : "Het AI-concept staat klaar voor menselijke review."
+      );
+    });
+  }
+
   function deleteUpdate(update: AdminWeeklyUpdateRow) {
     resetFeedback();
     startTransition(async () => {
@@ -1174,12 +1207,13 @@ export function AdminWeeklyUpdatesManager({
                   </div>
                   {(() => {
                     const transcript = latestTranscript(selectedUpdate);
+                    const workflow = transcriptWorkflow(transcript);
                     const canStart =
                       selectedUpdate.video_provider === "mux" &&
                       selectedUpdate.mux_status === "ready" &&
                       (!transcript ||
                         (transcript.status === "failed" && transcript.failure_retryable));
-                    return canStart ? (
+                    if (canStart) return (
                       <button
                         type="button"
                         className="cb-btn cb-btn-secondary text-sm"
@@ -1188,7 +1222,23 @@ export function AdminWeeklyUpdatesManager({
                       >
                         {transcript ? "Opnieuw proberen" : "Transcriptie starten"}
                       </button>
-                    ) : null;
+                    );
+                    const canProcess = transcript &&
+                      ((transcript.status === "processing" && Boolean(transcript.provider_track_id)) ||
+                        transcript.status === "ready") &&
+                      !["waiting_review", "completed"].includes(workflow?.status ?? "");
+                    if (!canProcess) return null;
+                    const restart = workflow?.status === "dead_letter";
+                    return (
+                      <button
+                        type="button"
+                        className="cb-btn cb-btn-secondary text-sm"
+                        disabled={pending}
+                        onClick={() => runTranscriptWorkflow(selectedUpdate, restart)}
+                      >
+                        {restart ? "Workflow herstarten" : "AI-verwerking voortzetten"}
+                      </button>
+                    );
                   })()}
                 </div>
                 <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
@@ -1197,6 +1247,11 @@ export function AdminWeeklyUpdatesManager({
                 {latestTranscript(selectedUpdate)?.failure_code ? (
                   <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-300">
                     Veilige foutcode: {latestTranscript(selectedUpdate)?.failure_code}
+                  </p>
+                ) : null}
+                {transcriptWorkflow(latestTranscript(selectedUpdate))?.last_error_code ? (
+                  <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-300">
+                    Workflowfout: {transcriptWorkflow(latestTranscript(selectedUpdate))?.last_error_code}
                   </p>
                 ) : null}
               </div>
