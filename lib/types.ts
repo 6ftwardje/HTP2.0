@@ -211,6 +211,31 @@ export type VideoTranscriptSummary = {
   failed_at: string | null;
   created_at: string;
   updated_at: string;
+  transcript?: Array<{
+    id: string;
+    startSeconds: number;
+    endSeconds: number;
+    text: string;
+  }> | null;
+  enrichments?: VideoEnrichmentSummary[];
+};
+
+export type VideoEnrichmentSummary = {
+  id: string;
+  transcript_id: string;
+  prompt_version: string;
+  model: string;
+  status: "processing" | "draft" | "review" | "published" | "rejected" | "failed";
+  summary: string | null;
+  key_takeaways: string[];
+  chapters: MarketInsightChapter[];
+  reviewed_content: Record<string, unknown> | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  published_at: string | null;
+  failure_code: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type LiveSessionStatus =

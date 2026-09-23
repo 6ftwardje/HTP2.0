@@ -14,6 +14,11 @@ import {
   adminUpdateWeeklyUpdate,
   adminUpdateWeeklyUpdateThumbnail,
 } from "@/app/actions/admin/weekly-updates";
+import {
+  adminPublishEnrichment,
+  adminRejectEnrichment,
+  adminSaveEnrichmentReview,
+} from "@/app/actions/admin/transcription-ai";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
@@ -27,9 +32,10 @@ import {
 import type {
   MarketAnalysisType,
   Student,
+  VideoEnrichmentSummary,
+  VideoTranscriptSummary,
   WeeklyUpdateAccessTier,
 } from "@/lib/types";
-import type { VideoTranscriptSummary } from "@/lib/types";
 import {
   getWeeklyUpdateAccessLabel,
   WEEKLY_UPDATE_ACCESS_OPTIONS,
@@ -167,6 +173,129 @@ function transcriptBadge(transcript: VideoTranscriptSummary | null) {
     return <span className="cb-badge cb-badge-locked">Transcript mislukt</span>;
   }
   return <span className="cb-badge cb-badge-available">Transcript in verwerking</span>;
+}
+
+function latestEnrichment(
+  transcript: VideoTranscriptSummary | null
+): VideoEnrichmentSummary | null {
+  return [...(transcript?.enrichments ?? [])].sort((a, b) =>
+    b.updated_at.localeCompare(a.updated_at)
+  )[0] ?? null;
+}
+
+function EnrichmentReviewPanel({
+  update,
+  onDone,
+  onError,
+}: {
+  update: AdminWeeklyUpdateRow;
+  onDone: (message: string) => void;
+  onError: (message: string) => void;
+}) {
+  const transcript = latestTranscript(update);
+  const enrichment = latestEnrichment(transcript);
+  const [busy, startReviewTransition] = useTransition();
+  const [summary, setSummary] = useState(enrichment?.summary ?? "");
+  const [takeaways, setTakeaways] = useState(
+    (enrichment?.key_takeaways ?? []).join("\n")
+  );
+  const [chapters, setChapters] = useState(
+    (enrichment?.chapters ?? [])
+      .map((chapter) =>
+        `${Math.floor(chapter.seconds / 60)}:${String(chapter.seconds % 60).padStart(2, "0")} ${chapter.title}`
+      )
+      .join("\n")
+  );
+
+  if (!transcript || !enrichment) return null;
+
+  const content = () => ({
+    summary: summary.trim(),
+    keyTakeaways: takeaways.split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
+    chapters: chapters.split(/\r?\n/).flatMap((line) => {
+      const match = line.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})\s+(.+)$/);
+      if (!match) return [];
+      return [{
+        title: match[4].trim(),
+        seconds: Number(match[1] ?? 0) * 3600 + Number(match[2]) * 60 + Number(match[3]),
+      }];
+    }),
+  });
+  const editable = enrichment.status === "draft" || enrichment.status === "review";
+
+  const run = (action: "save" | "publish" | "reject") => {
+    if (action === "publish" && !window.confirm("Publiceer deze gecontroleerde AI-inhoud voor studenten?")) return;
+    if (action === "reject" && !window.confirm("Wijs dit AI-concept definitief af?")) return;
+    startReviewTransition(async () => {
+      const result = action === "save"
+        ? await adminSaveEnrichmentReview(enrichment.id, update.id, content())
+        : action === "publish"
+          ? await adminPublishEnrichment(enrichment.id, update.id, content(), true)
+          : await adminRejectEnrichment(enrichment.id, update.id);
+      if (!result.success) {
+        onError(result.error ?? "De AI-review kon niet worden opgeslagen.");
+        return;
+      }
+      onDone(
+        action === "publish"
+          ? "AI-inhoud gepubliceerd."
+          : action === "reject"
+            ? "AI-concept afgewezen."
+            : "AI-review opgeslagen."
+      );
+    });
+  };
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="cb-eyebrow">AI-review</div>
+          <p className="mt-1 text-sm font-semibold text-[var(--foreground)]">
+            Status: {enrichment.status} · {enrichment.model}
+          </p>
+        </div>
+        {enrichment.published_at ? (
+          <span className="cb-badge cb-badge-completed">Gepubliceerd</span>
+        ) : null}
+      </div>
+
+      <details className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
+        <summary className="cursor-pointer text-sm font-semibold">Brontranscript vergelijken</summary>
+        <div className="mt-3 max-h-56 space-y-2 overflow-y-auto text-sm leading-6 text-[var(--muted)]">
+          {(transcript.transcript ?? []).map((segment) => (
+            <p key={segment.id}>
+              <span className="mr-2 font-mono text-xs text-[var(--foreground)]">
+                {Math.floor(segment.startSeconds / 60)}:{String(Math.floor(segment.startSeconds % 60)).padStart(2, "0")}
+              </span>
+              {segment.text}
+            </p>
+          ))}
+        </div>
+      </details>
+
+      <label className="mt-3 block space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Samenvatting</span>
+        <textarea value={summary} onChange={(event) => setSummary(event.currentTarget.value)} disabled={!editable || busy} rows={4} className={fieldClass()} />
+      </label>
+      <label className="mt-3 block space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Aandachtspunten</span>
+        <textarea value={takeaways} onChange={(event) => setTakeaways(event.currentTarget.value)} disabled={!editable || busy} rows={4} className={fieldClass()} />
+      </label>
+      <label className="mt-3 block space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken</span>
+        <textarea value={chapters} onChange={(event) => setChapters(event.currentTarget.value)} disabled={!editable || busy} rows={4} className={fieldClass()} placeholder="00:00 Inleiding" />
+      </label>
+
+      {editable ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button type="button" disabled={busy} className="cb-btn cb-btn-secondary text-sm" onClick={() => run("save")}>Review opslaan</button>
+          <button type="button" disabled={busy} className="cb-btn cb-btn-primary text-sm" onClick={() => run("publish")}>Publiceren</button>
+          <button type="button" disabled={busy} className="cb-btn cb-btn-secondary text-sm text-red-700 dark:text-red-300" onClick={() => run("reject")}>Afwijzen</button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function accessLabel(value: WeeklyUpdateAccessTier) {
@@ -1071,6 +1200,12 @@ export function AdminWeeklyUpdatesManager({
                   </p>
                 ) : null}
               </div>
+              <EnrichmentReviewPanel
+                key={latestEnrichment(latestTranscript(selectedUpdate))?.id ?? "no-enrichment"}
+                update={selectedUpdate}
+                onDone={(text) => refresh(text)}
+                onError={setError}
+              />
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
                 {pending || progress !== null ? "Bezig..." : "Video opslaan"}
