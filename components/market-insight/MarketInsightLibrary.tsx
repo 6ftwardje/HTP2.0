@@ -79,6 +79,32 @@ function itemMarkets(update: Update): Array<Market | "macro"> {
 }
 
 function ContentCard({ item, featured = false }: { item: Item; featured?: boolean }) {
+  if (!featured && item.contentFormat !== "video") {
+    const preview = item.summary?.trim() ?? "";
+    const titleRepeatsBody = preview.toLocaleLowerCase("nl-BE").startsWith(item.title.trim().toLocaleLowerCase("nl-BE"));
+    const initials = item.host.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
+    return <article className="group border-b border-[var(--border)] py-6 first:pt-5">
+      <div className="flex gap-3 sm:gap-4">
+        <div aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_18%,var(--card))] text-xs font-extrabold text-[var(--accent)] ring-1 ring-[var(--border)]">{initials || "HT"}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm"><span className="font-bold text-[var(--foreground)]">{item.host}</span><span className="text-[var(--muted)]">·</span><time dateTime={item.date} className="text-[var(--muted)]">{dateLabel(item.date, true)}</time></div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--muted)]"><span className="font-bold text-[var(--accent)]">{item.contentFormat === "chart" ? "Chartupdate" : "Marktupdate"}</span>{item.markets.map((market) => <span key={market} className="rounded-full border border-[var(--border)] px-2 py-0.5">{marketLabel(market)}</span>)}{item.status === "archive" ? <span>· Archief</span> : null}</div>
+          {!titleRepeatsBody ? <h3 className="mt-3 text-lg font-bold leading-snug text-[var(--foreground)]">{item.title}</h3> : null}
+          {preview ? <p className="mt-2 line-clamp-4 whitespace-pre-line break-words text-[0.95rem] leading-7 text-[var(--foreground)]">{preview}</p> : null}
+          {item.contentFormat === "chart" && item.thumbnail ? <Link href={item.href} aria-label={`Bekijk chartupdate: ${item.title}`} className="mt-4 block w-fit max-w-full overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)]"><img src={item.thumbnail} alt={`Chart bij ${item.title}`} className="max-h-[320px] w-auto max-w-full object-contain transition-transform duration-200 group-hover:scale-[1.01]" /></Link> : null}
+          <Link href={item.href} className="mt-3 inline-flex min-h-9 items-center gap-1 text-sm font-bold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">{item.contentFormat === "chart" ? "Bekijk chart en duiding" : preview.length > 280 ? "Lees verder" : "Open bericht"}<span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1">→</span></Link>
+        </div>
+      </div>
+    </article>;
+  }
+
+  if (!featured) {
+    return <article className="group grid gap-4 border-b border-[var(--border)] py-6 sm:grid-cols-[minmax(180px,240px)_minmax(0,1fr)] sm:gap-5">
+      <Link href={item.href} aria-label={`Bekijk video: ${item.title}`} className="relative block h-fit overflow-hidden rounded-lg bg-stone-950"><CourseThumbnail src={item.thumbnail} title={item.title} className="aspect-video w-full transition-transform duration-200 group-hover:scale-[1.025]" />{durationLabel(item.duration) ? <span className="absolute bottom-2 right-2 rounded bg-black/85 px-1.5 py-0.5 text-xs font-bold text-white">{durationLabel(item.duration)}</span> : null}</Link>
+      <div className="min-w-0 self-center"><div className="flex flex-wrap gap-x-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--accent)]"><span>{formatLabel(item.format)}</span>{item.markets.slice(0, 2).map((market) => <span key={market} className="text-[var(--muted)]">· {marketLabel(market)}</span>)}</div><Link href={item.href} className="mt-2 block text-lg font-bold leading-snug text-[var(--foreground)] group-hover:underline">{item.title}</Link><p className="mt-2 text-sm text-[var(--muted)]">{item.host} · <time dateTime={item.date}>{dateLabel(item.date)}</time>{item.status === "archive" ? " · Archief" : ""}</p>{item.summary ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{item.summary}</p> : null}</div>
+    </article>;
+  }
+
   return (
     <article className={featured ? "overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,.95fr)]" : "group grid gap-4 border-b border-[var(--border)] py-5 sm:grid-cols-[180px_minmax(0,1fr)]"}>
       <Link href={item.href} className="relative block self-center overflow-hidden rounded-lg bg-stone-950">
@@ -140,7 +166,7 @@ export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
     return allItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [updates]);
 
-  const featuredBase = items.find((item) => item.format === "weekly_outlook") ?? items[0] ?? null;
+  const featuredBase = items.find((item) => item.format === "weekly_outlook" && item.contentFormat === "video") ?? null;
   const featured = featuredBase ? { ...featuredBase, reason: featuredBase.format === "weekly_outlook" ? "Meest recente voorbereiding" : "Meest recente analyse" } : null;
   const filtered = items.filter((item) => (format === "all" || item.format === format) && (market === "all" || item.markets.includes(market)) && (status === "all" || item.status === status));
   const reset = () => { setFormat("all"); setMarket("all"); setStatus("all"); };
