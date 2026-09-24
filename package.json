@@ -10,7 +10,7 @@
     "perf:baseline": "node scripts/performance-baseline.mjs",
     "perf:verify-boundaries": "node scripts/verify-performance-boundaries.mjs",
     "start": "next start",
-    "test": "tsx --test tests/**/*.test.ts",
+    "test": "node --experimental-strip-types --test tests/market-updates/*.test.ts",
     "lint": "next lint",
     "verify:supabase-target": "node scripts/verify-supabase-target.mjs"
   },
@@ -35,7 +35,6 @@
     "playwright": "^1.61.1",
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.15",
-    "tsx": "^4.23.15",
     "typescript": "^5.6.3"
   },
   "overrides": {

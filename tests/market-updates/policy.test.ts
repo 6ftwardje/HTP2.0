@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateMarketUpdatePublication } from "../../lib/market-update-policy";
+import { validateMarketUpdatePublication } from "../../lib/market-update-policy.ts";
 
 const body = "BTC breekt door de weerstand, maar bevestiging ontbreekt nog.";
 
