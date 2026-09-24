@@ -168,12 +168,18 @@ export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
 
   const featuredBase = items.find((item) => item.format === "weekly_outlook" && item.contentFormat === "video") ?? null;
   const featured = featuredBase ? { ...featuredBase, reason: featuredBase.format === "weekly_outlook" ? "Meest recente voorbereiding" : "Meest recente analyse" } : null;
-  const filtered = items.filter((item) => (format === "all" || item.format === format) && (market === "all" || item.markets.includes(market)) && (status === "all" || item.status === status));
+  const filtersActive = format !== "all" || market !== "all" || status !== "all";
+  const filtered = items.filter((item) =>
+    (filtersActive || item.id !== featuredBase?.id) &&
+    (format === "all" || item.format === format) &&
+    (market === "all" || item.markets.includes(market)) &&
+    (status === "all" || item.status === status)
+  );
   const reset = () => { setFormat("all"); setMarket("all"); setStatus("all"); };
 
   return (
     <main>
-      {featured ? <section aria-label="Uitgelicht"><ContentCard item={featured} featured /></section> : null}
+      {featured && !filtersActive ? <section aria-label="Uitgelicht"><ContentCard item={featured} featured /></section> : null}
       <section className="mt-10" aria-labelledby="market-insight-feed">
         <div className="border-b border-[var(--border)]">
           <div className="flex max-w-full gap-1 overflow-x-auto" role="tablist" aria-label="Contentformaten">
@@ -184,8 +190,8 @@ export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
           <label className="relative text-sm font-semibold text-[var(--muted)]"><span className="sr-only">Markt</span><select value={market} onChange={(e) => setMarket(e.target.value as MarketFilter)} className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--background)] py-2.5 pl-3 pr-10 text-[var(--foreground)] sm:w-auto">{markets.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><SelectChevron /></label>
           <label className="relative text-sm font-semibold text-[var(--muted)]"><span className="sr-only">Status</span><select value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)} className="w-full appearance-none rounded-lg border border-[var(--border)] bg-[var(--background)] py-2.5 pl-3 pr-10 text-[var(--foreground)] sm:w-auto"><option value="all">Alle statussen</option><option value="current">Actueel</option><option value="archive">Archief</option></select><SelectChevron /></label>
         </div>
-        <h2 id="market-insight-feed" className="mt-8 text-xl font-extrabold">Alle marktinzichten <span className="ml-2 text-sm font-medium text-[var(--muted)]">{filtered.length}</span></h2>
-        {filtered.length ? <div className="mt-2">{filtered.map((item) => <ContentCard key={item.id} item={item} />)}</div> : <div className="mt-5 rounded-xl border border-dashed border-[var(--border)] p-8 text-center"><h3 className="font-bold">Geen marktinzichten gevonden</h3><p className="mt-2 text-sm text-[var(--muted)]">Pas je filters aan om andere content te bekijken.</p><button type="button" onClick={reset} className="mt-4 cb-btn cb-btn-secondary">Filters wissen</button></div>}
+        <h2 id="market-insight-feed" className="mt-8 text-xl font-extrabold">{filtersActive ? "Resultaten" : featured ? "Meer marktinzichten" : "Alle marktinzichten"} <span className="ml-2 text-sm font-medium text-[var(--muted)]">{filtered.length}</span></h2>
+        {filtered.length ? <div className="mt-2">{filtered.map((item) => <ContentCard key={item.id} item={item} />)}</div> : <div className="mt-5 rounded-xl border border-dashed border-[var(--border)] p-8 text-center"><h3 className="font-bold">{filtersActive ? "Geen marktinzichten gevonden" : "Nog geen andere marktinzichten"}</h3>{filtersActive ? <><p className="mt-2 text-sm text-[var(--muted)]">Pas je filters aan om andere content te bekijken.</p><button type="button" onClick={reset} className="mt-4 cb-btn cb-btn-secondary">Filters wissen</button></> : null}</div>}
       </section>
     </main>
   );
