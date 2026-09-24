@@ -5,6 +5,9 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   adminCreateWeeklyUpdate,
+  adminCreateChartUpload,
+  adminAttachChartImage,
+  adminRemoveChartImage,
   adminCreateWeeklyUpdateMuxUpload,
   adminCreateWeeklyUpdateThumbnailUpload,
   adminCreateWeeklyUpdateWithMuxUpload,
@@ -27,6 +30,7 @@ import type {
   MarketAnalysisType,
   Student,
   WeeklyUpdateAccessTier,
+  WeeklyUpdateContentFormat,
 } from "@/lib/types";
 import {
   getWeeklyUpdateAccessLabel,
@@ -135,6 +139,8 @@ function putFileWithProgress(
 }
 
 function statusBadge(update: AdminWeeklyUpdateRow) {
+  if (update.content_format === "chart") return <span className="cb-badge cb-badge-available">Chart · {update.image_paths.length}/4</span>;
+  if (update.content_format === "text") return <span className="cb-badge cb-badge-available">Tekst</span>;
   if (update.video_provider !== "mux") {
     return <span className="cb-badge cb-badge-locked">Legacy</span>;
   }
@@ -262,22 +268,37 @@ function WeeklyUpdateFields({
   update,
   mentors,
   onThumbnailFileChange,
+  onContentFormatChange,
+  chartFileRef,
 }: {
   update?: AdminWeeklyUpdateRow;
   mentors: MentorOption[];
   onThumbnailFileChange: (file: File | null) => void;
+  onContentFormatChange: (format: WeeklyUpdateContentFormat) => void;
+  chartFileRef: React.RefObject<HTMLInputElement>;
 }) {
   const [analysisType, setAnalysisType] = useState<MarketAnalysisType | "">(
     update?.type ?? ""
   );
+  const [contentFormat, setContentFormat] = useState<WeeklyUpdateContentFormat>(update?.content_format ?? "video");
 
   useEffect(() => {
     setAnalysisType(update?.type ?? "");
-  }, [update?.id, update?.type]);
+    setContentFormat(update?.content_format ?? "video");
+  }, [update?.id, update?.type, update?.content_format]);
 
   return (
     <div className="grid gap-3">
-      <ThumbnailField update={update} onFileChange={onThumbnailFileChange} />
+      {contentFormat === "video" ? <ThumbnailField update={update} onFileChange={onThumbnailFileChange} /> : null}
+      <label className="space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Inhoudsformaat</span>
+        <select name="content_format" value={contentFormat} onChange={(event) => { const format = event.target.value as WeeklyUpdateContentFormat; setContentFormat(format); onContentFormatChange(format); if (format !== "video") setAnalysisType("market_update"); }} disabled={Boolean(update?.is_published || update?.mux_upload_id || update?.image_paths.length)} className={fieldClass()}>
+          <option value="video">Video</option><option value="chart">Chart met duiding</option><option value="text">Tekstupdate</option>
+        </select>
+        {update && (update.is_published || update.mux_upload_id || update.image_paths.length > 0) ? <input type="hidden" name="content_format" value={contentFormat} /> : null}
+      </label>
+      {contentFormat !== "video" ? <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Duiding (minimaal 20 tekens voor publicatie)</span><textarea name="body" defaultValue={update?.body ?? ""} rows={10} maxLength={12000} placeholder="Wat toont deze chart of marktbeweging, en wat is de context?" className={fieldClass()} /></label> : null}
+      {contentFormat === "chart" ? <div className="space-y-2 rounded-xl border border-[var(--border)] p-3"><label className="block space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Charts (1–4, JPG/PNG/WebP, max. 10 MB per afbeelding)</span><input ref={chartFileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={update?.is_published} className={fieldClass()} /></label>{update?.image_paths.map((path, index) => <div key={path} className="flex items-center gap-3"><img src={`/api/market-updates/${update.id}/images/${index}`} alt={`Chart ${index + 1}`} className="h-20 w-32 rounded object-contain" /><span className="text-xs">Chart {index + 1}</span>{!update.is_published ? <button type="button" className="cb-btn cb-btn-secondary text-xs" onClick={async () => { const result = await adminRemoveChartImage(update.id, path); if (result.success) window.location.reload(); }}>Verwijder</button> : null}</div>)}</div> : null}
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
           Format <span className="text-red-600">*</span>
@@ -293,7 +314,7 @@ function WeeklyUpdateFields({
         >
           <option value="" disabled>Kies format</option>
           {MARKET_ANALYSIS_TYPE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
+            <option key={option.value} value={option.value} disabled={contentFormat !== "video" && option.value !== "market_update"}>{option.label}</option>
           ))}
         </select>
         <span className="block text-xs leading-5 text-[var(--muted)]">
@@ -406,11 +427,11 @@ function WeeklyUpdateFields({
           className={fieldClass()}
         />
       </label>
-      <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken / timestamps</span><textarea name="chapters" defaultValue={(update?.chapters ?? []).map((chapter) => `${Math.floor(chapter.seconds / 60)}:${String(chapter.seconds % 60).padStart(2, "0")} ${chapter.title}`).join("\n")} rows={4} placeholder="00:00 Introductie" className={fieldClass()} /></label>
+      {contentFormat === "video" ? <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken / timestamps</span><textarea name="chapters" defaultValue={(update?.chapters ?? []).map((chapter) => `${Math.floor(chapter.seconds / 60)}:${String(chapter.seconds % 60).padStart(2, "0")} ${chapter.title}`).join("\n")} rows={4} placeholder="00:00 Introductie" className={fieldClass()} /></label> : null}
       <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Gerelateerde content</span><textarea name="related_content" defaultValue={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} rows={3} placeholder="Les risicobeheer | /lessons/risicobeheer" className={fieldClass()} /></label>
       <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5">
-        <input name="is_published" type="checkbox" defaultChecked={update?.is_published ?? false} className="h-4 w-4" />
-        <span className="text-sm font-semibold text-[var(--foreground)]">Published</span>
+        <input name="is_published" type="checkbox" defaultChecked={update?.is_published ?? false} disabled={!update} className="h-4 w-4" />
+        <span className="text-sm font-semibold text-[var(--foreground)]">{update ? "Gepubliceerd" : "Eerst als concept opslaan; daarna publiceren"}</span>
       </label>
     </div>
   );
@@ -470,6 +491,8 @@ export function AdminWeeklyUpdatesManager({
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const chartFileRef = useRef<HTMLInputElement | null>(null);
+  const [contentFormat, setContentFormat] = useState<WeeklyUpdateContentFormat>("video");
   const [panel, setPanel] = useState<PanelState>({ type: "empty" });
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [pending, startTransition] = useTransition();
@@ -521,6 +544,7 @@ export function AdminWeeklyUpdatesManager({
   function resetPanel(nextPanel: PanelState) {
     resetFeedback();
     setThumbnailFile(null);
+    setContentFormat(nextPanel.type === "edit" ? nextPanel.update.content_format : "video");
     setPanel(nextPanel);
   }
 
@@ -575,6 +599,20 @@ export function AdminWeeklyUpdatesManager({
     return true;
   }
 
+  async function uploadChartsForUpdate(id: number, files: File[]): Promise<boolean> {
+    if (!files.length) return true;
+    for (const file of files) {
+      setMessage(`Chart uploaden: ${file.name}`);
+      const signed = await adminCreateChartUpload(id, { type: file.type, size: file.size });
+      if (!signed.success || !signed.path || !signed.token) { setError(signed.error ?? "Upload mislukt."); return false; }
+      const { error: uploadError } = await createBrowserSupabaseClient().storage.from("market-update-charts").uploadToSignedUrl(signed.path, signed.token, file, { contentType: file.type, upsert: false });
+      if (uploadError) { setError(uploadError.message); return false; }
+      const attached = await adminAttachChartImage(id, signed.path);
+      if (!attached.success) { setError(attached.error ?? "Chart koppelen mislukt."); return false; }
+    }
+    return true;
+  }
+
   async function uploadForExistingUpdate(weeklyUpdateId: number, file: File) {
     setMessage("Creating Mux upload...");
     setProgress(0);
@@ -626,6 +664,12 @@ export function AdminWeeklyUpdatesManager({
     resetFeedback();
     const file = fileInputRef.current?.files?.[0] ?? null;
     const selectedThumbnailFile = thumbnailFile;
+    const selectedChartFiles = Array.from(chartFileRef.current?.files ?? []);
+    const selectedFormat = formData.get("content_format");
+    if (selectedFormat === "chart" && selectedChartFiles.length + (update?.image_paths.length ?? 0) > 4) {
+      setError("Maximaal vier chartafbeeldingen per update.");
+      return;
+    }
 
     startTransition(async () => {
       if (update) {
@@ -634,6 +678,8 @@ export function AdminWeeklyUpdatesManager({
           setError(saved.error ?? "De video kon niet worden opgeslagen.");
           return;
         }
+
+        if (selectedFormat === "chart" && selectedChartFiles.length && !(await uploadChartsForUpdate(update.id, selectedChartFiles))) return;
 
         if (selectedThumbnailFile) {
           const uploaded = await uploadThumbnailForUpdate(
@@ -650,7 +696,20 @@ export function AdminWeeklyUpdatesManager({
 
         setThumbnailFile(null);
         setPanel({ type: "empty" });
-        refresh("Video opgeslagen.");
+        refresh("Marktupdate opgeslagen.");
+        return;
+      }
+
+      if (selectedFormat !== "video") {
+        const created = await adminCreateWeeklyUpdate(formData);
+        if (!created.success || !created.weeklyUpdateId) { setError(created.error ?? "Concept maken mislukt."); return; }
+        if (selectedFormat === "chart" && selectedChartFiles.length && !(await uploadChartsForUpdate(created.weeklyUpdateId, selectedChartFiles))) {
+          setPanel({ type: "empty" });
+          refresh("Concept opgeslagen; open het opnieuw om de chartupload te hervatten.");
+          return;
+        }
+        setPanel({ type: "empty" });
+        refresh("Concept opgeslagen. Open het opnieuw om te publiceren.");
         return;
       }
 
@@ -753,7 +812,7 @@ export function AdminWeeklyUpdatesManager({
     startTransition(async () => {
       const result = await adminDeleteWeeklyUpdate(update.id);
       if (!result.success) {
-        setError(result.error ?? "De video kon niet worden verwijderd.");
+        setError(result.error ?? "De marktanalyse kon niet worden verwijderd.");
         return;
       }
       setDeletedIds((current) => {
@@ -765,16 +824,16 @@ export function AdminWeeklyUpdatesManager({
         setThumbnailFile(null);
         setPanel({ type: "empty" });
       }
-      refresh("Video verwijderd.");
+      refresh("Marktanalyse verwijderd.");
     });
   }
 
   const panelTitle =
     panel.type === "create"
-      ? "Nieuwe video"
+      ? "Nieuw marktinzicht"
       : panel.type === "edit"
-        ? "Video bewerken"
-        : "Selecteer een video";
+        ? "Marktinzicht bewerken"
+        : "Selecteer een marktinzicht";
 
   return (
     <div className="grid gap-5 lg:h-[calc(100dvh-10rem)] lg:min-h-[620px] lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:overflow-hidden">
@@ -791,7 +850,7 @@ export function AdminWeeklyUpdatesManager({
             className="cb-btn cb-btn-primary text-sm"
             onClick={() => resetPanel({ type: "create" })}
           >
-            <Icon name="plus" /> Video toevoegen
+            <Icon name="plus" /> Marktinzicht toevoegen
           </button>
         </div>
 
@@ -803,7 +862,7 @@ export function AdminWeeklyUpdatesManager({
             className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-bold ${archiveFilter === "all" ? "bg-[var(--foreground)] text-[var(--background)]" : "text-[var(--muted)]"}`}
             onClick={() => setArchiveFilter("all")}
           >
-            Alle video’s ({availableUpdates.length})
+            Alle inzichten ({availableUpdates.length})
           </button>
           <button
             type="button"
@@ -821,8 +880,8 @@ export function AdminWeeklyUpdatesManager({
             <div className="p-8 text-center">
               <p className="cb-body">
                 {archiveFilter === "uncategorized"
-                  ? "Geen video’s wachten op handmatige classificatie."
-                  : "Nog geen marktinzichten. Voeg de eerste video toe."}
+                  ? "Geen marktinzichten wachten op handmatige classificatie."
+                  : "Nog geen marktinzichten. Voeg het eerste inzicht toe."}
               </p>
             </div>
           ) : (
@@ -840,13 +899,13 @@ export function AdminWeeklyUpdatesManager({
                   className="grid min-w-0 gap-3 text-left sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center"
                   onClick={() => resetPanel({ type: "edit", update })}
                 >
-                  <CourseThumbnail
+                  {update.content_format === "chart" && update.image_paths.length > 0 ? <img src={`/api/market-updates/${update.id}/images/0`} alt="" className="aspect-[16/10] w-full rounded-xl object-contain" /> : update.content_format === "text" ? <div className="flex aspect-[16/10] items-center justify-center rounded-xl bg-[var(--surface-hover)] text-xs font-bold">Tekstupdate</div> : <CourseThumbnail
                     src={update.thumbnail_url}
                     title={update.title}
                     eyebrow={update.type === "market_update" ? getMarketLabel(update.market) : getMarketAnalysisTypeLabel(update.type)}
                     className="aspect-[16/10] rounded-xl"
                     muted={!update.is_published}
-                  />
+                  />}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="truncate text-base font-semibold text-[var(--foreground)]">
@@ -957,20 +1016,20 @@ export function AdminWeeklyUpdatesManager({
             </p>
           ) : panel.type === "create" ? (
             <form action={(formData) => runSave(formData)} className="space-y-4">
-              <WeeklyUpdateFields key="create" mentors={mentors} onThumbnailFileChange={setThumbnailFile} />
-              <label className="space-y-1.5">
+              <WeeklyUpdateFields key="create" mentors={mentors} onThumbnailFileChange={setThumbnailFile} onContentFormatChange={setContentFormat} chartFileRef={chartFileRef} />
+              {contentFormat === "video" ? <label className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Video file</span>
                 <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
-              </label>
+              </label> : null}
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Bezig..." : "Video toevoegen"}
+                {pending || progress !== null ? "Bezig..." : contentFormat === "video" ? "Video toevoegen" : "Concept opslaan"}
               </button>
             </form>
           ) : selectedUpdate ? (
             <form action={(formData) => runSave(formData, selectedUpdate)} className="space-y-4">
-              <WeeklyUpdateFields key={selectedUpdate.id} update={selectedUpdate} mentors={mentors} onThumbnailFileChange={setThumbnailFile} />
-              <div className="rounded-xl border border-[var(--border)] p-3">
+              <WeeklyUpdateFields key={selectedUpdate.id} update={selectedUpdate} mentors={mentors} onThumbnailFileChange={setThumbnailFile} onContentFormatChange={setContentFormat} chartFileRef={chartFileRef} />
+              {contentFormat === "video" ? <div className="rounded-xl border border-[var(--border)] p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="cb-eyebrow">Video</div>
@@ -999,10 +1058,10 @@ export function AdminWeeklyUpdatesManager({
                   <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Replace/upload video</span>
                   <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
                 </label>
-              </div>
+              </div> : null}
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Bezig..." : "Video opslaan"}
+                {pending || progress !== null ? "Bezig..." : "Marktupdate opslaan"}
               </button>
             </form>
           ) : null}

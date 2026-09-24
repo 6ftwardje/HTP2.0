@@ -44,11 +44,11 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
   }
   const update = await getPublishedWeeklyUpdateBySlug(slug);
   if (!update) notFound();
-  const muxTokens = getMuxPlaybackTokens({
+  const muxTokens = update.content_format === "video" ? getMuxPlaybackTokens({
     playbackId: update.mux_playback_id,
     playbackPolicy: update.mux_playback_policy,
     durationSeconds: update.video_duration_seconds,
-  });
+  }) : null;
 
   const isOutlook = update.type === "weekly_outlook";
   const context = isOutlook
@@ -73,7 +73,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
 
       <main className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="min-w-0 space-y-6">
-          <WeeklyUpdateAutoCompleteVideo
+          {update.content_format === "video" ? <WeeklyUpdateAutoCompleteVideo
             weeklyUpdateId={update.id}
             videoUrl={update.video_url}
             videoProvider={update.video_provider}
@@ -81,7 +81,11 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
             muxPlaybackPolicy={update.mux_playback_policy}
             muxTokens={muxTokens}
             title={update.title}
-          />
+          /> : <article className="space-y-6 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-8">
+            <div className="cb-eyebrow">{update.content_format === "chart" ? "Chartupdate" : "Tekstupdate"}</div>
+            {update.content_format === "chart" ? update.image_paths.map((_, index) => <figure key={index} className="overflow-hidden rounded-lg border border-[var(--border)]"><a href={`/api/market-updates/${update.id}/images/${index}`} target="_blank" rel="noopener noreferrer" aria-label={`Open chart ${index + 1} op volledige grootte`}><img src={`/api/market-updates/${update.id}/images/${index}`} alt={`Chart ${index + 1} bij ${update.title}`} className="h-auto w-full" /></a><figcaption className="px-3 py-2 text-xs text-[var(--muted)]">Chart {index + 1} · klik om te vergroten</figcaption></figure>) : null}
+            <div className="whitespace-pre-wrap break-words text-[1rem] leading-8 text-[var(--foreground)]">{update.body}</div>
+          </article>}
 
           {update.summary ? (
             <section className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6">
