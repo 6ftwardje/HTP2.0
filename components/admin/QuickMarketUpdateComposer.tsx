@@ -53,7 +53,7 @@ export function QuickMarketUpdateComposer() {
     });
   }
 
-  return <section className="cb-panel mb-6 p-5 sm:p-6" aria-labelledby="quick-update-title">
+  return <section className="cb-panel p-5 sm:p-6" aria-labelledby="quick-update-title">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><div className="cb-eyebrow">Mentor · Marktupdate</div><h2 id="quick-update-title" className="cb-h2 mt-2">Deel een snelle update</h2><p className="cb-body mt-1">Een bericht of chart, zonder videoformulier.</p></div>
       <Link href="/admin/market-analysis" className="text-sm font-semibold underline underline-offset-4">Alle updates beheren →</Link>

@@ -3,6 +3,8 @@ import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { LessonTypeBadge, normalizeLessonType } from "@/components/LessonTypeBadge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BrandIcon } from "@/components/ui/Brand";
+import { QuickMarketUpdateComposer } from "@/components/admin/QuickMarketUpdateComposer";
+import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 import { asText } from "@/lib/as-text";
 import {
   canAccessSubscriberContent,
@@ -191,6 +193,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       />
 
       <main className="min-w-0 space-y-8">
+        {student.access_level === ADMIN_ACCESS_LEVEL ? <QuickMarketUpdateComposer /> : null}
         {params?.intake === "completed" && (
           <section className="rounded-xl border border-[color-mix(in_oklab,#34d399_32%,var(--border))] bg-emerald-400/[0.06] p-5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
