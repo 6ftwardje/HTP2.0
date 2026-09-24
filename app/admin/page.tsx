@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { QuickMarketUpdateComposer } from "@/components/admin/QuickMarketUpdateComposer";
 
 export default function AdminHomePage() {
   return (
@@ -9,6 +10,8 @@ export default function AdminHomePage() {
         title="Platform overview"
         description="Manage students, lesson progress, and access. Analytics will expand here in a later phase."
       />
+
+      <QuickMarketUpdateComposer />
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Link

@@ -299,6 +299,66 @@ export async function adminCreateWeeklyUpdate(
   return { success: true, weeklyUpdateId: weeklyUpdate?.id };
 }
 
+export async function adminCreateQuickMarketUpdate(
+  formData: FormData
+): Promise<ActionResult<{ weeklyUpdateId?: number }>> {
+  const { actorStudent } = await requireAdmin();
+  const body = asString(formData.get("body"));
+  const markets = formData.getAll("markets").map(asString).filter((value): value is Market | "macro" =>
+    [...MARKETS, "macro"].includes(value as Market | "macro")
+  );
+  const chartCount = Number(formData.get("chart_count") ?? 0);
+  if (body.length < 20 || body.length > 12000) return { success: false, error: "Schrijf 20 tot 12.000 tekens." };
+  if (!markets.length) return { success: false, error: "Kies minimaal één markt." };
+  if (!Number.isInteger(chartCount) || chartCount < 0 || chartCount > 4) return { success: false, error: "Voeg maximaal vier charts toe." };
+  const title = asString(formData.get("title")) || body.split(/\r?\n/)[0].slice(0, 90);
+  if (!title) return { success: false, error: "Voeg een titel of bericht toe." };
+  const now = new Date();
+  const slug = `${slugify(title).slice(0, 65)}-${crypto.randomUUID().slice(0, 8)}`;
+  const { weeklyUpdate, error } = await createWeeklyUpdateAdmin({
+    title, slug, body, content_format: chartCount ? "chart" : "text",
+    summary: null, key_takeaways: [], type: "market_update",
+    market: markets.find((value): value is Market => value !== "macro") ?? null,
+    markets, actuality_status: "current", event_context: null, period_label: null,
+    chapters: [], related_content: [], needs_review: false,
+    week_start_date: now.toISOString().slice(0, 10), mentor_student_id: actorStudent.id,
+    access_tier: "subscription", thumbnail_url: null, is_published: false,
+    published_at: null, created_by_student_id: actorStudent.id,
+    video_provider: "mux", mux_playback_policy: "public",
+  });
+  if (error || !weeklyUpdate) return { success: false, error: error ?? "Concept kon niet worden opgeslagen." };
+  logAdminAction("weekly_update.created", { actorStudentId: actorStudent.id, metadata: { weeklyUpdateId: weeklyUpdate.id, title } });
+  revalidateWeeklyUpdatePaths(slug);
+  return { success: true, weeklyUpdateId: weeklyUpdate.id };
+}
+
+export async function adminPublishQuickMarketUpdate(idRaw: unknown): Promise<ActionResult> {
+  const { actorStudent } = await requireAdmin();
+  const id = parsePositiveInteger(idRaw);
+  if (!id) return { success: false, error: "Ongeldige marktupdate." };
+  const update = await getWeeklyUpdateAdmin(id);
+  if (!update || update.type !== "market_update" || update.content_format === "video") return { success: false, error: "Marktupdate niet gevonden." };
+  if (update.is_published) return { success: true };
+  const validation = validateMarketUpdatePublication({ contentFormat: update.content_format, body: update.body, imagePaths: update.image_paths, muxReady: false });
+  if (validation) return { success: false, error: validation };
+  const { error, transitioned } = await updateWeeklyUpdateAdmin(id, {
+    content_format: update.content_format, body: update.body, title: update.title, slug: update.slug,
+    summary: update.summary, key_takeaways: update.key_takeaways, type: "market_update",
+    market: update.market, week_start_date: update.week_start_date, mentor_student_id: update.mentor_student_id,
+    access_tier: update.access_tier, thumbnail_url: update.thumbnail_url, markets: update.markets ?? [],
+    actuality_status: update.actuality_status ?? "current", event_context: update.event_context ?? null,
+    period_label: update.period_label ?? null, chapters: update.chapters ?? [], related_content: update.related_content ?? [],
+    needs_review: false, is_published: true, published_at: new Date().toISOString(),
+  }, true);
+  if (error) return { success: false, error };
+  if (!transitioned) return { success: false, error: "De update is intussen gewijzigd. Vernieuw de pagina." };
+  const published = await getWeeklyUpdateAdmin(id);
+  if (published) await notifyFirstPublication({ weeklyUpdate: published, actorStudentId: actorStudent.id });
+  logAdminAction("weekly_update.updated", { actorStudentId: actorStudent.id, metadata: { weeklyUpdateId: id, title: update.title } });
+  revalidateWeeklyUpdatePaths(update.slug);
+  return { success: true };
+}
+
 export async function adminUpdateWeeklyUpdate(
   weeklyUpdateIdRaw: unknown,
   formData: FormData

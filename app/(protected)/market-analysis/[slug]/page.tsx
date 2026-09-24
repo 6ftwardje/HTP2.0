@@ -117,7 +117,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
         </section>
 
         <aside className="h-fit rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6 lg:sticky lg:top-6">
-          <div className="cb-eyebrow">Key takeaways</div>
+          {update.content_format === "video" ? <><div className="cb-eyebrow">Key takeaways</div>
           {update.key_takeaways.length > 0 ? (
             <ol className="mt-5 space-y-3">
               {update.key_takeaways.map((takeaway, index) => (
@@ -131,7 +131,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
             </ol>
           ) : (
             <p className="mt-4 cb-body">Er zijn nog geen takeaways toegevoegd.</p>
-          )}
+          )}</> : null}
 
           <div className="mt-6 border-t border-[var(--border)] pt-5">
             <p className="cb-caption">Deze analyse is educatief en geen financieel advies.</p>
