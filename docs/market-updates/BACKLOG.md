@@ -17,6 +17,7 @@ Regel: **voordat iemand code voor een issue wijzigt, zet die het issue in de kol
 
 ## Issues
 
+0. MU-0: reconcilieer de bestaande migratiehistorie van HTP 2.0 vóór een reguliere database-release.
 1. MU-1: datamodel en veilige migratie.
 2. MU-2: private chartuploads en toegangsgecontroleerd tonen.
 3. MU-3: admin-editor voor tekst en charts.
