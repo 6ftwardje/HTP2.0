@@ -4,9 +4,9 @@ Doel: een admin kan een snelle tekst- of chartupdate naast bestaande video's pub
 
 ## Scrumboard
 
-GitHub Project (wanneer projectrechten beschikbaar zijn) met kolommen `Backlog`, `Ready`, `In progress`, `Review`, `Done`. Tot die tijd zijn de gelijknamige statuslabels op issues het uitvoerbare board. Per issue staat exact één statuslabel.
+Het [GitHub Project-board](https://github.com/users/6ftwardje/projects/3/views/1) heeft de kolommen `Backlog`, `Ready`, `In Progress`, `Review` en `Done`. Houd het statuslabel van ieder issue gelijk met het board: `status:todo` voor Backlog, `status:ready` voor Ready, `status:in-progress` voor In Progress, `status:review` voor Review en `status:done` voor Done.
 
-Regel: **voordat iemand code voor een issue wijzigt, zet die het issue op `status:in-progress`** en vermeldt branch of PR. `status:review` volgt zodra de implementatie en verificatie klaar zijn. `status:done` volgt pas na merge en acceptatie. Geblokkeerd werk krijgt `status:blocked` met een concrete reden en volgende actie. WIP-limiet: één actief issue per uitvoerder. Volg de issuevolgorde tenzij een afhankelijkheid anders vraagt.
+Regel: **voordat iemand code voor een issue wijzigt, zet die het issue in de kolom `In Progress` en op `status:in-progress`** en vermeldt branch of PR. `status:review` volgt zodra de implementatie en verificatie klaar zijn. `status:done` volgt pas na merge en acceptatie. Geblokkeerd werk krijgt `status:blocked` met een concrete reden en volgende actie en verlaat de kolom In Progress. WIP-limiet: één actief issue per uitvoerder. Volg de issuevolgorde tenzij een afhankelijkheid anders vraagt.
 
 ## Productgrenzen
 
