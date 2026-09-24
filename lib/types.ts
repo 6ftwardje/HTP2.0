@@ -155,6 +155,8 @@ export type MarketInsightFormat =
 
 export type MarketInsightActuality = "current" | "still_relevant" | "archive";
 
+export type WeeklyUpdateContentFormat = "video" | "chart" | "text";
+
 export type MarketInsightChapter = {
   title: string;
   seconds: number;
@@ -162,6 +164,9 @@ export type MarketInsightChapter = {
 
 export type WeeklyUpdate = {
   id: number;
+  content_format: WeeklyUpdateContentFormat;
+  body: string | null;
+  image_paths: string[];
   title: string;
   slug: string;
   summary: string | null;
