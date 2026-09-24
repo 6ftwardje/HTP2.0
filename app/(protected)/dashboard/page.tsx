@@ -3,6 +3,9 @@ import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { LessonTypeBadge, normalizeLessonType } from "@/components/LessonTypeBadge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BrandIcon } from "@/components/ui/Brand";
+import { QuickMarketUpdateComposer } from "@/components/admin/QuickMarketUpdateComposer";
+import { RecentMarketUpdatesFeed } from "@/components/dashboard/RecentMarketUpdatesFeed";
+import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 import { asText } from "@/lib/as-text";
 import {
   canAccessSubscriberContent,
@@ -20,6 +23,7 @@ import {
 import { stripModulePrefix } from "@/lib/module-title";
 import { listUpcomingLiveSessions } from "@/lib/live-sessions";
 import { ensureCurrentStudent } from "@/lib/students";
+import { listPublishedWeeklyUpdates } from "@/lib/weekly-updates";
 
 type Props = {
   searchParams?: Promise<{ intake?: string }>;
@@ -45,6 +49,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const firstName = student.name?.split(" ")[0] ?? null;
   const title = firstName ? `Welkom terug, ${firstName}` : "Welkom terug";
   const hasSubscriberAccess = canAccessSubscriberContent(student, billingOverview);
+  const recentUpdates = hasSubscriberAccess ? await listPublishedWeeklyUpdates(10) : [];
   const showPaidProducts = paidProductsEnabled();
   const nextLiveSession = upcomingLiveSessions[0] ?? null;
 
@@ -218,6 +223,9 @@ export default async function DashboardPage({ searchParams }: Props) {
             </div>
           </section>
         )}
+
+        {hasSubscriberAccess && <RecentMarketUpdatesFeed updates={recentUpdates} />}
+        {student.access_level === ADMIN_ACCESS_LEVEL ? <QuickMarketUpdateComposer /> : null}
 
         <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-7">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.86fr)] lg:items-center">

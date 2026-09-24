@@ -6,6 +6,7 @@ import type {
   Student,
   WeeklyUpdate,
   WeeklyUpdateAccessTier,
+  WeeklyUpdateContentFormat,
 } from "@/lib/types";
 
 export type AdminWeeklyUpdateRow = WeeklyUpdate & {
@@ -13,6 +14,8 @@ export type AdminWeeklyUpdateRow = WeeklyUpdate & {
 };
 
 export type WeeklyUpdateInput = {
+  content_format: WeeklyUpdateContentFormat;
+  body: string | null;
   title: string;
   slug: string;
   summary: string | null;
@@ -145,23 +148,26 @@ export async function createWeeklyUpdateAdmin(
 
 export async function updateWeeklyUpdateAdmin(
   weeklyUpdateId: number,
-  input: WeeklyUpdateInput
-): Promise<{ error: string | null }> {
+  input: WeeklyUpdateInput,
+  publishTransition = false
+): Promise<{ error: string | null; transitioned: boolean }> {
   await requireAdmin();
 
-  if (process.env.NODE_ENV === "test") return { error: null };
+  if (process.env.NODE_ENV === "test") return { error: null, transitioned: publishTransition };
 
   const db = await createClient();
-  const { data, error } = await db
+  let query = db
     .from("weekly_updates")
     .update(input)
-    .eq("id", weeklyUpdateId)
-    .select("id")
+    .eq("id", weeklyUpdateId);
+  if (publishTransition) query = query.eq("is_published", false);
+  const { data, error } = await query.select("id")
     .maybeSingle();
 
-  if (error) return { error: error.message };
-  if (!data) return { error: "Weekly update not found." };
-  return { error: null };
+  if (error) return { error: error.message, transitioned: false };
+  if (!data && publishTransition) return { error: null, transitioned: false };
+  if (!data) return { error: "Weekly update not found.", transitioned: false };
+  return { error: null, transitioned: publishTransition };
 }
 
 export async function updateWeeklyUpdateVideoAdmin(

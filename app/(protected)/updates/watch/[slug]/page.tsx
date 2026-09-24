@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { WeeklyUpdateAutoCompleteVideo } from "@/components/WeeklyUpdateAutoCompleteVideo";
 import { getMarketLabel } from "@/lib/market-analysis";
 import { getPublishedWeeklyUpdateBySlug } from "@/lib/weekly-updates";
@@ -33,6 +33,7 @@ export default async function MarketUpdateVideoPage({ params }: Props) {
   }
   const update = await getPublishedWeeklyUpdateBySlug(slug);
   if (!update || update.type !== "market_update" || !update.market) notFound();
+  if (update.content_format !== "video") redirect(`/market-analysis/${update.slug}`);
   const muxTokens = getMuxPlaybackTokens({
     playbackId: update.mux_playback_id,
     playbackPolicy: update.mux_playback_policy,

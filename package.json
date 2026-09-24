@@ -10,6 +10,7 @@
     "perf:baseline": "node scripts/performance-baseline.mjs",
     "perf:verify-boundaries": "node scripts/verify-performance-boundaries.mjs",
     "start": "next start",
+    "test": "node --experimental-strip-types --test tests/market-updates/*.test.ts",
     "lint": "next lint",
     "verify:supabase-target": "node scripts/verify-supabase-target.mjs"
   },
