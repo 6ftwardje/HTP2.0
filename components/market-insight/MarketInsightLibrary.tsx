@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
-import type { Market, WeeklyUpdate } from "@/lib/types";
+import type { Market, WeeklyUpdate, WeeklyUpdateContentFormat } from "@/lib/types";
 
 type Update = WeeklyUpdate & {
   mentor: { id: string; name: string | null; email: string } | null;
@@ -39,6 +39,7 @@ type Item = {
   status: Exclude<StatusFilter, "all">;
   href: string;
   action: string;
+  contentFormat: WeeklyUpdateContentFormat;
   reason?: string;
 };
 
@@ -81,7 +82,8 @@ function ContentCard({ item, featured = false }: { item: Item; featured?: boolea
   return (
     <article className={featured ? "overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,.95fr)]" : "group grid gap-4 border-b border-[var(--border)] py-5 sm:grid-cols-[180px_minmax(0,1fr)]"}>
       <Link href={item.href} className="relative block self-center overflow-hidden rounded-lg bg-stone-950">
-        <CourseThumbnail src={item.thumbnail} title={item.title} className="aspect-video w-full" />
+        {item.contentFormat === "chart" && item.thumbnail ? <img src={item.thumbnail} alt={`Chart bij ${item.title}`} className="aspect-video w-full object-contain" /> : item.contentFormat === "text" ? <div className="flex aspect-video items-center justify-center bg-[var(--card)] text-3xl font-extrabold text-[var(--foreground)]">Marktupdate</div> : <CourseThumbnail src={item.thumbnail} title={item.title} className="aspect-video w-full" />}
+        <span className="absolute left-3 top-3 rounded-md bg-black/75 px-2 py-1 text-xs font-bold text-white">{item.contentFormat === "chart" ? "Chart" : item.contentFormat === "text" ? "Tekst" : "Video"}</span>
         <span className="absolute bottom-3 left-3 rounded-md bg-black/75 px-2 py-1 text-xs font-bold text-white">{statusLabel(item.status)}</span>
       </Link>
       <div className={featured ? "flex flex-col justify-center p-6 sm:p-8" : "min-w-0 py-1"}>
@@ -116,25 +118,26 @@ export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
   const [market, setMarket] = useState<MarketFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const items = useMemo<Item[]>(() => {
-    const videoItems = updates.filter((update) => update.type !== "live_session").map((update): Item => {
+    const allItems = updates.filter((update) => update.type !== "live_session").map((update): Item => {
       const itemFormat = update.type === "weekly_outlook" ? "weekly_outlook" : "market_breakdown";
       const actuality = update.actuality_status ?? "current";
       return {
-        id: `video-${update.id}`,
+        id: `update-${update.id}`,
         format: itemFormat,
         title: update.title,
-        summary: update.summary,
+        summary: update.summary ?? (update.content_format !== "video" ? update.body : null),
         date: update.published_at ?? update.created_at,
-        duration: update.video_duration_seconds,
-        thumbnail: update.thumbnail_url,
+        duration: update.content_format === "video" ? update.video_duration_seconds : null,
+        thumbnail: update.content_format === "chart" ? `/api/market-updates/${update.id}/images/0` : update.thumbnail_url,
+        contentFormat: update.content_format,
         markets: itemMarkets(update),
         host: update.mentor?.name ?? update.mentor?.email ?? "Cryptoriez mentor",
         status: actuality === "archive" ? "archive" : "current",
         href: `/market-analysis/${update.slug}`,
-        action: itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown",
+        action: update.content_format === "video" ? (itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown") : "Lees update",
       };
     });
-    return videoItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return allItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [updates]);
 
   const featuredBase = items.find((item) => item.format === "weekly_outlook") ?? items[0] ?? null;

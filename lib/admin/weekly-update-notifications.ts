@@ -21,6 +21,7 @@ export async function notifyWeeklyUpdatePublished({
     | "access_tier"
     | "type"
     | "market"
+    | "content_format"
   >;
   actorStudentId: string;
 }): Promise<{ notified: number; skipped: boolean; error: string | null }> {
@@ -95,7 +96,7 @@ export async function notifyWeeklyUpdatePublished({
           : "Nieuwe markt update",
       body: weeklyUpdate.title,
       href:
-        weeklyUpdate.type === "market_update"
+        weeklyUpdate.type === "market_update" && weeklyUpdate.content_format === "video"
           ? `/updates/watch/${weeklyUpdate.slug}`
           : `/market-analysis/${weeklyUpdate.slug}`,
       metadata: {
