@@ -19,6 +19,7 @@ import {
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
+import { marketUpdateAuthorName } from "@/lib/market-update-author";
 import {
   getIsoWeekNumber,
   getMarketAnalysisTypeLabel,
@@ -940,7 +941,9 @@ export function AdminWeeklyUpdatesManager({
                       {update.type === "weekly_outlook"
                         ? `Week ${getIsoWeekNumber(update.week_start_date)} · ${formatDate(update.week_start_date)}`
                         : formatDate(update.published_at ?? update.created_at)}
-                      {update.mentor ? ` · ${update.mentor.name ?? update.mentor.email}` : ""}
+                      {update.content_format !== "video" && update.is_published
+                        ? ` · Geplaatst door ${marketUpdateAuthorName(update)}`
+                        : update.mentor ? ` · ${update.mentor.name ?? update.mentor.email}` : ""}
                     </p>
                     {update.summary ? (
                       <p className="mt-1 line-clamp-1 text-sm text-[var(--muted)]">

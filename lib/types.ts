@@ -176,6 +176,8 @@ export type WeeklyUpdate = {
   week_start_date: string;
   mentor_student_id: string | null;
   created_by_student_id: string | null;
+  published_by_student_id?: string | null;
+  published_by_display_name?: string | null;
   access_tier: WeeklyUpdateAccessTier;
   video_provider: "mux" | "vimeo" | "youtube";
   video_url: string | null;

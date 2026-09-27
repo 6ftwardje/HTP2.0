@@ -16,6 +16,7 @@ import {
 } from "@/lib/billing";
 import { SubscriptionPaywall } from "@/components/billing/SubscriptionPaywall";
 import { getMuxPlaybackTokens } from "@/lib/mux-signing";
+import { marketUpdateAuthorName } from "@/lib/market-update-author";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -25,12 +26,6 @@ function formatDate(value: string) {
     month: "long",
     year: "numeric",
   }).format(new Date(value));
-}
-
-function mentorName(
-  mentor: { name: string | null; email: string } | null
-): string {
-  return mentor?.name ?? mentor?.email ?? "Cryptoriez mentor";
 }
 
 export default async function MarketAnalysisDetailPage({ params }: Props) {
@@ -68,7 +63,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
             : `${getMarketAnalysisTypeLabel(update.type)} · ${getMarketLabel(update.market)}`
         }
         title={update.title}
-        description={`${context} · ${mentorName(update.mentor)}`}
+        description={`${context} · ${update.content_format === "video" ? marketUpdateAuthorName(update) : `Geplaatst door ${marketUpdateAuthorName(update)}`}`}
       />
 
       <main className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">

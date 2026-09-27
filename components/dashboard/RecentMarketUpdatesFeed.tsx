@@ -4,6 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import type { WeeklyUpdateWithMentor } from "@/lib/weekly-updates";
+import { marketUpdateAuthorName } from "@/lib/market-update-author";
 
 const marketNames: Record<string, string> = {
   crypto: "Crypto", forex: "Forex", stocks: "Aandelen",
@@ -40,6 +41,7 @@ export function RecentMarketUpdatesFeed({ updates }: { updates: WeeklyUpdateWith
           const hasChart = isChart && Boolean(update.image_paths?.length);
           const image = hasChart ? `/api/market-updates/${update.id}/images/0` : update.thumbnail_url;
           const body = isVideo ? update.summary : update.body || update.summary;
+          const author = marketUpdateAuthorName(update);
           const showBody = body && body.trim().toLocaleLowerCase("nl-BE") !== update.title.trim().toLocaleLowerCase("nl-BE");
           const date = update.published_at ?? update.created_at;
           const markets = update.markets?.length ? update.markets : update.market ? [update.market] : [];
@@ -47,12 +49,12 @@ export function RecentMarketUpdatesFeed({ updates }: { updates: WeeklyUpdateWith
             {isVideo || hasChart ? <div className="relative aspect-video overflow-hidden bg-[var(--surface-hover)]">
               {isVideo ? <CourseThumbnail src={image} title={update.title} className="h-full w-full transition-transform duration-200 group-hover:scale-[1.025]" /> : <img src={image ?? ""} alt={`Chart bij ${update.title}`} className="h-full w-full object-contain" />}
               {isVideo && update.video_duration_seconds ? <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-xs font-bold text-white">{Math.round(update.video_duration_seconds / 60)} min</span> : null}
-            </div> : <div className="flex min-h-20 items-center gap-3 border-b border-[var(--border)] px-5 py-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_18%,var(--card))] text-xs font-extrabold text-[var(--accent)]">HTP</span><span className="min-w-0 text-sm font-semibold text-[var(--foreground)]">{update.mentor?.name || "HTP Mentor"}</span></div>}
+            </div> : <div className="flex min-h-20 items-center gap-3 border-b border-[var(--border)] px-5 py-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_18%,var(--card))] text-xs font-extrabold text-[var(--accent)]">{author.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("")}</span><span className="min-w-0 text-sm font-semibold text-[var(--foreground)]">{author}</span></div>}
             <div className={`flex flex-1 flex-col p-5 ${isVideo || hasChart ? "min-h-[174px]" : "min-h-[154px]"}`}>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-[var(--muted)]"><span className="text-[var(--accent)]">{isVideo ? "Video" : isChart ? "Chartupdate" : "Bericht"}</span>{markets.slice(0, 2).map((market) => <span key={market}>· {marketNames[market] ?? market}</span>)}</div>
               <h3 className="mt-2 line-clamp-2 text-base font-bold leading-snug text-[var(--foreground)] group-hover:underline">{update.title}</h3>
               {showBody && <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{body}</p>}
-              <p className="mt-auto pt-4 text-xs text-[var(--muted)]"><time dateTime={date}>{new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date))}</time>{isVideo ? ` · ${update.mentor?.name || "HTP Mentor"}` : ""}</p>
+              <p className="mt-auto pt-4 text-xs text-[var(--muted)]"><time dateTime={date}>{new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date))}</time>{isVideo ? ` · ${author}` : ""}</p>
             </div>
           </Link>;
         })}

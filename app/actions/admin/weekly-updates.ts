@@ -22,6 +22,7 @@ import {
 } from "@/lib/mux";
 import { SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS } from "@/lib/weekly-update-access";
 import { getMondayDate } from "@/lib/market-analysis";
+import { publicAuthorName } from "@/lib/market-update-author";
 import { validateMarketUpdatePublication } from "@/lib/market-update-policy";
 import type {
   Market,
@@ -349,6 +350,8 @@ export async function adminPublishQuickMarketUpdate(idRaw: unknown): Promise<Act
     actuality_status: update.actuality_status ?? "current", event_context: update.event_context ?? null,
     period_label: update.period_label ?? null, chapters: update.chapters ?? [], related_content: update.related_content ?? [],
     needs_review: false, is_published: true, published_at: new Date().toISOString(),
+    published_by_student_id: actorStudent.id,
+    published_by_display_name: publicAuthorName(actorStudent),
   }, true);
   if (error) return { success: false, error };
   if (!transitioned) return { success: false, error: "De update is intussen gewijzigd. Vernieuw de pagina." };
@@ -402,6 +405,10 @@ export async function adminUpdateWeeklyUpdate(
 
   const input = {
     ...parsed.input,
+    ...(willPublish && parsed.input.content_format !== "video" ? {
+      published_by_student_id: actorStudent.id,
+      published_by_display_name: publicAuthorName(actorStudent),
+    } : {}),
     published_at: parsed.input.is_published
       ? currentWeeklyUpdate.published_at ?? parsed.input.published_at
       : null,

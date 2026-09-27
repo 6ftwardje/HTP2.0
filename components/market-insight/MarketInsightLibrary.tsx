@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import type { Market, WeeklyUpdate, WeeklyUpdateContentFormat } from "@/lib/types";
+import { marketUpdateAuthorName } from "@/lib/market-update-author";
 
 type Update = WeeklyUpdate & {
   mentor: { id: string; name: string | null; email: string } | null;
@@ -157,7 +158,7 @@ export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
         thumbnail: update.content_format === "chart" ? `/api/market-updates/${update.id}/images/0` : update.thumbnail_url,
         contentFormat: update.content_format,
         markets: itemMarkets(update),
-        host: update.mentor?.name && update.mentor.name !== "Onbekend" ? update.mentor.name : "HTP Mentor",
+        host: marketUpdateAuthorName(update),
         status: actuality === "archive" ? "archive" : "current",
         href: `/market-analysis/${update.slug}`,
         action: update.content_format === "video" ? (itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown") : "Lees update",

@@ -35,6 +35,8 @@ export type WeeklyUpdateInput = {
   needs_review: boolean;
   is_published: boolean;
   published_at: string | null;
+  published_by_student_id?: string | null;
+  published_by_display_name?: string | null;
 };
 
 type WeeklyUpdateVideoUpdate = Partial<
