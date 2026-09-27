@@ -54,7 +54,7 @@ export function RecentMarketUpdatesFeed({ updates }: { updates: WeeklyUpdateWith
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-[var(--muted)]"><span className="text-[var(--accent)]">{isVideo ? "Video" : isChart ? "Chartupdate" : "Bericht"}</span>{markets.slice(0, 2).map((market) => <span key={market}>· {marketNames[market] ?? market}</span>)}</div>
               <h3 className="mt-2 line-clamp-2 text-base font-bold leading-snug text-[var(--foreground)] group-hover:underline">{update.title}</h3>
               {showBody && <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{body}</p>}
-              <p className="mt-auto pt-4 text-xs text-[var(--muted)]"><time dateTime={date}>{new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date))}</time>{isVideo ? ` · ${author}` : ""}</p>
+              <p className="mt-auto pt-4 text-xs text-[var(--muted)]"><time dateTime={date}>{new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date))}</time>{isVideo || hasChart ? ` · ${author}` : ""}</p>
             </div>
           </Link>;
         })}
