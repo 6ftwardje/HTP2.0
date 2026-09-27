@@ -202,6 +202,7 @@ export async function listAdminMentorThreads(params: {
   let query = db
     .from("conversation_threads")
     .select(THREAD_COLUMNS)
+    .eq("source_type", "mentor_chat")
     .order("last_message_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);

@@ -15,22 +15,30 @@ function Arrow({ direction }: { direction: "left" | "right" }) {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-4 w-4"><path d={direction === "left" ? "m15 18-6-6 6-6" : "m9 6 6 6-6 6"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
-export function RecentMarketUpdatesFeed({ updates }: { updates: WeeklyUpdateWithMentor[] }) {
+export function RecentMarketUpdatesFeed({
+  updates,
+  title = "Recente marktupdates",
+  description = "Berichten, charts en video's van je mentoren.",
+}: {
+  updates: WeeklyUpdateWithMentor[];
+  title?: string;
+  description?: string;
+}) {
   const rail = useRef<HTMLDivElement>(null);
   const visibleUpdates = updates.filter((update) => update.type !== "live_session");
 
   return <section aria-labelledby="recent-market-updates" className="min-w-0">
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 id="recent-market-updates" className="text-2xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-[1.75rem]">Nieuw in Marktinzicht</h2>
-        <p className="mt-1 text-sm leading-6 text-[var(--muted)]">De laatste updates van je mentors, op één plek.</p>
+        <h2 id="recent-market-updates" className="text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-[1.75rem]">{title}</h2>
+        <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{description}</p>
       </div>
       <div className="flex items-center gap-2">
         {visibleUpdates.length > 1 && <div className="hidden gap-2 sm:flex">
-          <button type="button" onClick={() => rail.current?.scrollBy({ left: -340, behavior: "smooth" })} aria-label="Vorige marktupdates" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="left" /></button>
-          <button type="button" onClick={() => rail.current?.scrollBy({ left: 340, behavior: "smooth" })} aria-label="Volgende marktupdates" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="right" /></button>
+          <button type="button" onClick={() => rail.current?.scrollBy({ left: -340, behavior: "smooth" })} aria-label="Vorige marktupdates" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="left" /></button>
+          <button type="button" onClick={() => rail.current?.scrollBy({ left: 340, behavior: "smooth" })} aria-label="Volgende marktupdates" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="right" /></button>
         </div>}
-        <Link href="/market-analysis" className="inline-flex min-h-9 items-center text-sm font-bold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">Alle updates <span aria-hidden="true" className="ml-1">→</span></Link>
+        <Link href="/market-analysis" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">Alle updates <span aria-hidden="true" className="ml-1">→</span></Link>
       </div>
     </div>
     {visibleUpdates.length === 0 ? <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-6 text-sm leading-6 text-[var(--muted)]">Er zijn nog geen marktupdates gepubliceerd. Nieuwe berichten verschijnen hier zodra je mentor ze deelt.</div> :

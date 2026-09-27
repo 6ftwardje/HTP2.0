@@ -5,11 +5,20 @@ import {
   listWeeklyUpdatesAdmin,
 } from "@/lib/admin/weekly-updates";
 
-export default async function AdminMarketAnalysisPage() {
-  const [updates, mentors] = await Promise.all([
+export default async function AdminMarketAnalysisPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ update?: string }>;
+}) {
+  const [updates, mentors, params] = await Promise.all([
     listWeeklyUpdatesAdmin(),
     listWeeklyUpdateMentorsAdmin(),
+    searchParams ? searchParams : Promise.resolve({} as { update?: string }),
   ]);
+  const requestedUpdateId = Number(params.update);
+  const initialUpdateId = Number.isInteger(requestedUpdateId) && requestedUpdateId > 0
+    ? requestedUpdateId
+    : null;
 
   const readyCount = updates.filter(
     (update) => update.video_provider === "mux" && update.mux_status === "ready"
@@ -39,7 +48,7 @@ export default async function AdminMarketAnalysisPage() {
         }
       />
 
-      <AdminWeeklyUpdatesManager updates={updates} mentors={mentors} />
+      <AdminWeeklyUpdatesManager updates={updates} mentors={mentors} initialUpdateId={initialUpdateId} />
     </div>
   );
 }

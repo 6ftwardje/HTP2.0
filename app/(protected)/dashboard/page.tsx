@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { CourseThumbnail } from "@/components/CourseThumbnail";
-import { LessonTypeBadge, normalizeLessonType } from "@/components/LessonTypeBadge";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { BrandIcon } from "@/components/ui/Brand";
 import { QuickMarketUpdateComposer } from "@/components/admin/QuickMarketUpdateComposer";
+import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { RecentMarketUpdatesFeed } from "@/components/dashboard/RecentMarketUpdatesFeed";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { listDashboardDraftsAdmin } from "@/lib/admin/weekly-updates";
 import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 import { asText } from "@/lib/as-text";
 import {
@@ -16,18 +15,38 @@ import {
   getDashboardOverview,
   getDashboardOverviewReadModel,
 } from "@/lib/dashboard";
+import { listUpcomingLiveSessions } from "@/lib/live-sessions";
+import { listAdminMentorThreads } from "@/lib/mentor-chat";
+import { stripModulePrefix } from "@/lib/module-title";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
 } from "@/lib/onboarding";
-import { stripModulePrefix } from "@/lib/module-title";
-import { listUpcomingLiveSessions } from "@/lib/live-sessions";
 import { ensureCurrentStudent } from "@/lib/students";
+import type { Student } from "@/lib/types";
 import { listPublishedWeeklyUpdates } from "@/lib/weekly-updates";
 
 type Props = {
   searchParams?: Promise<{ intake?: string }>;
 };
+
+function displayFirstName(name: string | null) {
+  const firstName = name?.trim().split(/\s+/)[0];
+  return firstName && firstName.toLocaleLowerCase("nl-BE") !== "onbekend"
+    ? firstName
+    : null;
+}
+
+function sessionDate(date: string) {
+  return new Intl.DateTimeFormat("nl-BE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Brussels",
+  }).format(new Date(date));
+}
 
 export default async function DashboardPage({ searchParams }: Props) {
   const [{ student }, params] = await Promise.all([
@@ -36,6 +55,162 @@ export default async function DashboardPage({ searchParams }: Props) {
   ]);
   if (!student) return null;
 
+  if (student.access_level === ADMIN_ACCESS_LEVEL) {
+    return <AdminDashboard />;
+  }
+
+  return <StudentDashboard student={student} intakeCompleted={params?.intake === "completed"} />;
+}
+
+async function AdminDashboard() {
+  const [
+    { rows: unreadThreads, missingMigration },
+    drafts,
+    upcomingSessions,
+    recentUpdates,
+  ] = await Promise.all([
+    listAdminMentorThreads({ status: "unread", limit: 3 }),
+    listDashboardDraftsAdmin(),
+    listUpcomingLiveSessions(1),
+    listPublishedWeeklyUpdates(6),
+  ]);
+  const nextLiveSession = upcomingSessions[0] ?? null;
+
+  return (
+    <div>
+      <PageHeader
+        title="Werkoverzicht"
+        description="Deel marktinzichten en volg op wat aandacht nodig heeft."
+      />
+
+      <div className="space-y-10">
+        <QuickMarketUpdateComposer />
+
+        <section aria-labelledby="admin-follow-up-title">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 id="admin-follow-up-title" className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
+                Op te volgen
+              </h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                Vragen van studenten en updates die nog niet gepubliceerd zijn.
+              </p>
+            </div>
+            <Link href="/admin/mentor-inbox" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+              Open mentor inbox →
+            </Link>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-base font-bold text-[var(--foreground)]">Ongelezen studentvragen</h3>
+                <Link href="/admin/mentor-inbox?status=unread" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+                  Bekijk alles
+                </Link>
+              </div>
+              {missingMigration ? (
+                <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+                  De mentor inbox is nog niet beschikbaar. Controleer de inrichting in het beheer.
+                </p>
+              ) : unreadThreads.length > 0 ? (
+                <ul className="mt-4 divide-y divide-[var(--border)]">
+                  {unreadThreads.map((thread) => (
+                    <li key={thread.id}>
+                      <Link
+                        href={`/admin/mentor-inbox?status=unread&thread=${thread.id}`}
+                        className="group block rounded-md py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                      >
+                        <span className="block text-sm font-semibold text-[var(--foreground)] group-hover:underline">
+                          {thread.student?.name || thread.student?.email || "Student"}
+                        </span>
+                        <span className="mt-1 block line-clamp-1 text-sm text-[var(--muted)]">
+                          {thread.lastMessage?.body || thread.subject || "Open het gesprek"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+                  Geen ongelezen vragen. Nieuwe berichten verschijnen hier.
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-base font-bold text-[var(--foreground)]">Conceptupdates</h3>
+                <Link href="/admin/market-analysis" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+                  Beheer updates
+                </Link>
+              </div>
+              {drafts.length > 0 ? (
+                <ul className="mt-4 divide-y divide-[var(--border)]">
+                  {drafts.map((draft) => (
+                    <li key={draft.id}>
+                      <Link
+                        href={`/admin/market-analysis?update=${draft.id}`}
+                        className="group flex items-center justify-between gap-3 rounded-md py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                      >
+                        <span className="min-w-0 truncate text-sm font-semibold text-[var(--foreground)] group-hover:underline">
+                          {draft.title || "Naamloos concept"}
+                        </span>
+                        <span className="shrink-0 text-xs text-[var(--muted)]">
+                          {draft.content_format === "video" ? "Video" : draft.content_format === "chart" ? "Chart" : "Bericht"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+                  Geen concepten. Bewaar een update als concept om ze later af te werken.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between" aria-labelledby="admin-live-title">
+          <div>
+            <h2 id="admin-live-title" className="text-lg font-bold text-[var(--foreground)]">
+              {nextLiveSession ? "Volgende live marktsessie" : "Live marktsessies"}
+            </h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              {nextLiveSession
+                ? `${nextLiveSession.title} · ${sessionDate(nextLiveSession.starts_at)}`
+                : "Er staat nog geen gepubliceerde sessie gepland."}
+            </p>
+          </div>
+          <Link href="/admin/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+            {nextLiveSession ? "Beheer sessies" : "Plan een sessie"} →
+          </Link>
+        </section>
+
+        <RecentMarketUpdatesFeed
+          updates={recentUpdates}
+          title="Recent gepubliceerd"
+          description="Deze marktupdates zijn zichtbaar voor studenten met toegang."
+        />
+
+        <nav aria-label="Meer beheertaken" className="flex flex-wrap gap-x-6 gap-y-2 border-t border-[var(--border)] pt-6 text-sm font-semibold">
+          <Link href="/admin/market-analysis" className="text-[var(--foreground)] underline-offset-4 hover:underline">Marktinzicht beheren →</Link>
+          <Link href="/admin/students" className="text-[var(--foreground)] underline-offset-4 hover:underline">Studenten beheren →</Link>
+          <Link href="/admin" className="text-[var(--foreground)] underline-offset-4 hover:underline">Alle beheertools →</Link>
+        </nav>
+      </div>
+    </div>
+  );
+}
+
+async function StudentDashboard({
+  student,
+  intakeCompleted,
+}: {
+  student: Student;
+  intakeCompleted: boolean;
+}) {
   const [overview, onboarding, billingOverview, upcomingLiveSessions] = await Promise.all([
     process.env.PROJECT_SPEED_DASHBOARD_READ_MODEL === "1"
       ? getDashboardOverviewReadModel(student.id, student.access_level)
@@ -46,375 +221,171 @@ export default async function DashboardPage({ searchParams }: Props) {
   ]);
   const { nextStep } = overview;
   const intakeComplete = onboardingIsComplete(onboarding);
-  const firstName = student.name?.split(" ")[0] ?? null;
-  const title = firstName ? `Welkom terug, ${firstName}` : "Welkom terug";
   const hasSubscriberAccess = canAccessSubscriberContent(student, billingOverview);
   const recentUpdates = hasSubscriberAccess ? await listPublishedWeeklyUpdates(10) : [];
-  const showPaidProducts = paidProductsEnabled();
   const nextLiveSession = upcomingLiveSessions[0] ?? null;
-
-  const stepTitle =
-    nextStep.type === "lesson"
-      ? nextStep.lesson.title
-      : nextStep.type === "exam"
-        ? nextStep.exam.title
-        : nextStep.type === "completed"
-          ? "Je traject is afgerond"
-          : stripModulePrefix(
-              nextStep.module.title,
-              nextStep.module.order_index
-            );
-  const stepCopy =
-    nextStep.type === "lesson"
-      ? asText(nextStep.lesson.takeaway) ??
-        asText(nextStep.lesson.description) ??
-        "Bekijk de les en werk daarna de opdrachten af."
-      : nextStep.type === "exam"
-        ? "Je hebt alle lessen van deze module bekeken. Rond nu de toets af."
-        : nextStep.type === "completed"
-          ? "Mooi werk. Je hebt alle beschikbare modules doorlopen."
-          : "Open de module om verder te gaan met je traject.";
-  const thumbnail = nextStep.module?.thumbnail_url;
+  const firstName = displayFirstName(student.name);
   const moduleTitle = nextStep.module
     ? stripModulePrefix(nextStep.module.title, nextStep.module.order_index)
     : "Academy";
-  const moduleOrder = nextStep.module?.order_index;
-  const headerDescription =
-    nextStep.type === "completed"
-      ? "Je hebt alle beschikbare modules doorlopen."
-      : moduleOrder
-        ? `Je bent bezig met Module ${moduleOrder}: ${moduleTitle}.`
-        : "Je traject staat klaar om verder op te pakken.";
-  const pct =
-    nextStep.totalLessons > 0
-      ? Math.round((nextStep.completedLessons / nextStep.totalLessons) * 100)
-      : 0;
-  const remainingLessons = Math.max(
-    0,
-    nextStep.totalLessons - nextStep.completedLessons
-  );
-
-  const actionSummary =
-    nextStep.type === "lesson" && nextStep.actions.length > 0
-      ? {
-          completed: nextStep.actions.filter((_, index) =>
-            nextStep.actionProgress.get(index)
-          ).length,
-          total: nextStep.actions.length,
-          next:
-            nextStep.actions.find(
-              (_, index) => !nextStep.actionProgress.get(index)
-            ) ?? null,
-        }
-      : null;
-
-  const nextStepAction = !intakeComplete
+  const moduleContext = nextStep.module
+    ? `Module ${nextStep.module.order_index} · ${moduleTitle}`
+    : "Academy";
+  const pct = nextStep.totalLessons > 0
+    ? Math.round((nextStep.completedLessons / nextStep.totalLessons) * 100)
+    : 0;
+  const nextAction = !intakeComplete
     ? {
         title: "Vul je intake in",
-        copy: "Rond je korte intake af zodat je videolessen openen en je mentor betere context heeft.",
+        copy: "Vertel je mentor kort waar je staat. Daarna kun je verder met je lessen.",
         href: "/onboarding",
         label: "Intake invullen",
-        external: false,
-        type: "intake",
       }
-    : nextStep.type === "lesson" && actionSummary?.next
-      ? {
-          title: "Werk je eerstvolgende opdracht af",
-          copy: actionSummary.next,
-          href: nextStep.href,
-          label: "Naar de opdracht",
-          external: false,
-          type: "lesson_action",
-        }
-      : nextStep.type === "lesson"
+    : nextStep.type === "lesson"
         ? {
             title: nextStep.lesson.title,
-            copy: `Ga verder met Module ${nextStep.module.order_index}: ${stripModulePrefix(nextStep.module.title, nextStep.module.order_index)}.`,
+            copy: asText(nextStep.lesson.takeaway) ??
+              asText(nextStep.lesson.description) ??
+              "Bekijk de les en werk daarna de opdrachten af.",
             href: nextStep.href,
             label: nextStep.label,
-            external: false,
-            type: "lesson",
           }
         : nextStep.type === "exam"
           ? {
               title: nextStep.exam.title,
-              copy: "Je lessen zijn afgerond. Maak de toets om verder te gaan.",
+              copy: "Je hebt de lessen afgerond. Maak de toets om verder te gaan.",
               href: nextStep.href,
               label: nextStep.label,
-              external: false,
-              type: "exam",
             }
           : nextStep.type === "module"
             ? {
-                title: stripModulePrefix(
-                  nextStep.module.title,
-                  nextStep.module.order_index
-                ),
+                title: moduleTitle,
                 copy: "Open de module om verder te gaan met je traject.",
                 href: nextStep.href,
                 label: nextStep.label,
-                external: false,
-                type: "module",
               }
             : {
-                title: "Stel een vraag aan je mentor",
-                copy: "Loop je vast op deze module? Deel kort waar je naar kijkt en waar je twijfel zit.",
+                title: "Je traject is afgerond",
+                copy: "Je hebt alle beschikbare modules doorlopen. Je kunt je mentor nog steeds vragen stellen.",
                 href: "/mentor",
-                label: "Vraag stellen",
-                external: false,
-                type: "mentor_action",
+                label: "Stel een vraag",
               };
-  const primaryLabel =
-    nextStep.type === "lesson" ? "Start met deze les" : nextStep.label;
-  const heroHref = intakeComplete ? nextStep.href : "/onboarding";
-  const heroLabel = intakeComplete
-    ? primaryLabel
-    : "Intake invullen om te starten";
-  const headerMeta = (
-    <div className="min-w-[190px] text-left sm:text-right">
-      <div className="mb-4 h-1 overflow-hidden rounded-sm bg-[color-mix(in_oklab,var(--foreground)_12%,transparent)]">
-        <div
-          className="h-full rounded-sm bg-[var(--accent)]"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <p className="text-sm font-semibold text-[var(--foreground)]">
-        {pct}% voltooid
-      </p>
-      <p className="mt-1 text-sm text-[var(--muted)]">
-        {remainingLessons} lessen resterend
-      </p>
-    </div>
-  );
 
   return (
     <div>
       <PageHeader
-        title={title}
-        description={headerDescription}
-        meta={headerMeta}
+        title={firstName ? `Welkom terug, ${firstName}` : "Welkom terug"}
       />
 
-      <main className="min-w-0 space-y-8">
-        {params?.intake === "completed" && (
-          <section className="rounded-xl border border-[color-mix(in_oklab,#34d399_32%,var(--border))] bg-emerald-400/[0.06] p-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-100">
-                  Intake correct opgeslagen
-                </p>
-                <p className="mt-1 cb-caption">
-                  Je mentorcontext is bijgewerkt. Je volgende stap staat nu klaar.
-                </p>
-              </div>
-              <Link
-                href={nextStepAction.href}
-                className="inline-flex text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline"
-              >
-                {nextStepAction.label}
-              </Link>
-              <Link
-                href="/dashboard"
-                aria-label="Melding sluiten"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--border)] text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
-              >
-                ×
-              </Link>
-            </div>
+      <div className="min-w-0 space-y-8 sm:space-y-10">
+        {intakeCompleted && (
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[color-mix(in_oklab,#34d399_32%,var(--border))] bg-emerald-400/[0.06] px-5 py-4" role="status">
+            <p className="text-sm font-semibold text-[var(--foreground)]">
+              Je intake is opgeslagen. Je volgende stap staat klaar.
+            </p>
+            <Link href="/dashboard" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline">
+              Melding sluiten
+            </Link>
           </section>
         )}
 
-        {hasSubscriberAccess && <RecentMarketUpdatesFeed updates={recentUpdates} />}
-        {student.access_level === ADMIN_ACCESS_LEVEL ? <QuickMarketUpdateComposer /> : null}
-
-        <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-7">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.86fr)] lg:items-center">
-            <div className="relative overflow-hidden rounded-lg border border-[var(--border)] bg-black">
-              <CourseThumbnail
-                src={thumbnail}
-                title={stepTitle}
-                priority={
-                  process.env.PROJECT_SPEED_DASHBOARD_HERO_PRIORITY === "1"
-                }
-                className="aspect-[16/9] min-h-[220px] w-full"
-              />
-              {nextStep.type === "lesson" && (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/70 bg-black/24 text-white backdrop-blur-sm">
-                    <svg
-                      width="23"
-                      height="23"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden
-                      className="ml-1"
-                    >
-                      <path d="M8 5v14l11-7-11-7Z" fill="currentColor" />
-                    </svg>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="min-w-0">
-              <div className="cb-eyebrow text-[var(--accent)]">
-                {moduleOrder ? `Module ${moduleOrder}` : "Jouw traject"}
-              </div>
-              {nextStep.type === "lesson" ? (
-                <div className="mt-4">
-                  <LessonTypeBadge type={normalizeLessonType(nextStep.lesson.type)} />
-                </div>
-              ) : null}
-              <h2 className="mt-4 text-3xl font-extrabold leading-tight text-[var(--foreground)] sm:text-[2.15rem]">
-                {stepTitle}
-              </h2>
-              <p className="mt-5 max-w-xl text-[0.98rem] leading-8 text-[color-mix(in_oklab,var(--foreground)_76%,var(--muted))]">
-                {stepCopy}
-              </p>
-              {actionSummary && (
-                <div className="mt-6 border-l border-[var(--border)] pl-4">
-                  <p className="text-sm font-semibold text-[var(--foreground)]">
-                    {actionSummary.completed}/{actionSummary.total} opdrachten
-                    afgerond
-                  </p>
-                  {actionSummary.next ? (
-                    <p className="mt-1 cb-caption line-clamp-2">
-                      Eerstvolgende actie: {actionSummary.next}
-                    </p>
-                  ) : (
-                    <p className="mt-1 cb-caption">
-                      Alle opdrachten bij deze les zijn afgerond.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-10">
-                <div className="flex items-center justify-between gap-4 text-sm text-[var(--muted)]">
-                  <span>
-                    {nextStep.completedLessons}/{nextStep.totalLessons} lessen
-                    voltooid
-                  </span>
+        <section aria-label="Jouw volgende stap" className={`overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] ${nextStep.module?.thumbnail_url ? "lg:grid lg:grid-cols-[minmax(0,1fr)_260px]" : ""}`}>
+          <div className="min-w-0 p-5 sm:p-6">
+            <h2 className="text-2xl font-bold leading-tight tracking-tight text-[var(--foreground)]">
+              {nextAction.title}
+            </h2>
+            <p className="mt-2 text-sm font-medium text-[var(--muted)]">
+              {intakeComplete ? moduleContext : "Eerst je intake afronden"}
+            </p>
+            <p className="mt-4 line-clamp-2 max-w-[70ch] text-sm leading-6 text-[var(--foreground)]">
+              {nextAction.copy}
+            </p>
+            {intakeComplete && nextStep.totalLessons > 0 && (
+              <div className="mt-5 max-w-[34rem]">
+                <div className="flex items-center justify-between gap-3 text-xs font-medium text-[var(--muted)]">
+                  <span>{nextStep.type === "completed" ? "Trajectvoortgang" : "Modulevoortgang"} · {nextStep.completedLessons}/{nextStep.totalLessons} lessen</span>
                   <span>{pct}%</span>
                 </div>
-                <div className="mt-3 h-1 overflow-hidden rounded-sm bg-[color-mix(in_oklab,var(--foreground)_12%,transparent)]">
-                  <div
-                    className="h-full rounded-sm bg-[var(--accent)]"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <Link
-                  href={heroHref}
-                  className="mt-8 inline-flex w-full cb-btn cb-btn-primary px-7 py-3 sm:w-auto"
+                <div
+                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--foreground)_12%,transparent)]"
+                  role="progressbar"
+                  aria-label={nextStep.type === "completed" ? "Voortgang van je traject" : "Voortgang van deze module"}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={pct}
                 >
-                  {heroLabel}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
-          {hasSubscriberAccess || showPaidProducts ? <section
-            id="live-sessions"
-            className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-6"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="cb-eyebrow">Weekly Outlook</div>
-                <h2 className="mt-2 text-2xl font-extrabold leading-tight text-[var(--foreground)]">
-                  Volgende livesessie
-                </h2>
-              </div>
-              <Link
-                href="/live-sessions"
-                className="shrink-0 text-sm font-semibold text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-              >
-                Agenda →
-              </Link>
-            </div>
-
-            {hasSubscriberAccess && nextLiveSession ? (
-              <div className="mt-6 rounded-lg border border-[var(--border)] bg-[color-mix(in_oklab,var(--accent)_7%,var(--card))] p-5">
-                <p className="text-sm font-semibold capitalize text-[var(--muted)]">
-                  {new Intl.DateTimeFormat("nl-BE", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    timeZone: "Europe/Brussels",
-                  }).format(new Date(nextLiveSession.starts_at))}
-                </p>
-                <h3 className="mt-2 text-lg font-bold text-[var(--foreground)]">
-                  {nextLiveSession.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                  Bekijk de details, voeg de sessie toe aan je agenda en neem vanaf 15 minuten vooraf deel.
-                </p>
-                <Link href="/live-sessions" className="mt-4 inline-flex cb-btn cb-btn-secondary px-4 py-2 text-sm">
-                  Bekijk livesessie
-                </Link>
-              </div>
-            ) : !hasSubscriberAccess ? (
-              <div className="mt-6 rounded-lg border border-[var(--border)] p-5">
-                <p className="cb-body">
-                  Ontgrendel elke week één Weekly Outlook en minstens twee marktupdates voor €99 per maand, inclusief btw.
-                </p>
-                <Link href="/account#subscription" className="mt-4 inline-flex cb-btn cb-btn-primary px-4 py-2 text-sm">
-                  Bekijk subscription
-                </Link>
-              </div>
-            ) : (
-              <div className="mt-6 rounded-lg border border-dashed border-[var(--border)] p-5">
-                <p className="cb-body">
-                  Er staat nog geen Weekly Outlook gepland. Zodra een mentor publiceert,
-                  verschijnt de volgende livesessie hier.
-                </p>
+                  <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${pct}%` }} />
+                </div>
               </div>
             )}
-          </section> : null}
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link href={nextAction.href} className="cb-btn cb-btn-primary min-h-11 px-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]">
+                {nextAction.label} <span className="ml-2" aria-hidden="true">→</span>
+              </Link>
+              <Link href="/modules" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] underline-offset-4 hover:text-[var(--foreground)] hover:underline focus-visible:underline">
+                Bekijk Academy
+              </Link>
+            </div>
+          </div>
+          {nextStep.module?.thumbnail_url && (
+            <div className="hidden min-h-[220px] bg-[var(--surface-subtle)] lg:block">
+              <CourseThumbnail
+                src={nextStep.module.thumbnail_url}
+                title={nextAction.title}
+                priority={process.env.PROJECT_SPEED_DASHBOARD_HERO_PRIORITY === "1"}
+                className="h-full w-full"
+                sizes="260px"
+              />
+            </div>
+          )}
+        </section>
 
-          <section
-            id="mentor"
-            className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-soft)] sm:p-6"
-          >
-            <div className="cb-eyebrow">Volgende stap</div>
-            <div className="mt-7 grid gap-5 sm:grid-cols-[64px_minmax(0,1fr)] sm:items-start">
-              <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-[color-mix(in_oklab,var(--accent)_32%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_10%,var(--card))]">
-                <BrandIcon className="h-9 w-9" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-extrabold leading-tight text-[var(--foreground)]">
-                  {nextStepAction.title}
-                </h2>
-                <p className="mt-3 max-w-md text-[0.95rem] leading-7 text-[var(--muted)]">
-                  {nextStepAction.copy}
-                </p>
-              </div>
+        {hasSubscriberAccess && <RecentMarketUpdatesFeed updates={recentUpdates} />}
+
+        {hasSubscriberAccess && nextLiveSession && (
+          <section aria-labelledby="student-live-title" className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 id="student-live-title" className="text-lg font-bold text-[var(--foreground)]">
+                Volgende live marktsessie
+              </h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {nextLiveSession.title} · {sessionDate(nextLiveSession.starts_at)}
+              </p>
             </div>
-            <div className="mt-8">
-              {nextStepAction.external ? (
-                <a
-                  href={nextStepAction.href}
-                  className="inline-flex w-full cb-btn cb-btn-secondary justify-between px-5 py-3"
-                >
-                  {nextStepAction.label}
-                  <span aria-hidden>→</span>
-                </a>
-              ) : (
-                <Link
-                  href={nextStepAction.href}
-                  className="inline-flex w-full cb-btn cb-btn-secondary justify-between px-5 py-3"
-                >
-                  {nextStepAction.label}
-                  <span aria-hidden>→</span>
-                </Link>
-              )}
-            </div>
+            <Link href="/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+              Bekijk sessie →
+            </Link>
           </section>
-        </div>
-      </main>
+        )}
+
+        {!hasSubscriberAccess && paidProductsEnabled() && (
+          <section className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-[var(--foreground)]">Marktinzicht</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                Ontgrendel Weekly Outlooks en marktupdates met een abonnement.
+              </p>
+            </div>
+            <Link href="/account#subscription" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+              Bekijk abonnement →
+            </Link>
+          </section>
+        )}
+
+        {nextStep.type !== "completed" && (
+          <section id="mentor" className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-[var(--foreground)]">Loop je vast?</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                Stel je vraag aan je mentor en ga met meer vertrouwen verder.
+              </p>
+            </div>
+            <Link href="/mentor" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+              Stel een vraag →
+            </Link>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

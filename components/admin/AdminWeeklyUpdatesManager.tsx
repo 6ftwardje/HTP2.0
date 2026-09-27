@@ -496,15 +496,22 @@ function DeleteConfirmModal({
 export function AdminWeeklyUpdatesManager({
   updates,
   mentors,
+  initialUpdateId,
 }: {
   updates: AdminWeeklyUpdateRow[];
   mentors: MentorOption[];
+  initialUpdateId?: number | null;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const chartFileRef = useRef<HTMLInputElement | null>(null);
-  const [contentFormat, setContentFormat] = useState<WeeklyUpdateContentFormat>("video");
-  const [panel, setPanel] = useState<PanelState>({ type: "empty" });
+  const initialUpdate = updates.find((update) => update.id === initialUpdateId);
+  const [contentFormat, setContentFormat] = useState<WeeklyUpdateContentFormat>(
+    initialUpdate?.content_format ?? "video"
+  );
+  const [panel, setPanel] = useState<PanelState>(
+    initialUpdate ? { type: "edit", update: initialUpdate } : { type: "empty" }
+  );
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);

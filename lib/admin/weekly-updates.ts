@@ -13,6 +13,11 @@ export type AdminWeeklyUpdateRow = WeeklyUpdate & {
   mentor: Pick<Student, "id" | "name" | "email"> | null;
 };
 
+export type AdminDashboardDraft = Pick<
+  WeeklyUpdate,
+  "id" | "title" | "content_format" | "updated_at"
+>;
+
 export type WeeklyUpdateInput = {
   content_format: WeeklyUpdateContentFormat;
   body: string | null;
@@ -84,6 +89,27 @@ export async function listWeeklyUpdatesAdmin(): Promise<AdminWeeklyUpdateRow[]> 
   }
 
   return (data ?? []) as AdminWeeklyUpdateRow[];
+}
+
+export async function listDashboardDraftsAdmin(): Promise<AdminDashboardDraft[]> {
+  await requireAdmin();
+
+  if (process.env.NODE_ENV === "test") return [];
+
+  const db = await createClient();
+  const { data, error } = await db
+    .from("weekly_updates")
+    .select("id, title, content_format, updated_at")
+    .eq("is_published", false)
+    .order("updated_at", { ascending: false })
+    .limit(3);
+
+  if (error) {
+    console.error("listDashboardDraftsAdmin", error.message);
+    return [];
+  }
+
+  return (data ?? []) as AdminDashboardDraft[];
 }
 
 export async function listWeeklyUpdateMentorsAdmin(): Promise<
