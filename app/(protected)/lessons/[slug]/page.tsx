@@ -165,6 +165,9 @@ export default async function LessonPage({ params }: Props) {
     currentIndex >= 0 && currentIndex < allLessons.length - 1
       ? allLessons[currentIndex + 1]
       : null;
+  const nextLessonStatus = nextLesson
+    ? statusMap.get(nextLesson.id) ?? "locked"
+    : null;
   const isLastLesson = nextLesson === null && allLessons.length > 0;
   const allLessonsCompleted = allLessons.every(
     (l) => progressMap.get(l.id)?.watched === true
@@ -187,7 +190,7 @@ export default async function LessonPage({ params }: Props) {
             { label: moduleTitle, href: `/modules/${moduleData.slug}` },
             { label: "Intake" },
           ]}
-          eyebrow="Videocourse"
+          eyebrow="Les"
           title="Vul eerst je intake in"
           description="Je kunt rondkijken in de Academy, maar videolessen openen pas nadat je intake is afgerond. Zo krijgt je mentor de context die nodig is om je beter te begeleiden."
         />
@@ -195,10 +198,8 @@ export default async function LessonPage({ params }: Props) {
           <div className="max-w-2xl">
             <div className="cb-eyebrow text-[var(--accent)]">Waarom dit nodig is</div>
             <p className="mt-4 cb-body">
-              We gebruiken je antwoorden om je ervaring, doelen, beschikbare
-              tijd en huidige uitdaging te begrijpen. Die context helpt mentors
-              en toekomstige AI-coaching om relevanter te reageren op je
-              voortgang.
+              Je antwoorden geven je mentor zicht op je ervaring, doelen en de
+              vragen waar je nu mee zit. Zo kan die gerichter met je meedenken.
             </p>
             <Link href="/onboarding" className="mt-6 inline-flex cb-btn cb-btn-primary">
               Intake invullen
@@ -384,13 +385,17 @@ export default async function LessonPage({ params }: Props) {
           )}
         </div>
         <div className="text-right">
-          {nextLesson ? (
+          {nextLesson && nextLessonStatus !== "locked" ? (
             <Link
               href={`/lessons/${nextLesson.slug}`}
               className="cb-btn cb-btn-primary inline-flex"
             >
               Volgende: {nextLesson.title}
             </Link>
+          ) : nextLesson ? (
+            <p className="text-sm text-[var(--muted)]">
+              Rond deze les af om de volgende les te openen.
+            </p>
           ) : isLastLesson && examAvailable ? (
             <Link
               href={`/modules/${moduleData.slug}/exam`}

@@ -148,7 +148,7 @@ export function MarketUpdatesLibrary({
       </nav>
 
       {featured ? (
-        <main className="pt-8">
+        <div className="pt-8">
           <section aria-labelledby="latest-update-title">
             <Link
               href={`/updates/watch/${featured.slug}`}
@@ -210,7 +210,7 @@ export function MarketUpdatesLibrary({
               </div>
             </section>
           ) : null}
-        </main>
+        </div>
       ) : (
         <div className="mt-8 rounded-lg border-[0.5px] border-dashed border-[var(--border)] bg-[var(--card)] px-6 py-12 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full" style={{ backgroundColor: colors.background, color: colors.icon }}>

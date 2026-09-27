@@ -7,8 +7,8 @@ export function StudentExamOverview({ modules }: { modules: AdminModuleProgressB
   if (rows.length === 0) {
     return (
       <div className="cb-panel p-6">
-        <h3 className="cb-section-title">Exam overview</h3>
-        <p className="cb-caption mt-2">No exams linked to published modules.</p>
+        <h3 className="cb-section-title">Toetsresultaten</h3>
+        <p className="cb-caption mt-2">Er zijn nog geen toetsen gekoppeld aan gepubliceerde modules.</p>
       </div>
     );
   }
@@ -16,9 +16,9 @@ export function StudentExamOverview({ modules }: { modules: AdminModuleProgressB
   return (
     <div className="cb-panel overflow-hidden">
       <div className="border-b border-[var(--border)] px-5 py-4">
-        <h3 className="cb-section-title">Exam overview</h3>
+        <h3 className="cb-section-title">Toetsresultaten</h3>
         <p className="cb-caption mt-1">
-          Read-only summary. Attempt counts and latest scores per module exam.
+          Laatste score en aantal pogingen per moduletoets.
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -26,11 +26,11 @@ export function StudentExamOverview({ modules }: { modules: AdminModuleProgressB
           <thead>
             <tr className="border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_92%,var(--background)_8%)]">
               <th className="px-5 py-3 font-bold">Module</th>
-              <th className="px-5 py-3 font-bold">Exam</th>
+              <th className="px-5 py-3 font-bold">Toets</th>
               <th className="px-5 py-3 font-bold">Status</th>
-              <th className="px-5 py-3 font-bold">Latest score</th>
-              <th className="px-5 py-3 font-bold">Attempts</th>
-              <th className="px-5 py-3 font-bold">Last submitted</th>
+              <th className="px-5 py-3 font-bold">Laatste score</th>
+              <th className="px-5 py-3 font-bold">Pogingen</th>
+              <th className="px-5 py-3 font-bold">Laatst ingediend</th>
             </tr>
           </thead>
           <tbody>
@@ -47,11 +47,11 @@ export function StudentExamOverview({ modules }: { modules: AdminModuleProgressB
                   <td className="px-5 py-3 text-[var(--muted)]">{examSummary.exam.title}</td>
                   <td className="px-5 py-3">
                     {examSummary.hasPassed ? (
-                      <span className="cb-badge cb-badge-completed">Passed</span>
+                      <span className="cb-badge cb-badge-completed">Geslaagd</span>
                     ) : latest ? (
-                      <span className="cb-badge cb-badge-available">Not passed</span>
+                      <span className="cb-badge cb-badge-available">Niet geslaagd</span>
                     ) : (
-                      <span className="cb-badge cb-badge-locked">No attempts</span>
+                      <span className="cb-badge cb-badge-locked">Nog niet gemaakt</span>
                     )}
                   </td>
                   <td className="px-5 py-3 text-[var(--muted)]">
@@ -60,7 +60,7 @@ export function StudentExamOverview({ modules }: { modules: AdminModuleProgressB
                   <td className="px-5 py-3 text-[var(--muted)]">{examSummary.attemptCount}</td>
                   <td className="px-5 py-3 text-[var(--muted)]">
                     {latest
-                      ? new Intl.DateTimeFormat(undefined, {
+                      ? new Intl.DateTimeFormat("nl-BE", {
                           dateStyle: "medium",
                           timeStyle: "short",
                         }).format(new Date(latest.submitted_at))

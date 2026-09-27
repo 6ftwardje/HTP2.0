@@ -143,18 +143,18 @@ function statusBadge(update: AdminWeeklyUpdateRow) {
   if (update.content_format === "chart") return <span className="cb-badge cb-badge-available">Chart · {update.image_paths.length}/4</span>;
   if (update.content_format === "text") return <span className="cb-badge cb-badge-available">Tekst</span>;
   if (update.video_provider !== "mux") {
-    return <span className="cb-badge cb-badge-locked">Legacy</span>;
+    return <span className="cb-badge cb-badge-locked">Oud formaat</span>;
   }
   if (update.mux_status === "ready") {
-    return <span className="cb-badge cb-badge-completed">Ready</span>;
+    return <span className="cb-badge cb-badge-completed">Klaar</span>;
   }
   if (update.mux_status === "errored") {
-    return <span className="cb-badge cb-badge-locked">Error</span>;
+    return <span className="cb-badge cb-badge-locked">Fout</span>;
   }
   if (update.mux_upload_id) {
-    return <span className="cb-badge cb-badge-available">Processing</span>;
+    return <span className="cb-badge cb-badge-available">In verwerking</span>;
   }
-  return <span className="cb-badge cb-badge-locked">No video</span>;
+  return <span className="cb-badge cb-badge-locked">Geen video</span>;
 }
 
 function accessLabel(value: WeeklyUpdateAccessTier) {
@@ -180,7 +180,7 @@ function UploadProgress({ progress }: { progress: number | null }) {
         />
       </div>
       <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
-        {progress}% uploaded
+        {progress}% geüpload
       </p>
     </div>
   );
@@ -377,7 +377,7 @@ function WeeklyUpdateFields({
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
             Slug
           </span>
-          <input name="slug" defaultValue={update?.slug ?? ""} placeholder="auto from title" className={fieldClass()} />
+          <input name="slug" defaultValue={update?.slug ?? ""} placeholder="Automatisch op basis van de titel" className={fieldClass()} />
         </label>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -386,7 +386,7 @@ function WeeklyUpdateFields({
             Host
           </span>
           <select name="mentor_student_id" defaultValue={update?.mentor_student_id ?? ""} className={fieldClass()}>
-            <option value="">No mentor</option>
+            <option value="">Geen mentor</option>
             {mentors.map((mentor) => (
               <option key={mentor.id} value={mentor.id}>
                 {mentor.name ?? mentor.email}
@@ -396,7 +396,7 @@ function WeeklyUpdateFields({
         </label>
         <label className="space-y-1.5">
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Access
+            Toegang
           </span>
           <select name="access_tier" defaultValue={update?.access_tier ?? "subscription"} className={fieldClass()}>
             {WEEKLY_UPDATE_ACCESS_OPTIONS.map((option) => (
@@ -434,7 +434,7 @@ function WeeklyUpdateFields({
           name="key_takeaways"
           defaultValue={(update?.key_takeaways ?? []).join("\n")}
           rows={5}
-          placeholder="One takeaway per line"
+          placeholder="Eén aandachtspunt per regel"
           className={fieldClass()}
         />
       </label>
@@ -468,14 +468,15 @@ function DeleteConfirmModal({
     >
       <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-2xl">
         <h2 id="delete-market-analysis-title" className="text-lg font-semibold text-[var(--foreground)]">
-          Video verwijderen?
+          Marktinzicht verwijderen?
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          <span className="font-semibold">{confirm.update.title}</span> en de bijbehorende kijkstatus worden verwijderd.
+          <span className="font-semibold">{confirm.update.title}</span> wordt definitief verwijderd en is daarna niet meer beschikbaar voor studenten.
+          {confirm.update.content_format === "video" ? " Ook de bijbehorende kijkstatus wordt verwijderd." : null}
         </p>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button type="button" className="cb-btn cb-btn-secondary justify-center text-sm" disabled={pending} onClick={onCancel}>
-            Cancel
+            Annuleren
           </button>
           <button
             type="button"
@@ -484,7 +485,7 @@ function DeleteConfirmModal({
             onClick={onConfirm}
           >
             <Icon name="trash" />
-            Delete
+            Verwijderen
           </button>
         </div>
       </div>
@@ -931,7 +932,7 @@ export function AdminWeeklyUpdatesManager({
                       </h3>
                       {statusBadge(update)}
                       <span className={update.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
-                        {update.is_published ? "Published" : "Draft"}
+                        {update.is_published ? "Gepubliceerd" : "Concept"}
                       </span>
                       <span className="cb-badge cb-badge-locked">
                         {accessLabel(update.access_tier)}
@@ -963,39 +964,43 @@ export function AdminWeeklyUpdatesManager({
                   <button
                     type="button"
                     className={iconButtonClass()}
-                    aria-label={`Edit ${update.title}`}
-                    title="Video bewerken"
+                    aria-label={`${update.title} bewerken`}
+                    title="Marktinzicht bewerken"
                     onClick={() => resetPanel({ type: "edit", update })}
                   >
                     <Icon name="edit" />
                   </button>
-                  <button
-                    type="button"
-                    className={iconButtonClass()}
-                    aria-label={`Upload video for ${update.title}`}
-                    title="Upload video"
-                    onClick={() => {
-                      resetPanel({ type: "edit", update });
-                      window.setTimeout(() => fileInputRef.current?.focus(), 0);
-                    }}
-                  >
-                    <Icon name="upload" />
-                  </button>
-                  <button
-                    type="button"
-                    className={iconButtonClass()}
-                    aria-label={`Sync ${update.title}`}
-                    title="Sync Mux status"
-                    disabled={!update.mux_upload_id || pending}
-                    onClick={() => syncUpdate(update)}
-                  >
-                    <Icon name="refresh" />
-                  </button>
+                  {update.content_format === "video" ? (
+                    <>
+                      <button
+                        type="button"
+                        className={iconButtonClass()}
+                        aria-label={`Video uploaden voor ${update.title}`}
+                        title="Video uploaden"
+                        onClick={() => {
+                          resetPanel({ type: "edit", update });
+                          window.setTimeout(() => fileInputRef.current?.focus(), 0);
+                        }}
+                      >
+                        <Icon name="upload" />
+                      </button>
+                      <button
+                        type="button"
+                        className={iconButtonClass()}
+                        aria-label={`Videostatus bijwerken voor ${update.title}`}
+                        title="Videostatus bijwerken"
+                        disabled={!update.mux_upload_id || pending}
+                        onClick={() => syncUpdate(update)}
+                      >
+                        <Icon name="refresh" />
+                      </button>
+                    </>
+                  ) : null}
                   <button
                     type="button"
                     className={iconButtonClass("danger")}
-                    aria-label={`Delete ${update.title}`}
-                    title="Video verwijderen"
+                    aria-label={`${update.title} verwijderen`}
+                    title="Marktinzicht verwijderen"
                     onClick={() => {
                       resetFeedback();
                       setConfirm({ type: "delete", update });
@@ -1024,7 +1029,7 @@ export function AdminWeeklyUpdatesManager({
               className="rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-[color-mix(in_oklab,var(--card)_70%,var(--foreground)_6%)]"
               onClick={() => resetPanel({ type: "empty" })}
             >
-              Close
+              Sluiten
             </button>
           ) : null}
         </div>
@@ -1032,7 +1037,7 @@ export function AdminWeeklyUpdatesManager({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
           {panel.type === "empty" ? (
             <p className="cb-body">
-              Selecteer een video uit de bibliotheek of voeg een nieuwe marktanalyse toe.
+              Selecteer een marktinzicht uit de bibliotheek of voeg een nieuw inzicht toe.
             </p>
           ) : panel.type === "create" ? (
             <form action={(formData) => runSave(formData)} className="space-y-4">

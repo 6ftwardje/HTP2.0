@@ -200,7 +200,7 @@ export default async function ModuleDetailPage({ params }: Props) {
           mentor gerichter kan meekijken.
         </p>
         <Link
-          href="/dashboard#mentor"
+          href="/mentor"
           className="mt-5 inline-flex w-full cb-btn cb-btn-secondary justify-between"
         >
           Stel een vraag

@@ -179,7 +179,7 @@ export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
   const reset = () => { setFormat("all"); setMarket("all"); setStatus("all"); };
 
   return (
-    <main>
+    <div>
       {featured && !filtersActive ? <section aria-label="Uitgelicht"><ContentCard item={featured} featured /></section> : null}
       <section className="mt-10" aria-labelledby="market-insight-feed">
         <div className="border-b border-[var(--border)]">
@@ -194,6 +194,6 @@ export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
         <h2 id="market-insight-feed" className="mt-8 text-xl font-extrabold">{filtersActive ? "Resultaten" : featured ? "Meer marktinzichten" : "Alle marktinzichten"} <span className="ml-2 text-sm font-medium text-[var(--muted)]">{filtered.length}</span></h2>
         {filtered.length ? <div className="mt-2">{filtered.map((item) => <ContentCard key={item.id} item={item} />)}</div> : <div className="mt-5 rounded-xl border border-dashed border-[var(--border)] p-8 text-center"><h3 className="font-bold">{filtersActive ? "Geen marktinzichten gevonden" : "Nog geen andere marktinzichten"}</h3>{filtersActive ? <><p className="mt-2 text-sm text-[var(--muted)]">Pas je filters aan om andere content te bekijken.</p><button type="button" onClick={reset} className="mt-4 cb-btn cb-btn-secondary">Filters wissen</button></> : null}</div>}
       </section>
-    </main>
+    </div>
   );
 }

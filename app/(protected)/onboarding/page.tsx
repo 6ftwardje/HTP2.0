@@ -21,12 +21,12 @@ export default async function OnboardingPage({ searchParams }: Props) {
           Dashboard / {isEditing ? "Profielcontext" : "Verplichte intake"}
         </div>
         <h1 className="mt-5 max-w-3xl text-4xl font-extrabold leading-[1.02] text-[var(--foreground)] sm:text-5xl xl:text-[3.4rem]">
-          {isEditing ? "Werk je intake bij" : "Maak je traject persoonlijker"}
+          {isEditing ? "Werk je intake bij" : "Vertel ons waar je staat"}
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--muted)]">
           {isEditing
-            ? "Je antwoorden blijven later aanpasbaar. We gebruiken deze context om begeleiding relevanter te maken."
-            : "Vul deze korte intake in voordat je de videocourse opent. Zo kunnen mentors en toekomstige AI-coaching beter begrijpen waar je nu staat."}
+            ? "Je kunt je antwoorden altijd aanpassen. Je mentor gebruikt ze om beter op je vragen aan te sluiten."
+            : "Vul je intake in voordat je aan de videolessen begint. Zo weet je mentor welke ervaring, doelen en vragen je meebrengt."}
         </p>
         <div className="mt-8 grid max-w-xl gap-4 border-t border-[var(--border)] pt-6 sm:grid-cols-2">
           <div>
@@ -38,7 +38,7 @@ export default async function OnboardingPage({ searchParams }: Props) {
           <div>
             <p className="cb-caption">Status</p>
             <p className="mt-1 font-semibold text-[var(--foreground)]">
-              {isEditing ? "Ingevuld" : "Nodig voor videocourse"}
+              {isEditing ? "Ingevuld" : "Vereist voor de videolessen"}
             </p>
           </div>
         </div>

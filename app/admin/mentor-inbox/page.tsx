@@ -28,13 +28,12 @@ export default async function AdminMentorInboxPage({ searchParams }: Props) {
   return (
     <div>
       <PageHeader
-        eyebrow="Mentor"
-        title="Mentor inbox"
-        description="Beantwoord studentvragen, beheer prioriteit en behoud context rond sales-intentie en begeleiding."
+        title="Mentor-inbox"
+        description="Beantwoord vragen van studenten en houd de context van eerdere gesprekken bij."
         meta={
           <div>
             <p className="font-bold text-[var(--foreground)]">{unreadCount} ongelezen</p>
-            <p>{rows.length} actieve gesprekken</p>
+            <p>{rows.length} gesprekken in deze weergave</p>
           </div>
         }
       />
@@ -42,11 +41,10 @@ export default async function AdminMentorInboxPage({ searchParams }: Props) {
       {missingMigration ? (
         <section className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-6">
           <h2 className="text-lg font-extrabold text-[var(--foreground)]">
-            Mentor inbox is bijna klaar
+            Mentor-inbox niet beschikbaar
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--muted)]">
-            De UI staat klaar. Pas de nieuwe Supabase migration toe om gesprekken,
-            berichten en notificaties te activeren.
+            Gesprekken zijn voor deze omgeving nog niet geactiveerd. Het technische team moet deze functie eerst inschakelen.
           </p>
         </section>
       ) : (

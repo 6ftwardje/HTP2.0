@@ -17,8 +17,8 @@ function Arrow({ direction }: { direction: "left" | "right" }) {
 
 export function RecentMarketUpdatesFeed({
   updates,
-  title = "Recente marktupdates",
-  description = "Berichten, charts en video's van je mentoren.",
+  title = "Nieuw in Marktinzicht",
+  description = "Nieuwe berichten, charts en video's op één plek.",
 }: {
   updates: WeeklyUpdateWithMentor[];
   title?: string;
@@ -35,14 +35,14 @@ export function RecentMarketUpdatesFeed({
       </div>
       <div className="flex items-center gap-2">
         {visibleUpdates.length > 1 && <div className="hidden gap-2 sm:flex">
-          <button type="button" onClick={() => rail.current?.scrollBy({ left: -340, behavior: "smooth" })} aria-label="Vorige marktupdates" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="left" /></button>
-          <button type="button" onClick={() => rail.current?.scrollBy({ left: 340, behavior: "smooth" })} aria-label="Volgende marktupdates" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="right" /></button>
+          <button type="button" onClick={() => rail.current?.scrollBy({ left: -340, behavior: "smooth" })} aria-label="Vorige inzichten" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="left" /></button>
+          <button type="button" onClick={() => rail.current?.scrollBy({ left: 340, behavior: "smooth" })} aria-label="Volgende inzichten" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="right" /></button>
         </div>}
-        <Link href="/market-analysis" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">Alle updates <span aria-hidden="true" className="ml-1">→</span></Link>
+        <Link href="/market-analysis" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">Bekijk Marktinzicht <span aria-hidden="true" className="ml-1">→</span></Link>
       </div>
     </div>
-    {visibleUpdates.length === 0 ? <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-6 text-sm leading-6 text-[var(--muted)]">Er zijn nog geen marktupdates gepubliceerd. Nieuwe berichten verschijnen hier zodra je mentor ze deelt.</div> :
-      <div ref={rail} tabIndex={0} role="region" aria-label="Recente marktupdates, horizontaal scrollbaar" className="flex items-start snap-x snap-mandatory gap-4 overflow-x-auto pb-4 pr-8 focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
+    {visibleUpdates.length === 0 ? <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-6 text-sm leading-6 text-[var(--muted)]">Er zijn nog geen marktinzichten gepubliceerd. Nieuwe berichten verschijnen hier zodra ze gedeeld worden.</div> :
+      <div ref={rail} tabIndex={0} role="region" aria-label="Nieuwe marktinzichten, horizontaal scrollbaar" className="flex items-start snap-x snap-mandatory gap-4 overflow-x-auto pb-4 pr-8 focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
         {visibleUpdates.map((update) => {
           const isVideo = update.content_format === "video";
           const isChart = update.content_format === "chart";

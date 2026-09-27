@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
@@ -265,18 +265,36 @@ export function AppShell({
   floatingNotifications?: FloatingNotification[];
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuCloseRef = useRef<HTMLButtonElement>(null);
+  const restoreMenuFocusRef = useRef(false);
   const pathname = usePathname();
   const showFloatingNotifications = pathname !== "/notifications";
 
   useNotificationsRealtime(currentStudentId);
 
+  const closeMobileMenu = useCallback((restoreFocus = true) => {
+    restoreMenuFocusRef.current = restoreFocus;
+    setMobileOpen(false);
+  }, []);
+
   useEffect(() => {
     if (!mobileOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileOpen(false);
+      if (e.key === "Escape") closeMobileMenu();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [closeMobileMenu, mobileOpen]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const menuTrigger = menuTriggerRef.current;
+    menuCloseRef.current?.focus();
+    return () => {
+      if (restoreMenuFocusRef.current) menuTrigger?.focus();
+      restoreMenuFocusRef.current = false;
+    };
   }, [mobileOpen]);
 
   useEffect(() => {
@@ -299,7 +317,7 @@ export function AppShell({
             studentName={studentName}
             accessLevel={accessLevel}
             unreadNotificationCount={unreadNotificationCount}
-            onNavigate={() => setMobileOpen(false)}
+            onNavigate={() => closeMobileMenu(false)}
           />
         </div>
       </aside>
@@ -311,17 +329,18 @@ export function AppShell({
             type="button"
             aria-label="Menu sluiten"
             className="fixed inset-0 z-40 bg-stone-900/35 backdrop-blur-[2px] md:hidden"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => closeMobileMenu()}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r-[0.5px] border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] text-[var(--foreground)] shadow-2xl md:hidden">
+          <aside id="mobile-nav" className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r-[0.5px] border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] text-[var(--foreground)] shadow-2xl md:hidden">
             <div className="flex shrink-0 items-center justify-between border-b-[0.5px] border-[var(--border)] px-4 py-3">
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
                 Menu
               </span>
               <button
+                ref={menuCloseRef}
                 type="button"
-                className="rounded-md px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
-                onClick={() => setMobileOpen(false)}
+                className="min-h-11 rounded-md px-3 py-2 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+                onClick={() => closeMobileMenu()}
               >
                 Sluiten
               </button>
@@ -331,7 +350,7 @@ export function AppShell({
                 studentName={studentName}
                 accessLevel={accessLevel}
                 unreadNotificationCount={unreadNotificationCount}
-                onNavigate={() => setMobileOpen(false)}
+                onNavigate={() => closeMobileMenu(false)}
               />
             </div>
           </aside>
@@ -345,9 +364,13 @@ export function AppShell({
 
         <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_82%,var(--card)_18%)] px-4 py-3 backdrop-blur-md md:hidden">
           <button
+            ref={menuTriggerRef}
             type="button"
             className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
-            onClick={() => setMobileOpen(true)}
+            onClick={() => {
+              restoreMenuFocusRef.current = true;
+              setMobileOpen(true);
+            }}
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"
           >
@@ -369,10 +392,7 @@ export function AppShell({
           <ThemeToggle />
         </div>
 
-        <main
-          id="mobile-nav"
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
-        >
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
             <PageLoadOverlay>{children}</PageLoadOverlay>
           </div>

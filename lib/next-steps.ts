@@ -177,7 +177,7 @@ function intakeStep(studentId: string): StepInput {
     status: "active",
     title: "Vul je intake in",
     description:
-      "Verplicht voordat je de videocourse opent. Zo krijgen mentors en toekomstige AI-coaching betere context over je huidige staat.",
+      "Vul je intake in om de videolessen te openen. Je mentor kan je daarna gerichter begeleiden.",
     href: "/onboarding",
     cta_label: "Intake invullen",
     source_table: "student_onboarding_responses",

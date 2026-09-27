@@ -21,12 +21,12 @@ function formatMessageTime(value: string) {
 function senderLabel(message: ConversationMessage) {
   if (message.sender_role === "student") return "Jij";
   if (message.sender_role === "ai") return "AI assistent";
-  return "Rousso";
+  return "Mentor";
 }
 
 function threadStatusLabel(thread: ConversationThread) {
   if (thread.status === "pending_mentor") return "Wacht op mentor";
-  if (thread.status === "pending_student") return "Rousso heeft geantwoord";
+  if (thread.status === "pending_student") return "Je mentor heeft geantwoord";
   if (thread.status === "closed") return "Afgesloten";
   if (thread.status === "snoozed") return "Later opvolgen";
   return "Open";
@@ -75,19 +75,13 @@ export function MentorChatPanel({
     <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)]">
       <div className="flex flex-col gap-4 border-b border-[var(--border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-extrabold text-[var(--foreground)]">Directe lijn met Rousso</h2>
-          <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-            Stel je vraag concreet. Voeg context toe over de les, setup of twijfel waar je op vastloopt.
-          </p>
+          <h2 className="text-lg font-extrabold text-[var(--foreground)]">Je mentorgesprek</h2>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex w-fit items-center rounded-full border border-emerald-500/25 px-3 py-1 text-xs font-bold uppercase tracking-[0.13em] text-emerald-500">
-            Live
-          </span>
+        {thread.status !== "open" ? (
           <span className="inline-flex w-fit items-center rounded-full border border-[var(--border)] px-3 py-1 text-xs font-bold uppercase tracking-[0.13em] text-[var(--muted)]">
             {threadStatusLabel(thread)}
           </span>
-        </div>
+        ) : null}
       </div>
 
       <div className="max-h-[58vh] min-h-[360px] space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
@@ -95,11 +89,10 @@ export function MentorChatPanel({
           <div className="flex min-h-[280px] items-center justify-center">
             <div className="max-w-md text-center">
               <p className="text-xl font-extrabold text-[var(--foreground)]">
-                Waar kan Rousso je mee helpen?
+                Nog geen berichten
               </p>
               <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                Goede vragen bevatten meestal drie dingen: waar je naar kijkt, wat je al geprobeerd hebt
-                en waar de twijfel precies zit.
+                Stel hieronder je vraag. Je mentor antwoordt in dit gesprek.
               </p>
             </div>
           </div>
@@ -144,27 +137,27 @@ export function MentorChatPanel({
       >
         <input type="hidden" name="client_message_id" value={clientMessageId} />
         <label htmlFor="mentor-message" className="sr-only">
-          Je bericht aan Rousso
+          Je bericht aan je mentor
         </label>
         <textarea
           id="mentor-message"
           name="body"
           rows={4}
           maxLength={5000}
-          placeholder="Typ je vraag aan Rousso..."
+          placeholder="Typ je vraag aan je mentor..."
           className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-7 text-[var(--foreground)] outline-none transition focus:border-[color-mix(in_oklab,var(--accent)_55%,var(--border))] focus:ring-2 focus:ring-[color-mix(in_oklab,var(--accent)_18%,transparent)]"
           required
         />
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs leading-5 text-[var(--muted)]">
-            Tip: vermeld de module, je setup of de concrete keuze waar je twijfelt.
+            Noem de les of markt en wat je al geprobeerd hebt.
           </p>
           <button
             type="submit"
             disabled={pending}
             className="cb-btn cb-btn-primary justify-center px-5 py-3"
           >
-            {pending ? "Verzenden..." : "Stuur naar Rousso"}
+            {pending ? "Verzenden..." : "Stuur naar je mentor"}
           </button>
         </div>
         {error && (

@@ -57,7 +57,7 @@ export default async function MarketUpdateVideoPage({ params }: Props) {
         </p>
       </header>
 
-      <main className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="min-w-0 space-y-6">
           <WeeklyUpdateAutoCompleteVideo
             weeklyUpdateId={update.id}
@@ -101,7 +101,7 @@ export default async function MarketUpdateVideoPage({ params }: Props) {
             Deze update is educatief en geen financieel advies.
           </p>
         </aside>
-      </main>
+      </div>
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { BrandLogo } from "@/components/ui/Brand";
 const adminNav = [
   {
     href: "/admin",
-    label: "Overview",
+    label: "Overzicht",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
@@ -25,7 +25,7 @@ const adminNav = [
   },
   {
     href: "/admin/students",
-    label: "Students",
+    label: "Studenten",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
@@ -39,7 +39,7 @@ const adminNav = [
   },
   {
     href: "/admin/mentor-inbox",
-    label: "Mentor Inbox",
+    label: "Mentor-inbox",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
@@ -59,7 +59,7 @@ const adminNav = [
   },
   {
     href: "/admin/exams",
-    label: "Exams",
+    label: "Examens",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
@@ -74,7 +74,7 @@ const adminNav = [
   },
   {
     href: "/admin/videos",
-    label: "Videos",
+    label: "Lesvideo's",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
@@ -144,7 +144,7 @@ function SidebarContent({
       {studentName && (
         <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-[0_1px_0_rgba(28,25,23,0.04)] dark:shadow-[0_1px_0_rgba(255,255,255,0.06)]">
           <div className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
-            Signed in
+            Ingelogd als
           </div>
           <div className="mt-1 truncate text-sm font-semibold text-[var(--foreground)]">
             {studentName}
@@ -154,7 +154,7 @@ function SidebarContent({
 
       <nav
         className="mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain"
-        aria-label="Admin"
+        aria-label="Beheermenu"
       >
         {adminNav.map((item) => {
           const isActive =
@@ -179,14 +179,14 @@ function SidebarContent({
           onClick={onNavigate}
           className="mb-2 block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
         >
-          ← Back to Academy
+          Naar Academy
         </Link>
         <form action="/auth/signout" method="post">
           <button
             type="submit"
             className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
           >
-            Sign out
+            Uitloggen
           </button>
         </form>
       </div>
@@ -240,21 +240,21 @@ export function AdminShell({
         <>
           <button
             type="button"
-            aria-label="Close menu"
+            aria-label="Menu sluiten"
             className="fixed inset-0 z-40 bg-stone-900/35 backdrop-blur-[2px] md:hidden"
             onClick={() => setMobileOpen(false)}
           />
           <aside className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] shadow-2xl md:hidden">
             <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-4 py-3">
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
-                Admin menu
+                Beheermenu
               </span>
               <button
                 type="button"
                 className="rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
                 onClick={() => setMobileOpen(false)}
               >
-                Close
+                Sluiten
               </button>
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-6">

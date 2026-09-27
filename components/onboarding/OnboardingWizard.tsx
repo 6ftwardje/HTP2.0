@@ -67,7 +67,7 @@ const steps: Step[] = [
     eyebrow: "Markt",
     question: "Op welke markt focus je vooral?",
     reason:
-      "Marktcontext helpt mentors en toekomstige AI-begeleiding om voorbeelden en feedback relevanter te maken.",
+      "Zo weet je mentor welke markt je volgt en kan die beter aansluiten bij je vragen.",
     type: "options",
     options: [
       { value: "crypto", label: "Crypto" },
@@ -246,7 +246,7 @@ export function OnboardingWizard({
             <p className="mt-5 rounded-lg border border-[color-mix(in_oklab,#fca5a5_38%,var(--border))] bg-red-500/[0.08] px-4 py-3 text-sm font-semibold text-red-100">
               {error === "save_failed"
                 ? "Je intake kon niet worden opgeslagen. Probeer het opnieuw of contacteer support als dit blijft gebeuren."
-                : "Vul alle intakevragen in voordat je de videocourse opent."}
+                : "Vul alle intakevragen in voordat je aan de videolessen begint."}
             </p>
           )}
 

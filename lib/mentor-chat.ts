@@ -71,7 +71,7 @@ async function createDefaultThread(
     .insert({
       student_id: studentId,
       source_type: "mentor_chat",
-      subject: "Chat met Rousso",
+      subject: "Mentorgesprek",
     })
     .select(THREAD_COLUMNS)
     .single();

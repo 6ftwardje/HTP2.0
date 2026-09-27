@@ -6,6 +6,7 @@ import {
   getUnreadNotificationCount,
   listMyNotifications,
 } from "@/lib/notifications";
+import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 
 export default async function ProtectedLayout({
   children,
@@ -32,7 +33,8 @@ export default async function ProtectedLayout({
   }
 
   const notificationShell =
-    process.env.PROJECT_SPEED_NOTIFICATION_SHELL === "1"
+    process.env.PROJECT_SPEED_NOTIFICATION_SHELL === "1" &&
+    student.access_level === ADMIN_ACCESS_LEVEL
       ? await getNotificationShellReadModel(student.id)
       : null;
   const [unreadNotificationCount, notificationResult] = notificationShell

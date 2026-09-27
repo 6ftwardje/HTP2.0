@@ -30,27 +30,26 @@ export function ModuleProgressCard({
               {moduleTitle}
             </h3>
             <p className="cb-caption mt-1">
-              Lessons {completedCount}/{totalLessons} complete ({pct}%)
+              {completedCount} van {totalLessons} lessen afgerond ({pct}%)
             </p>
           </div>
           {examSummary && (
             <div className="text-right text-sm">
               <div className="font-bold text-[var(--foreground)]">
-                Exam: {examSummary.exam.title}
+                Toets: {examSummary.exam.title}
               </div>
               <div className="cb-caption mt-1">
                 {examSummary.hasPassed ? (
-                  <span className="cb-badge cb-badge-completed">Passed</span>
+                  <span className="cb-badge cb-badge-completed">Geslaagd</span>
                 ) : examSummary.latestResult ? (
-                  <span className="cb-badge cb-badge-available">Not passed yet</span>
+                  <span className="cb-badge cb-badge-available">Niet geslaagd</span>
                 ) : (
-                  <span className="cb-badge cb-badge-locked">No attempts</span>
+                  <span className="cb-badge cb-badge-locked">Nog niet gemaakt</span>
                 )}
                 {examSummary.latestResult && (
                   <span className="ml-2 text-[var(--muted)]">
-                    Latest {examSummary.latestResult.score}% ·{" "}
-                    {examSummary.attemptCount} attempt
-                    {examSummary.attemptCount === 1 ? "" : "s"}
+                    Laatste score {examSummary.latestResult.score}% ·{" "}
+                    {examSummary.attemptCount} {examSummary.attemptCount === 1 ? "poging" : "pogingen"}
                   </span>
                 )}
               </div>
@@ -69,10 +68,10 @@ export function ModuleProgressCard({
             <span className="flex flex-wrap items-center gap-2">
               {watched ? (
                 <>
-                  <span className="cb-badge cb-badge-completed">Watched</span>
+                  <span className="cb-badge cb-badge-completed">Afgerond</span>
                   {watchedAt && (
                     <span className="text-xs text-[var(--muted)]">
-                      {new Intl.DateTimeFormat(undefined, {
+                      {new Intl.DateTimeFormat("nl-BE", {
                         dateStyle: "medium",
                         timeStyle: "short",
                       }).format(new Date(watchedAt))}
@@ -80,7 +79,7 @@ export function ModuleProgressCard({
                   )}
                 </>
               ) : (
-                <span className="cb-badge cb-badge-locked">Open</span>
+                <span className="cb-badge cb-badge-locked">Nog niet afgerond</span>
               )}
             </span>
           </li>
@@ -88,7 +87,7 @@ export function ModuleProgressCard({
       </ul>
 
       <div className="flex flex-col gap-2 border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_40%,var(--card)_60%)] px-5 py-4 sm:flex-row sm:flex-wrap">
-        <form
+        <ConfirmForm
           action={
             adminMarkStudentModuleComplete.bind(
               null,
@@ -96,17 +95,18 @@ export function ModuleProgressCard({
               module.id
             ) as unknown as (formData: FormData) => Promise<void>
           }
+          confirmMessage={`Alle lessen van “${moduleTitle}” als afgerond markeren voor deze student?`}
         >
           <button type="submit" className="cb-btn cb-btn-primary text-sm">
-            Mark module complete
+            Markeer module als afgerond
           </button>
-        </form>
+        </ConfirmForm>
         <ConfirmForm
           action={adminResetStudentModuleProgress.bind(null, studentId, module.id)}
-          confirmMessage={`Reset lesson progress for “${moduleTitle}”? Exam results are not changed.`}
+          confirmMessage={`De lesvoortgang van “${moduleTitle}” wissen? Toetsresultaten blijven bewaard.`}
         >
           <button type="submit" className="cb-btn cb-btn-secondary text-sm">
-            Reset module progress
+            Wis lesvoortgang
           </button>
         </ConfirmForm>
       </div>

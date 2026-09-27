@@ -66,7 +66,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
         description={`${context} · ${update.content_format === "video" ? marketUpdateAuthorName(update) : `Geplaatst door ${marketUpdateAuthorName(update)}`}`}
       />
 
-      <main className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="min-w-0 space-y-6">
           {update.content_format === "video" ? <WeeklyUpdateAutoCompleteVideo
             weeklyUpdateId={update.id}
@@ -138,7 +138,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
             </Link>
           </div>
         </aside>
-      </main>
+      </div>
     </div>
   );
 }

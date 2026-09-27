@@ -5,7 +5,7 @@ import { AccessLevelSelect } from "@/components/admin/AccessLevelSelect";
 function formatDate(iso: string | null) {
   if (!iso) return "—";
   try {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat("nl-BE", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(iso));
@@ -15,9 +15,9 @@ function formatDate(iso: string | null) {
 }
 
 function mentorStatusLabel(status: AdminStudentListRow["mentor_status"]) {
-  if (status === "needs_attention") return "Needs attention";
-  if (status === "watch") return "Watch";
-  return "Active";
+  if (status === "needs_attention") return "Aandacht nodig";
+  if (status === "watch") return "Opvolgen";
+  return "Actief";
 }
 
 function mentorStatusClass(status: AdminStudentListRow["mentor_status"]) {
@@ -36,8 +36,8 @@ export function StudentsTable({
   if (rows.length === 0) {
     return (
       <div className="cb-panel p-10 text-center">
-        <p className="cb-body font-semibold text-[var(--foreground)]">No students found</p>
-        <p className="cb-caption mt-2">Try adjusting search or sort.</p>
+        <p className="cb-body font-semibold text-[var(--foreground)]">Geen studenten gevonden</p>
+        <p className="cb-caption mt-2">Probeer een andere naam of e-mailadres.</p>
       </div>
     );
   }
@@ -49,31 +49,31 @@ export function StudentsTable({
           <thead>
             <tr className="border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_92%,var(--background)_8%)]">
               <th scope="col" className="px-4 py-3 font-bold text-[var(--foreground)]">
-                Name
+                Naam
               </th>
               <th scope="col" className="px-4 py-3 font-bold text-[var(--foreground)]">
-                Email
+                E-mail
               </th>
               <th scope="col" className="px-4 py-3 font-bold text-[var(--foreground)]">
-                Phone
+                Telefoon
               </th>
               <th scope="col" className="px-4 py-3 font-bold text-[var(--foreground)]">
-                Access
+                Toegang
               </th>
               <th scope="col" className="px-4 py-3 font-bold text-[var(--foreground)]">
                 Mentor
               </th>
               <th scope="col" className="px-4 py-3 font-bold text-[var(--foreground)]">
-                Tags
+                Labels
               </th>
               <th scope="col" className="px-4 py-3 font-bold text-[var(--foreground)]">
-                Joined
+                Aangemeld
               </th>
               <th scope="col" className="px-4 py-3 font-bold text-[var(--foreground)]">
-                Last seen
+                Laatst gezien
               </th>
               <th scope="col" className="px-4 py-3 text-right font-bold text-[var(--foreground)]">
-                Actions
+                Actie
               </th>
             </tr>
           </thead>
@@ -143,7 +143,7 @@ export function StudentsTable({
                     href={`/admin/students/${s.id}`}
                     className="cb-btn cb-btn-secondary text-xs"
                   >
-                    View
+                    Bekijk profiel
                   </Link>
                 </td>
               </tr>

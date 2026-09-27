@@ -31,15 +31,18 @@ export default async function AccountPage({ searchParams }: Props) {
     ? await getBillingOverview(student.id)
     : null;
   const intakeComplete = onboardingIsComplete(onboarding);
+  const displayName = student.name?.trim().toLowerCase() === "onbekend"
+    ? null
+    : student.name?.trim() || null;
 
-  const initials = student?.name
-    ? student.name
+  const initials = displayName
+    ? displayName
         .split(" ")
         .filter(Boolean)
         .slice(0, 2)
         .map((p) => p[0]?.toUpperCase())
         .join("")
-    : "";
+    : student.email?.[0]?.toUpperCase() ?? "";
 
   const main = (
     <div className="space-y-6">
@@ -62,7 +65,7 @@ export default async function AccountPage({ searchParams }: Props) {
             <div className="min-w-0">
               <div className="cb-eyebrow">Lid</div>
               <div className="mt-2 text-xl font-semibold text-[var(--foreground)]">
-                {student?.name ?? "Niet ingesteld"}
+                {displayName ?? "Naam niet ingesteld"}
               </div>
               <div className="cb-caption mt-1">{student?.email ?? "—"}</div>
             </div>
@@ -88,10 +91,10 @@ export default async function AccountPage({ searchParams }: Props) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="cb-eyebrow">Jouw intake</div>
-            <h2 className="mt-3 cb-section-title">Mentorcontext</h2>
+            <h2 className="mt-3 cb-section-title">Jouw doelen en ervaring</h2>
             <p className="mt-2 cb-caption max-w-2xl">
-              Deze informatie helpt mentors en toekomstige AI-coaching om je
-              huidige staat beter te begrijpen.
+              Je mentor gebruikt je antwoorden om gerichter op je vragen en
+              voortgang aan te sluiten.
             </p>
           </div>
           <Link href="/onboarding" className="cb-btn cb-btn-secondary shrink-0">
@@ -157,7 +160,6 @@ export default async function AccountPage({ searchParams }: Props) {
     <div>
       <PageHeader
         breadcrumbs={[{ label: "Academy", href: "/modules" }, { label: "Profiel" }]}
-        eyebrow="Profiel"
         title="Jouw profiel"
         description="Je persoonlijke gegevens en mentorcontext."
       />

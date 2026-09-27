@@ -59,11 +59,10 @@ export default async function AdminStudentsPage({
       <PageHeader
         breadcrumbs={[
           { href: "/admin", label: "Admin" },
-          { label: "Students" },
+          { label: "Studenten" },
         ]}
-        eyebrow="Directory"
-        title="Students"
-        description="Search by name or email, sort the list, and open a profile for full progress control."
+        title="Studenten"
+        description="Zoek een student en bekijk de voortgang of toegang op het profiel."
       />
 
       <div className="mb-4 flex justify-end">
@@ -72,7 +71,7 @@ export default async function AdminStudentsPage({
           download
           className="cb-btn cb-btn-secondary text-sm"
         >
-          Export all students (CSV)
+          Exporteer studenten (CSV)
         </a>
       </div>
 
@@ -82,30 +81,30 @@ export default async function AdminStudentsPage({
         role="search"
       >
         <label className="sr-only" htmlFor="student-search">
-          Search students
+          Zoek studenten
         </label>
         <input
           id="student-search"
           name="q"
           type="search"
           defaultValue={q ?? ""}
-          placeholder="Search name or email…"
+          placeholder="Zoek op naam of e-mail…"
           className="min-h-[44px] min-w-[min(100%,280px)] flex-1 rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)]"
         />
         <input type="hidden" name="sort" value={sortBy} />
         <input type="hidden" name="order" value={order} />
         <button type="submit" className="cb-btn cb-btn-primary">
-          Search
+          Zoeken
         </button>
       </form>
 
       <div className="mb-4 flex flex-wrap gap-2 text-sm">
-        <span className="font-semibold text-[var(--muted)]">Sort:</span>
+        <span className="font-semibold text-[var(--muted)]">Sorteer op:</span>
         {(
           [
-            ["created_at", "Joined"],
-            ["access_level", "Access level"],
-            ["email", "Email"],
+            ["created_at", "Aangemeld"],
+            ["access_level", "Toegang"],
+            ["email", "E-mail"],
           ] as const
         ).map(([key, label]) => {
           const active = sortBy === key;
@@ -135,7 +134,7 @@ export default async function AdminStudentsPage({
 
       <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-[var(--border)] pt-6 sm:flex-row">
         <p className="cb-caption">
-          Showing {visibleFrom}–{visibleTo}
+          Studenten {visibleFrom}–{visibleTo}
           {hasNextPage ? "+" : ""}
         </p>
         <div className="flex gap-2">
@@ -144,14 +143,14 @@ export default async function AdminStudentsPage({
             className={`cb-btn cb-btn-secondary text-sm ${page <= 1 ? "pointer-events-none opacity-40" : ""}`}
             aria-disabled={page <= 1}
           >
-            Previous
+            Vorige
           </Link>
           <Link
             href={hasNextPage ? buildHref({ page: String(page + 1) }) : "#"}
             className={`cb-btn cb-btn-secondary text-sm ${!hasNextPage ? "pointer-events-none opacity-40" : ""}`}
             aria-disabled={!hasNextPage}
           >
-            Next
+            Volgende
           </Link>
         </div>
       </div>

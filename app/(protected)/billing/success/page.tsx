@@ -13,8 +13,8 @@ export default async function BillingSuccessPage({ searchParams }: Props) {
     <div>
       <PageHeader
         eyebrow="Betaling ontvangen"
-        title={academy ? "Welkom bij de Academy" : "Welkom bij de subscription"}
-        description="Stripe verwerkt je betaling en activeert je toegang via een beveiligde webhook. Dit gebeurt normaal binnen enkele seconden."
+        title={academy ? "Welkom bij de Academy" : "Je abonnement is gestart"}
+        description="Je betaling is ontvangen. Je toegang wordt meestal binnen enkele seconden actief."
       />
       <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-7 sm:p-9">
         <h2 className="cb-section-title">Je toegang wordt klaargezet</h2>

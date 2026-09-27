@@ -126,18 +126,18 @@ function iconButtonClass(tone: "normal" | "danger" = "normal") {
 
 function statusBadge(lesson: AdminLessonVideoRow) {
   if (lesson.video_provider !== "mux") {
-    return <span className="cb-badge cb-badge-locked">Legacy</span>;
+    return <span className="cb-badge cb-badge-locked">Oud formaat</span>;
   }
   if (lesson.mux_status === "ready") {
-    return <span className="cb-badge cb-badge-completed">Ready</span>;
+    return <span className="cb-badge cb-badge-completed">Klaar</span>;
   }
   if (lesson.mux_status === "errored") {
-    return <span className="cb-badge cb-badge-locked">Error</span>;
+    return <span className="cb-badge cb-badge-locked">Fout</span>;
   }
   if (lesson.mux_upload_id) {
-    return <span className="cb-badge cb-badge-available">Processing</span>;
+    return <span className="cb-badge cb-badge-available">In verwerking</span>;
   }
-  return <span className="cb-badge cb-badge-locked">No video</span>;
+  return <span className="cb-badge cb-badge-locked">Geen video</span>;
 }
 
 function putFileWithProgress(
@@ -158,10 +158,10 @@ function putFileWithProgress(
         onProgress(100);
         resolve();
       } else {
-        reject(new Error(`Upload failed with status ${xhr.status}`));
+        reject(new Error(`Upload mislukt (status ${xhr.status}).`));
       }
     };
-    xhr.onerror = () => reject(new Error("Upload failed before Mux accepted the file."));
+    xhr.onerror = () => reject(new Error("Upload mislukt voordat de videodienst het bestand ontving."));
     xhr.send(file);
   });
 }
@@ -179,30 +179,30 @@ function ModuleFields({
     <div className="grid gap-3">
       <input type="hidden" name="order_index" value={module?.order_index ?? orderIndex} readOnly />
       <ThumbnailField
-        title={module?.title ?? "Module thumbnail"}
+        title={module?.title ?? "Moduleafbeelding"}
         currentUrl={module?.thumbnail_url}
-        label="Module thumbnail"
+        label="Moduleafbeelding"
         onFileChange={onThumbnailFileChange}
       />
       <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Title</span>
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Titel</span>
         <input name="title" defaultValue={module?.title ?? ""} required className={fieldClass()} />
       </label>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Slug</span>
-        <input name="slug" defaultValue={module?.slug ?? ""} placeholder="auto from title" className={fieldClass()} />
+        <input name="slug" defaultValue={module?.slug ?? ""} placeholder="Automatisch op basis van de titel" className={fieldClass()} />
       </label>
       <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Short description</span>
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Korte omschrijving</span>
         <input name="short_description" defaultValue={module?.short_description ?? ""} className={fieldClass()} />
       </label>
       <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Description</span>
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Omschrijving</span>
         <textarea name="description" defaultValue={module?.description ?? ""} rows={4} className={fieldClass()} />
       </label>
       <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5">
         <input name="is_published" type="checkbox" defaultChecked={module?.is_published ?? false} className="h-4 w-4" />
-        <span className="text-sm font-semibold text-[var(--foreground)]">Published</span>
+        <span className="text-sm font-semibold text-[var(--foreground)]">Gepubliceerd</span>
       </label>
     </div>
   );
@@ -235,9 +235,9 @@ function LessonFields({
     <div className="grid gap-3">
       <input type="hidden" name="order_index" value={orderIndex} readOnly />
       <ThumbnailField
-        title={lesson?.title ?? "Lesson thumbnail"}
+        title={lesson?.title ?? "Lesafbeelding"}
         currentUrl={lesson?.thumbnail_url}
-        label="Lesson thumbnail"
+        label="Lesafbeelding"
         onFileChange={onThumbnailFileChange}
       />
       <label className="space-y-1.5">
@@ -249,7 +249,7 @@ function LessonFields({
           className={fieldClass()}
           onChange={(event) => setSelectedModuleId(Number(event.currentTarget.value) || null)}
         >
-          <option value="">Choose module</option>
+          <option value="">Kies een module</option>
           {modules.map((module) => (
             <option key={module.id} value={module.id}>
               {formatModuleOptionLabel(module.order_index, module.title)}
@@ -259,7 +259,7 @@ function LessonFields({
       </label>
       <fieldset className="space-y-2">
         <legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Lesson type
+          Lestype
         </legend>
         <div className="grid grid-cols-2 gap-2">
           {(["theorie", "praktijk"] as LessonType[]).map((type) => (
@@ -279,38 +279,38 @@ function LessonFields({
           ))}
         </div>
         <p className="text-xs leading-relaxed text-[var(--muted)]">
-          Required for every lesson. Pick the dominant format; split mixed lessons later if needed.
+          Kies of deze les vooral theorie of praktijk bevat.
         </p>
       </fieldset>
       <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Title</span>
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Titel</span>
         <input name="title" defaultValue={lesson?.title ?? ""} required className={fieldClass()} />
       </label>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Slug</span>
-        <input name="slug" defaultValue={lesson?.slug ?? ""} placeholder="auto from title" className={fieldClass()} />
+        <input name="slug" defaultValue={lesson?.slug ?? ""} placeholder="Automatisch op basis van de titel" className={fieldClass()} />
       </label>
       <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Description</span>
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Omschrijving</span>
         <textarea name="description" defaultValue={lesson?.description ?? ""} rows={4} className={fieldClass()} />
       </label>
       <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Lesson takeaway</span>
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Belangrijkste inzicht</span>
         <textarea name="takeaway" defaultValue={lesson?.takeaway ?? ""} rows={2} className={fieldClass()} />
       </label>
       <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Lesson actions</span>
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Actiepunten</span>
         <textarea
           name="action_items"
           defaultValue={(lesson?.action_items ?? []).join("\n")}
           rows={5}
-          placeholder="One action per line"
+          placeholder="Eén actiepunt per regel"
           className={fieldClass()}
         />
       </label>
       <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5">
         <input name="is_published" type="checkbox" defaultChecked={lesson?.is_published ?? false} className="h-4 w-4" />
-        <span className="text-sm font-semibold text-[var(--foreground)]">Published</span>
+        <span className="text-sm font-semibold text-[var(--foreground)]">Gepubliceerd</span>
       </label>
     </div>
   );
@@ -349,12 +349,12 @@ function ThumbnailField({
       <CourseThumbnail
         src={previewUrl}
         title={title}
-        eyebrow="Thumbnail"
+        eyebrow="Voorvertoning"
         className="aspect-[16/9] w-full"
       />
       <div className="grid gap-3 p-3">
         <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">{label} URL</span>
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">{label}-URL</span>
           <input
             name="thumbnail_url"
             defaultValue={currentUrl ?? ""}
@@ -364,7 +364,7 @@ function ThumbnailField({
           />
         </label>
         <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Upload image</span>
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Afbeelding uploaden</span>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/avif"
@@ -387,7 +387,7 @@ function ThumbnailField({
           />
         </label>
         <p className="text-xs leading-relaxed text-[var(--muted)]">
-          JPG, PNG, WebP, or AVIF. Best crop: 16:9.
+          JPG, PNG, WebP of AVIF. Aanbevolen verhouding: 16:9.
         </p>
       </div>
     </div>
@@ -401,7 +401,7 @@ function UploadProgress({ progress }: { progress: number | null }) {
       <div className="h-2 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--border)_70%,transparent)]">
         <div className="h-full rounded-full bg-[var(--foreground)] transition-all" style={{ width: `${progress}%` }} />
       </div>
-      <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{progress}% uploaded</p>
+      <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{progress}% geüpload</p>
     </div>
   );
 }
@@ -435,17 +435,17 @@ function DeleteConfirmModal({
               className="text-lg font-semibold text-[var(--foreground)]"
             >
               {confirm.type === "delete-lesson"
-                ? "Delete lesson?"
+                ? "Les verwijderen?"
                 : confirm.lessonCount > 0
-                  ? "Module has lessons"
-                  : "Delete module?"}
+                  ? "Module bevat nog lessen"
+                  : "Module verwijderen?"}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
               {confirm.type === "delete-lesson"
-                ? `This will delete "${confirm.lesson.title}" and remove progress rows for this lesson.`
+                ? `De les "${confirm.lesson.title}" en de bijbehorende lesvoortgang worden definitief verwijderd.`
                 : confirm.lessonCount > 0
-                  ? `Module "${stripModulePrefix(confirm.module.title, confirm.module.order_index)}" still contains ${confirm.lessonCount} lesson${confirm.lessonCount === 1 ? "" : "s"}. Delete or move those lessons first.`
-                  : `This will permanently delete module "${stripModulePrefix(confirm.module.title, confirm.module.order_index)}".`}
+                  ? `Module "${stripModulePrefix(confirm.module.title, confirm.module.order_index)}" bevat nog ${confirm.lessonCount} ${confirm.lessonCount === 1 ? "les" : "lessen"}. Verwijder of verplaats die eerst.`
+                  : `De module "${stripModulePrefix(confirm.module.title, confirm.module.order_index)}" wordt definitief verwijderd.`}
             </p>
           </div>
         </div>
@@ -457,7 +457,7 @@ function DeleteConfirmModal({
             disabled={pending}
             onClick={onCancel}
           >
-            Cancel
+            Annuleren
           </button>
           {confirm.type === "delete-module" && confirm.lessonCount > 0 ? null : (
             <button
@@ -467,7 +467,7 @@ function DeleteConfirmModal({
               onClick={onConfirm}
             >
               <Icon name="trash" />
-              Delete
+              Verwijderen
             </button>
           )}
         </div>
@@ -577,7 +577,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
     entityId: number;
     file: File;
   }): Promise<boolean> {
-    setMessage("Preparing thumbnail upload...");
+    setMessage("Afbeeldingsupload voorbereiden...");
     const signed = await adminCreateThumbnailUpload(target, entityId, {
       name: file.name,
       type: file.type,
@@ -585,11 +585,11 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
     });
 
     if (!signed.success || !signed.path || !signed.token || !signed.publicUrl) {
-      setError(signed.error ?? "Could not prepare thumbnail upload.");
+      setError(signed.error ?? "De afbeeldingsupload kon niet worden voorbereid.");
       return false;
     }
 
-    setMessage("Uploading thumbnail...");
+    setMessage("Afbeelding uploaden...");
     const supabase = createBrowserSupabaseClient();
     const { error: uploadError } = await supabase.storage
       .from("course-thumbnails")
@@ -604,14 +604,14 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
       return false;
     }
 
-    setMessage("Saving thumbnail...");
+    setMessage("Afbeelding opslaan...");
     const updated =
       target === "modules"
         ? await adminUpdateModuleThumbnail(entityId, signed.publicUrl)
         : await adminUpdateLessonThumbnail(entityId, signed.publicUrl);
 
     if (!updated.success) {
-      setError(updated.error ?? "Could not save thumbnail.");
+      setError(updated.error ?? "De afbeelding kon niet worden opgeslagen.");
       return false;
     }
 
@@ -628,7 +628,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
           ? await adminUpdateModule(module.id, formData)
           : await adminCreateModule(formData);
       if (!result.success) {
-        setError(result.error ?? "Could not save module.");
+        setError(result.error ?? "De module kon niet worden opgeslagen.");
         return;
       }
 
@@ -644,7 +644,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
 
       setThumbnailFile(null);
       setPanel({ type: "empty" });
-      refresh(module ? "Module saved." : "Module created.");
+      refresh(module ? "Module opgeslagen." : "Module toegevoegd.");
     });
   }
 
@@ -657,7 +657,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
       if (lesson) {
         const saved = await adminUpdateLesson(lesson.id, formData);
         if (!saved.success) {
-          setError(saved.error ?? "Could not save lesson.");
+          setError(saved.error ?? "De les kon niet worden opgeslagen.");
           return;
         }
 
@@ -677,17 +677,17 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
 
         setThumbnailFile(null);
         setPanel({ type: "empty" });
-        refresh("Lesson saved.");
+        refresh("Les opgeslagen.");
         return;
       }
 
       if (file) {
-        setMessage("Creating lesson and upload...");
+        setMessage("Les en videoupload voorbereiden...");
         setProgress(0);
         const created = await adminCreateLessonMuxUpload(formData);
         if (!created.success || !created.lessonId || !created.uploadId || !created.uploadUrl) {
           setProgress(null);
-          setError(created.error ?? "Could not create lesson upload.");
+          setError(created.error ?? "De videoupload voor deze les kon niet worden voorbereid.");
           return;
         }
         try {
@@ -702,24 +702,24 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
               return;
             }
           }
-          setMessage("Uploading to Mux...");
+          setMessage("Video uploaden...");
           await putFileWithProgress(created.uploadUrl, file, setProgress);
-          setMessage("Upload complete. Syncing status...");
+          setMessage("Upload voltooid. Videostatus bijwerken...");
           await adminSyncMuxUpload(created.lessonId, created.uploadId);
           setThumbnailFile(null);
           setPanel({ type: "empty" });
           setProgress(null);
-          refresh("Lesson created. Mux is processing the video.");
+          refresh("Les toegevoegd. De video wordt verwerkt.");
         } catch (uploadError) {
           setProgress(null);
-          setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+          setError(uploadError instanceof Error ? uploadError.message : "De upload is mislukt.");
         }
         return;
       }
 
       const created = await adminCreateLesson(formData);
       if (!created.success) {
-        setError(created.error ?? "Could not create lesson.");
+        setError(created.error ?? "De les kon niet worden toegevoegd.");
         return;
       }
       if (selectedThumbnailFile && created.lessonId) {
@@ -732,32 +732,32 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
       }
       setThumbnailFile(null);
       setPanel({ type: "empty" });
-      refresh("Lesson created.");
+      refresh("Les toegevoegd.");
     });
   }
 
   async function uploadForExistingLesson(lessonId: number, file: File) {
-    setMessage("Creating Mux upload...");
+    setMessage("Videoupload voorbereiden...");
     setProgress(0);
     const created = await adminCreateMuxUpload(lessonId);
     if (!created.success || !created.uploadId || !created.uploadUrl) {
       setProgress(null);
-      setError(created.error ?? "Could not create Mux upload.");
+      setError(created.error ?? "De videoupload kon niet worden voorbereid.");
       return;
     }
 
     try {
-      setMessage("Uploading to Mux...");
+      setMessage("Video uploaden...");
       await putFileWithProgress(created.uploadUrl, file, setProgress);
-      setMessage("Upload complete. Syncing status...");
+      setMessage("Upload voltooid. Videostatus bijwerken...");
       await adminSyncMuxUpload(lessonId, created.uploadId);
       setThumbnailFile(null);
       setPanel({ type: "empty" });
       setProgress(null);
-      refresh("Video uploaded. Mux is processing it.");
+      refresh("Video geüpload en wordt verwerkt.");
     } catch (uploadError) {
       setProgress(null);
-      setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+      setError(uploadError instanceof Error ? uploadError.message : "De upload is mislukt.");
     }
   }
 
@@ -766,7 +766,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
     startTransition(async () => {
       const result = await adminDeleteLesson(lesson.id);
       if (!result.success) {
-        setError(result.error ?? "Could not delete lesson.");
+        setError(result.error ?? "De les kon niet worden verwijderd.");
         return;
       }
       setDeletedLessonIds((current) => {
@@ -778,7 +778,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
         setThumbnailFile(null);
         setPanel({ type: "empty" });
       }
-      refresh("Lesson deleted.");
+      refresh("Les verwijderd.");
     });
   }
 
@@ -786,7 +786,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
     const moduleTitle = stripModulePrefix(module.title, module.order_index);
     if (lessonCount > 0) {
       setError(
-        `Module "${moduleTitle}" still has lessons. Delete or move those lessons first.`
+        `Module "${moduleTitle}" bevat nog lessen. Verwijder of verplaats die eerst.`
       );
       return;
     }
@@ -794,7 +794,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
     startTransition(async () => {
       const result = await adminDeleteModule(module.id);
       if (!result.success) {
-        setError(result.error ?? "Could not delete module.");
+        setError(result.error ?? "De module kon niet worden verwijderd.");
         return;
       }
       setDeletedModuleIds((current) => {
@@ -806,7 +806,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
         setThumbnailFile(null);
         setPanel({ type: "empty" });
       }
-      refresh("Module deleted.");
+      refresh("Module verwijderd.");
     });
   }
 
@@ -815,10 +815,10 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
     startTransition(async () => {
       const result = await adminSyncMuxUpload(lesson.id);
       if (!result.success) {
-        setError(result.error ?? "Could not sync Mux status.");
+        setError(result.error ?? "De videostatus kon niet worden bijgewerkt.");
         return;
       }
-      refresh(result.status === "ready" ? "Video is ready." : "Mux status updated.");
+      refresh(result.status === "ready" ? "Video is klaar." : "Videostatus bijgewerkt.");
     });
   }
 
@@ -841,13 +841,13 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
 
     resetFeedback();
     startTransition(async () => {
-      setMessage("Saving module order...");
+      setMessage("Modulevolgorde opslaan...");
       const result = await adminReorderModules(nextIds);
       if (!result.success) {
-        setError(result.error ?? "Could not reorder modules.");
+        setError(result.error ?? "De modulevolgorde kon niet worden opgeslagen.");
         return;
       }
-      refresh("Module order saved.");
+      refresh("Modulevolgorde opgeslagen.");
     });
   }
 
@@ -863,38 +863,38 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
 
     resetFeedback();
     startTransition(async () => {
-      setMessage("Saving lesson order...");
+      setMessage("Lesvolgorde opslaan...");
       const result = await adminReorderLessons(moduleId, nextIds);
       if (!result.success) {
-        setError(result.error ?? "Could not reorder lessons.");
+        setError(result.error ?? "De lesvolgorde kon niet worden opgeslagen.");
         return;
       }
-      refresh("Lesson order saved.");
+      refresh("Lesvolgorde opgeslagen.");
     });
   }
 
   const panelTitle =
     panel.type === "create-module"
-      ? "New module"
+      ? "Nieuwe module"
       : panel.type === "create-lesson"
-        ? "New lesson"
+        ? "Nieuwe les"
         : panel.type === "edit-module"
-          ? "Edit module"
+          ? "Module bewerken"
           : panel.type === "edit-lesson"
-            ? "Edit lesson"
-            : "Select an item";
+            ? "Les bewerken"
+            : "Selecteer een onderdeel";
 
   return (
     <div className="grid gap-5 lg:h-[calc(100dvh-10rem)] lg:min-h-[620px] lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:overflow-hidden">
       <section className="flex min-w-0 min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
         <div className="flex shrink-0 flex-col gap-4 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="cb-eyebrow">Overview</div>
+            <div className="cb-eyebrow">Inhoud</div>
             <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
-              Modules and lessons
+              Modules en lessen
             </h2>
             <p className="mt-1 text-xs text-[var(--muted)]">
-              Use the arrows to save module and lesson order.
+              Gebruik de pijlen om de volgorde van modules en lessen aan te passen.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -915,7 +915,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                 resetPanel({ type: "create-lesson" });
               }}
             >
-              <Icon name="plus" /> Lesson
+              <Icon name="plus" /> Les
             </button>
           </div>
         </div>
@@ -923,7 +923,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
         <div className="min-h-0 flex-1 divide-y divide-[var(--border)] overflow-y-auto overscroll-contain">
           {visibleBlocks.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="cb-body">No modules yet. Create the first module to start building the curriculum.</p>
+              <p className="cb-body">Nog geen modules. Voeg een module toe om de lessen op te bouwen.</p>
             </div>
           ) : (
             visibleBlocks.map(({ module, lessons: moduleLessons }, moduleIndex) => {
@@ -957,7 +957,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                           {moduleTitle}
                         </h3>
                         <span className={module.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
-                          {module.is_published ? "Published" : "Draft"}
+                          {module.is_published ? "Gepubliceerd" : "Concept"}
                         </span>
                       </div>
                       {module.short_description ? (
@@ -966,12 +966,12 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     </div>
                   </button>
                   <div className="flex shrink-0 items-center gap-2">
-                    <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] p-1" role="group" aria-label={`Reorder ${moduleTitle}`}>
+                    <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] p-1" role="group" aria-label={`Volgorde van ${moduleTitle} aanpassen`}>
                       <button
                         type="button"
                         className={iconButtonClass()}
-                        aria-label={`Move ${moduleTitle} up`}
-                        title="Move module up"
+                        aria-label={`${moduleTitle} omhoog verplaatsen`}
+                        title="Module omhoog verplaatsen"
                         disabled={pending || moduleIndex === 0}
                         onClick={() => reorderModule(module.id, -1)}
                       >
@@ -980,8 +980,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                       <button
                         type="button"
                         className={iconButtonClass()}
-                        aria-label={`Move ${moduleTitle} down`}
-                        title="Move module down"
+                        aria-label={`${moduleTitle} omlaag verplaatsen`}
+                        title="Module omlaag verplaatsen"
                         disabled={pending || moduleIndex === visibleBlocks.length - 1}
                         onClick={() => reorderModule(module.id, 1)}
                       >
@@ -991,8 +991,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     <button
                       type="button"
                       className={iconButtonClass()}
-                      aria-label={`Add lesson to ${moduleTitle}`}
-                      title="Add lesson"
+                      aria-label={`Les toevoegen aan ${moduleTitle}`}
+                      title="Les toevoegen"
                       onClick={() => {
                         resetPanel({ type: "create-lesson", moduleId: module.id });
                       }}
@@ -1002,8 +1002,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     <button
                       type="button"
                       className={iconButtonClass()}
-                      aria-label={`Edit ${moduleTitle}`}
-                      title="Edit module"
+                      aria-label={`${moduleTitle} bewerken`}
+                      title="Module bewerken"
                       onClick={() => {
                         resetPanel({ type: "edit-module", module });
                       }}
@@ -1013,8 +1013,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                     <button
                       type="button"
                       className={iconButtonClass("danger")}
-                      aria-label={`Delete ${moduleTitle}`}
-                      title={moduleLessons.length > 0 ? "Delete lessons first" : "Delete module"}
+                      aria-label={`${moduleTitle} verwijderen`}
+                      title={moduleLessons.length > 0 ? "Verwijder eerst de lessen" : "Module verwijderen"}
                       onClick={() => {
                         resetFeedback();
                         setConfirm({
@@ -1032,7 +1032,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                 <div className="mt-3 overflow-hidden rounded-xl border border-[var(--border)]">
                   {moduleLessons.length === 0 ? (
                     <div className="bg-[color-mix(in_oklab,var(--background)_88%,var(--card)_12%)] px-4 py-3">
-                      <p className="cb-caption">No lessons in this module yet.</p>
+                      <p className="cb-caption">Nog geen lessen in deze module.</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-[var(--border)]">
@@ -1063,7 +1063,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                                 <LessonTypeBadge type={lesson.type} />
                                 {statusBadge(lesson)}
                                 <span className={lesson.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
-                                  {lesson.is_published ? "Published" : "Draft"}
+                                  {lesson.is_published ? "Gepubliceerd" : "Concept"}
                                 </span>
                               </div>
                               {lesson.description ? (
@@ -1072,12 +1072,12 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                             </div>
                           </button>
                           <div className="flex items-center gap-2 md:justify-end">
-                            <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] p-1" role="group" aria-label={`Reorder ${lesson.title}`}>
+                            <div className="flex items-center gap-1 rounded-lg border border-[var(--border)] p-1" role="group" aria-label={`Volgorde van ${lesson.title} aanpassen`}>
                               <button
                                 type="button"
                                 className={iconButtonClass()}
-                                aria-label={`Move ${lesson.title} up`}
-                                title="Move lesson up"
+                                aria-label={`${lesson.title} omhoog verplaatsen`}
+                                title="Les omhoog verplaatsen"
                                 disabled={pending || lessonIndex === 0}
                                 onClick={() => reorderLesson(module.id, lesson.id, -1)}
                               >
@@ -1086,8 +1086,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                               <button
                                 type="button"
                                 className={iconButtonClass()}
-                                aria-label={`Move ${lesson.title} down`}
-                                title="Move lesson down"
+                                aria-label={`${lesson.title} omlaag verplaatsen`}
+                                title="Les omlaag verplaatsen"
                                 disabled={pending || lessonIndex === moduleLessons.length - 1}
                                 onClick={() => reorderLesson(module.id, lesson.id, 1)}
                               >
@@ -1097,8 +1097,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                             <button
                               type="button"
                               className={iconButtonClass()}
-                              aria-label={`Edit ${lesson.title}`}
-                              title="Edit lesson"
+                              aria-label={`${lesson.title} bewerken`}
+                              title="Les bewerken"
                               onClick={() => {
                                 resetPanel({ type: "edit-lesson", lesson });
                               }}
@@ -1108,8 +1108,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                             <button
                               type="button"
                               className={iconButtonClass()}
-                              aria-label={`Upload video for ${lesson.title}`}
-                              title="Upload video"
+                              aria-label={`Video uploaden voor ${lesson.title}`}
+                              title="Video uploaden"
                               onClick={() => {
                                 resetPanel({ type: "edit-lesson", lesson });
                                 window.setTimeout(() => fileInputRef.current?.focus(), 0);
@@ -1120,8 +1120,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                             <button
                               type="button"
                               className={iconButtonClass()}
-                              aria-label={`Sync ${lesson.title}`}
-                              title="Sync Mux status"
+                              aria-label={`Videostatus bijwerken voor ${lesson.title}`}
+                              title="Videostatus bijwerken"
                               disabled={!lesson.mux_upload_id || pending}
                               onClick={() => syncLesson(lesson)}
                             >
@@ -1130,8 +1130,8 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                             <button
                               type="button"
                               className={iconButtonClass("danger")}
-                              aria-label={`Delete ${lesson.title}`}
-                              title="Delete lesson"
+                              aria-label={`${lesson.title} verwijderen`}
+                              title="Les verwijderen"
                               onClick={() => {
                                 resetFeedback();
                                 setConfirm({ type: "delete-lesson", lesson });
@@ -1167,7 +1167,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                 resetPanel({ type: "empty" });
               }}
             >
-              Close
+              Sluiten
             </button>
           ) : null}
         </div>
@@ -1175,7 +1175,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
           {panel.type === "empty" ? (
             <p className="cb-body">
-              Select a module or lesson from the overview, or create a new item with the actions above.
+              Selecteer een module of les, of voeg bovenaan een nieuw onderdeel toe.
             </p>
           ) : panel.type === "create-module" ? (
             <form action={(formData) => runModuleSave(formData)} className="space-y-4">
@@ -1184,7 +1184,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                 onThumbnailFileChange={setThumbnailFile}
               />
               <button type="submit" disabled={pending} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending ? "Saving..." : "Create module"}
+                {pending ? "Opslaan..." : "Module toevoegen"}
               </button>
             </form>
           ) : panel.type === "edit-module" && selectedModule ? (
@@ -1195,7 +1195,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                 onThumbnailFileChange={setThumbnailFile}
               />
               <button type="submit" disabled={pending} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending ? "Saving..." : "Save module"}
+                {pending ? "Opslaan..." : "Module opslaan"}
               </button>
             </form>
           ) : panel.type === "create-lesson" ? (
@@ -1208,12 +1208,12 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                 onThumbnailFileChange={setThumbnailFile}
               />
               <label className="space-y-1.5">
-                <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Video file</span>
+                <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Videobestand</span>
                 <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
               </label>
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Working..." : "Create lesson"}
+                {pending || progress !== null ? "Bezig..." : "Les toevoegen"}
               </button>
             </form>
           ) : panel.type === "edit-lesson" && selectedLesson ? (
@@ -1231,7 +1231,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                       disabled={pending}
                       onClick={() => syncLesson(selectedLesson)}
                     >
-                      <Icon name="refresh" /> Sync
+                      <Icon name="refresh" /> Status bijwerken
                     </button>
                   ) : null}
                 </div>
@@ -1244,7 +1244,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                   <p className="mt-3 text-sm font-semibold text-red-700 dark:text-red-300">{selectedLesson.mux_error_message}</p>
                 ) : null}
                 <label className="mt-3 block space-y-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Replace/upload video</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Video uploaden of vervangen</span>
                   <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
                 </label>
               </div>
@@ -1257,7 +1257,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                 onThumbnailFileChange={setThumbnailFile}
               />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Working..." : "Save lesson"}
+                {pending || progress !== null ? "Bezig..." : "Les opslaan"}
               </button>
             </form>
           ) : null}
