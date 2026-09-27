@@ -7,6 +7,7 @@ import { getLessonStatuses } from "@/lib/lesson-gate";
 import { getProgressByLessonIds } from "@/lib/progress";
 import { getExamByModuleId } from "@/lib/exams";
 import { getModuleAccessMap } from "@/lib/module-gate";
+import { canOpenLessonWithIntake, FREE_ACCESS_MODULE_LIMIT, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
 import { LessonAutoCompleteVideo } from "./LessonAutoCompleteVideo";
 import { asText } from "@/lib/as-text";
@@ -150,8 +151,21 @@ export default async function LessonPage({ params }: Props) {
   if (!moduleData) notFound();
   const moduleTitle = stripModulePrefix(moduleData.title, moduleData.order_index);
   const intakeComplete = onboardingIsComplete(onboarding);
+  const firstModuleId = [...allModules].sort((a, b) => a.order_index - b.order_index || a.id - b.id)[0]?.id;
   const moduleAccessMap = await getModuleAccessMap(student.id, allModules);
   const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
+  const moduleIndex = allModules.findIndex((module) => module.id === moduleData.id);
+  const hasLegacyModuleAccess = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
+    moduleIndex >= FREE_ACCESS_MODULE_LIMIT && canAccessModule;
+  const needsIntake = !intakeComplete &&
+    student.access_level < FULL_COURSE_ACCESS_LEVEL && !hasLegacyModuleAccess;
+  const canOpenWithIntake = canOpenLessonWithIntake({
+    accessLevel: student.access_level,
+    intakeComplete,
+    isFirstModule: moduleData.id === firstModuleId,
+    isFirstLesson: allLessons[0]?.id === lesson.id,
+    hasLegacyModuleAccess,
+  });
   const statusMap = await getLessonStatuses(student.id, allLessons, progressMap);
 
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
@@ -172,7 +186,7 @@ export default async function LessonPage({ params }: Props) {
   const allLessonsCompleted = allLessons.every(
     (l) => progressMap.get(l.id)?.watched === true
   );
-  const examAvailable = !!exam && allLessonsCompleted;
+  const examAvailable = !!exam && allLessonsCompleted && !needsIntake;
   const lessonNotes = asText(lesson.description);
   const lessonTakeaway = asText(lesson.takeaway);
   const lessonActions = normalizeLessonActions(lesson.action_items);
@@ -181,7 +195,7 @@ export default async function LessonPage({ params }: Props) {
       ? await getLessonActionProgress(student.id, lesson.id)
       : new Map<number, boolean>();
 
-  if (!intakeComplete) {
+  if (!canOpenWithIntake) {
     return (
       <div>
         <PageHeader
@@ -191,8 +205,8 @@ export default async function LessonPage({ params }: Props) {
             { label: "Intake" },
           ]}
           eyebrow="Les"
-          title="Vul eerst je intake in"
-          description="Je kunt rondkijken in de Academy, maar videolessen openen pas nadat je intake is afgerond. Zo krijgt je mentor de context die nodig is om je beter te begeleiden."
+          title="Vul je intake in om verder te gaan"
+          description="De eerste les kun je direct bekijken. Daarna helpt je intake de mentor om je vragen en doelen te begrijpen."
         />
         <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-8">
           <div className="max-w-2xl">
@@ -276,8 +290,8 @@ export default async function LessonPage({ params }: Props) {
           {moduleTitle}
         </Link>
         <p className="mt-2 cb-caption">
-          Module {moduleData.order_index} · Les {lesson.order_index} van{" "}
-          {allLessons.length}
+          Module {moduleData.order_index} · Les {lesson.order_index}
+          {needsIntake ? " · vervolg na intake" : ` van ${allLessons.length}`}
         </p>
       </RightRailCard>
 
@@ -385,7 +399,17 @@ export default async function LessonPage({ params }: Props) {
           )}
         </div>
         <div className="text-right">
-          {nextLesson && nextLessonStatus !== "locked" ? (
+          {needsIntake ? (
+            isCompleted ? (
+              <Link href="/onboarding" className="cb-btn cb-btn-primary inline-flex">
+                Vul je intake in voor de volgende les
+              </Link>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">
+                Na deze les vul je je intake in om verder te gaan.
+              </p>
+            )
+          ) : nextLesson && nextLessonStatus !== "locked" ? (
             <Link
               href={`/lessons/${nextLesson.slug}`}
               className="cb-btn cb-btn-primary inline-flex"
@@ -429,7 +453,7 @@ export default async function LessonPage({ params }: Props) {
           <span className="flex flex-wrap items-center gap-2">
             <LessonTypeBadge type={normalizeLessonType(lesson.type)} />
             <span className="cb-caption">
-              {lesson.order_index} van {allLessons.length}
+              {needsIntake ? "Eerste les, zonder intake" : `${lesson.order_index} van ${allLessons.length}`}
             </span>
           </span>
         }

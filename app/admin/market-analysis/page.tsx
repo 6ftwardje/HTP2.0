@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminWeeklyUpdatesManager } from "@/components/admin/AdminWeeklyUpdatesManager";
+import { paidProductsEnabled } from "@/lib/billing";
 import {
   listWeeklyUpdateMentorsAdmin,
   listWeeklyUpdatesAdmin,
@@ -38,9 +39,9 @@ export default async function AdminMarketAnalysisPage({
           { href: "/admin", label: "Admin" },
           { label: "Marktinzicht" },
         ]}
-        eyebrow="Video content"
+        eyebrow="Beheer"
         title="Marktinzicht"
-        description="Beheer Weekvooruitblikken en Marktbreakdowns. Live marktsessies plan je via het livebeheer."
+        description="Publiceer tekstberichten, charts en video's. Live marktsessies plan je in het aparte beheer."
         meta={
           <span className="cb-caption">
             {publishedCount} gepubliceerd · {readyCount} klaar · {processingCount} in verwerking · {uncategorizedCount} controle nodig
@@ -48,7 +49,7 @@ export default async function AdminMarketAnalysisPage({
         }
       />
 
-      <AdminWeeklyUpdatesManager updates={updates} mentors={mentors} initialUpdateId={initialUpdateId} />
+      <AdminWeeklyUpdatesManager updates={updates} mentors={mentors} initialUpdateId={initialUpdateId} paidProductsActive={paidProductsEnabled()} />
     </div>
   );
 }

@@ -98,7 +98,7 @@ export function ExamForm({
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-[var(--muted)]">
             {result.passed
-              ? `Je bent geslaagd voor ${moduleTitle}. Je volgende module komt nu vrij.`
+              ? `Je bent geslaagd voor ${moduleTitle}. Bekijk in de Academy wat je volgende stap is.`
               : `Je hebt ${passingScore}% nodig om te slagen. Neem de module rustig opnieuw door en probeer daarna opnieuw.`}
           </p>
 
@@ -120,7 +120,7 @@ export function ExamForm({
 
             {result.passed ? (
               <Link href="/modules" className="cb-btn cb-btn-primary">
-                Ga naar de volgende module
+                Bekijk je modules
               </Link>
             ) : (
               <button

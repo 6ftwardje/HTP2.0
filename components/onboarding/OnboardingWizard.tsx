@@ -243,10 +243,10 @@ export function OnboardingWizard({
           </p>
 
           {error && (
-            <p className="mt-5 rounded-lg border border-[color-mix(in_oklab,#fca5a5_38%,var(--border))] bg-red-500/[0.08] px-4 py-3 text-sm font-semibold text-red-100">
+            <p className="mt-5 rounded-lg border border-[color-mix(in_oklab,#fca5a5_38%,var(--border))] bg-red-500/[0.08] px-4 py-3 text-sm font-semibold text-red-100" role="alert">
               {error === "save_failed"
                 ? "Je intake kon niet worden opgeslagen. Probeer het opnieuw of contacteer support als dit blijft gebeuren."
-                : "Vul alle intakevragen in voordat je aan de videolessen begint."}
+                : "Beantwoord alle vragen om je intake af te ronden."}
             </p>
           )}
 
@@ -257,6 +257,7 @@ export function OnboardingWizard({
                 onChange={(event) => setValue(current.id, event.target.value)}
                 rows={4}
                 placeholder={current.placeholder}
+                aria-label={current.question}
                 className="w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-base leading-7 text-[var(--foreground)] outline-none transition placeholder:text-[color-mix(in_oklab,var(--muted)_68%,transparent)] focus:border-[color-mix(in_oklab,var(--accent)_58%,var(--border))]"
               />
             ) : current.type === "scale" ? (
@@ -268,6 +269,7 @@ export function OnboardingWizard({
                       key={option.value}
                       type="button"
                       onClick={() => setValue(current.id, option.value)}
+                      aria-pressed={selected}
                       className={[
                         "flex min-h-20 flex-col items-center justify-center rounded-lg border px-2 py-3 text-center transition-colors",
                         selected
@@ -294,6 +296,7 @@ export function OnboardingWizard({
                       key={option.value}
                       type="button"
                       onClick={() => setValue(current.id, option.value)}
+                      aria-pressed={selected}
                       className={[
                         "flex w-full items-start justify-between gap-5 rounded-lg border px-4 py-3 text-left transition-colors",
                         selected
@@ -339,7 +342,7 @@ export function OnboardingWizard({
           </button>
 
           {isLast ? (
-            <SubmitButton disabled={!canContinue} />
+            <SubmitButton disabled={completedCount !== steps.length} />
           ) : (
             <button
               type="button"

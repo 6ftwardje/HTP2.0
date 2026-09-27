@@ -12,6 +12,7 @@ import { syncStudentNextStep } from "@/lib/next-steps";
 import { getLessonById, getPublishedLessonsByModuleId } from "@/lib/lessons";
 import { getPublishedModules } from "@/lib/modules";
 import { getModuleAccessMap } from "@/lib/module-gate";
+import { canOpenLessonWithIntake, FREE_ACCESS_MODULE_LIMIT, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 import { getLessonStatuses } from "@/lib/lesson-gate";
 import { logError } from "@/lib/logger";
 
@@ -36,17 +37,28 @@ export async function markLessonComplete(lessonId: number): Promise<{
     return { success: false, error: "Deze les bestaat niet of is niet gepubliceerd." };
   }
 
-  const [moduleLessons, modules] = await Promise.all([
+  const [moduleLessons, modules, onboarding] = await Promise.all([
     getPublishedLessonsByModuleId(lesson.module_id),
     getPublishedModules(),
+    getStudentOnboardingResponse(student.id),
   ]);
   const [accessMap, statusMap] = await Promise.all([
     getModuleAccessMap(student.id, modules),
     getLessonStatuses(student.id, moduleLessons),
   ]);
+  const moduleIndex = modules.findIndex((module) => module.id === lesson.module_id);
+  const hasLegacyModuleAccess = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
+    moduleIndex >= FREE_ACCESS_MODULE_LIMIT && accessMap.get(lesson.module_id) === true;
   if (
     accessMap.get(lesson.module_id) !== true ||
-    statusMap.get(lessonId) === "locked"
+    !["available", "completed"].includes(statusMap.get(lessonId) ?? "locked") ||
+    !canOpenLessonWithIntake({
+      accessLevel: student.access_level,
+      intakeComplete: onboardingIsComplete(onboarding),
+      isFirstModule: modules[0]?.id === lesson.module_id,
+      isFirstLesson: moduleLessons[0]?.id === lessonId,
+      hasLegacyModuleAccess,
+    })
   ) {
     logError("progress.complete_access_denied", new Error("Lesson is locked"), {
       studentId: student.id,
@@ -64,10 +76,7 @@ export async function markLessonComplete(lessonId: number): Promise<{
     return { success: false, error: "Je voortgang kon niet worden opgeslagen." };
   }
 
-  const [overview, onboarding] = await Promise.all([
-    getDashboardOverview(student.id, student.access_level),
-    getStudentOnboardingResponse(student.id),
-  ]);
+  const overview = await getDashboardOverview(student.id, student.access_level);
   await syncStudentNextStep({
     studentId: student.id,
     intakeComplete: onboardingIsComplete(onboarding),

@@ -212,7 +212,7 @@ export async function adminCreateMuxUpload(
 
     if (error) return { success: false, error };
 
-    logAdminAction("video.mux_upload_created", {
+    await logAdminAction("video.mux_upload_created", {
       actorStudentId: actorStudent.id,
       metadata: { lessonId, uploadId: upload.id },
     });
@@ -263,7 +263,7 @@ export async function adminCreateThumbnailUpload(
 
   const publicUrl = db.storage.from(THUMBNAIL_BUCKET).getPublicUrl(path).data.publicUrl;
 
-  logAdminAction("content.thumbnail_upload_created", {
+  await logAdminAction("content.thumbnail_upload_created", {
     actorStudentId: actorStudent.id,
     metadata: { target, entityId, path },
   });
@@ -298,7 +298,7 @@ export async function adminUpdateModuleThumbnail(
   if (error) return { success: false, error: error.message };
   if (!data) return { success: false, error: "Module not found." };
 
-  logAdminAction("content.module_thumbnail_updated", {
+  await logAdminAction("content.module_thumbnail_updated", {
     actorStudentId: actorStudent.id,
     metadata: { moduleId },
   });
@@ -330,7 +330,7 @@ export async function adminUpdateLessonThumbnail(
   if (error) return { success: false, error: error.message };
   if (!data) return { success: false, error: "Lesson not found." };
 
-  logAdminAction("content.lesson_thumbnail_updated", {
+  await logAdminAction("content.lesson_thumbnail_updated", {
     actorStudentId: actorStudent.id,
     metadata: { lessonId },
   });
@@ -349,7 +349,7 @@ export async function adminCreateModule(
   const { module, error } = await createModuleAdmin(parsed.input);
   if (error) return { success: false, error };
 
-  logAdminAction("content.module_created", {
+  await logAdminAction("content.module_created", {
     actorStudentId: actorStudent.id,
     metadata: { moduleId: module?.id, title: parsed.input.title },
   });
@@ -372,7 +372,7 @@ export async function adminUpdateModule(
   const { error } = await updateModuleAdmin(moduleId, parsed.input);
   if (error) return { success: false, error };
 
-  logAdminAction("content.module_updated", {
+  await logAdminAction("content.module_updated", {
     actorStudentId: actorStudent.id,
     metadata: { moduleId, title: parsed.input.title },
   });
@@ -392,7 +392,7 @@ export async function adminCreateLesson(
   const { lesson, error } = await createLessonAdmin(parsed.input);
   if (error) return { success: false, error };
 
-  logAdminAction("content.lesson_created", {
+  await logAdminAction("content.lesson_created", {
     actorStudentId: actorStudent.id,
     metadata: { lessonId: lesson?.id, moduleId: parsed.input.module_id },
   });
@@ -430,7 +430,7 @@ export async function adminCreateLessonMuxUpload(
     });
     if (updated.error) return { success: false, error: updated.error };
 
-    logAdminAction("content.lesson_created_with_mux_upload", {
+    await logAdminAction("content.lesson_created_with_mux_upload", {
       actorStudentId: actorStudent.id,
       metadata: {
         lessonId: lesson.id,
@@ -483,7 +483,7 @@ export async function adminUpdateLesson(
   const targetNormalized = await normalizeLessonsAdmin(parsed.input.module_id);
   if (targetNormalized.error) return { success: false, error: targetNormalized.error };
 
-  logAdminAction("content.lesson_updated", {
+  await logAdminAction("content.lesson_updated", {
     actorStudentId: actorStudent.id,
     metadata: { lessonId, moduleId: parsed.input.module_id },
   });
@@ -504,7 +504,7 @@ export async function adminReorderModules(
   const { error } = await reorderModulesAdmin(moduleIds);
   if (error) return { success: false, error };
 
-  logAdminAction("content.modules_reordered", {
+  await logAdminAction("content.modules_reordered", {
     actorStudentId: actorStudent.id,
     metadata: { moduleIds },
   });
@@ -527,7 +527,7 @@ export async function adminReorderLessons(
   const { error } = await reorderLessonsAdmin(moduleId, lessonIds);
   if (error) return { success: false, error };
 
-  logAdminAction("content.lessons_reordered", {
+  await logAdminAction("content.lessons_reordered", {
     actorStudentId: actorStudent.id,
     metadata: { moduleId, lessonIds },
   });
@@ -552,7 +552,7 @@ export async function adminDeleteLesson(
   const normalized = await normalizeLessonsAdmin(lesson.module_id);
   if (normalized.error) return { success: false, error: normalized.error };
 
-  logAdminAction("content.lesson_deleted", {
+  await logAdminAction("content.lesson_deleted", {
     actorStudentId: actorStudent.id,
     metadata: { lessonId, moduleId: lesson.module_id, title: lesson.title },
   });
@@ -574,7 +574,7 @@ export async function adminDeleteModule(
   const normalized = await normalizeModulesAdmin();
   if (normalized.error) return { success: false, error: normalized.error };
 
-  logAdminAction("content.module_deleted", {
+  await logAdminAction("content.module_deleted", {
     actorStudentId: actorStudent.id,
     metadata: { moduleId },
   });
@@ -657,7 +657,7 @@ export async function adminSyncMuxUpload(
 
     if (error) return { success: false, error };
 
-    logAdminAction("video.mux_upload_synced", {
+    await logAdminAction("video.mux_upload_synced", {
       actorStudentId: actorStudent.id,
       metadata: {
         lessonId,

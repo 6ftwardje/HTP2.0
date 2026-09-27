@@ -137,12 +137,12 @@ function revalidateWeeklyUpdatePaths(slug?: string) {
 }
 
 function validateThumbnailUpload(input: ThumbnailUploadInput): string | null {
-  if (!input.size || input.size <= 0) return "Choose a thumbnail image.";
+  if (!input.size || input.size <= 0) return "Kies een afbeelding voor de thumbnail.";
   if (input.size > MAX_THUMBNAIL_SIZE) {
-    return "Thumbnail must be smaller than 5 MB.";
+    return "De thumbnail mag maximaal 5 MB groot zijn.";
   }
   if (!input.type || !THUMBNAIL_MIME_EXTENSIONS[input.type]) {
-    return "Thumbnail must be a JPG, PNG, WebP, or AVIF image.";
+    return "Gebruik een JPG, PNG, WebP of AVIF als thumbnail.";
   }
   return null;
 }
@@ -155,7 +155,7 @@ function canPublishWeeklyUpdate(update: {
 }
 
 function getWeeklyUpdateSyncError(error: unknown): string {
-  const detail = error instanceof Error ? error.message : "Unknown Mux error.";
+  const detail = error instanceof Error ? error.message : "Onbekende Mux-fout.";
   if (/abort|timeout|timed out|fetch failed|network/i.test(detail)) {
     return "Mux reageerde niet op tijd. De upload is niet verloren; probeer over enkele seconden opnieuw te syncen.";
   }
@@ -230,16 +230,16 @@ function readWeeklyUpdateInput(
   const contentFormat: WeeklyUpdateContentFormat = formatRaw === "chart" || formatRaw === "text" ? formatRaw : "video";
   const body = asNullableString(formData.get("body"));
 
-  if (!title) return { error: "Title is required." as const };
-  if (!slug) return { error: "Slug is required." as const };
+  if (!title) return { error: "Vul een titel in." as const };
+  if (!slug) return { error: "Vul een geldige URL-naam in." as const };
   if (!type) return { error: "Kies verplicht een videotype." as const };
   if (type === "market_update" && markets.length === 0 && !market) {
     return { error: "Kies minimaal één markt voor deze marktbreakdown." as const };
   }
   if (!weekStartDate || Number.isNaN(Date.parse(weekStartDate))) {
-    return { error: "Choose a valid week date." as const };
+    return { error: "Kies een geldige weekdatum." as const };
   }
-  if (!accessTier) return { error: "Choose a valid access tier." as const };
+  if (!accessTier) return { error: "Kies een geldig toegangsniveau." as const };
   if (contentFormat !== "video" && type !== "market_update") return { error: "Tekst en charts horen bij een marktupdate." as const };
   if (body && body.length > 12000) return { error: "Duiding mag maximaal 12.000 tekens bevatten." as const };
 
@@ -291,7 +291,7 @@ export async function adminCreateWeeklyUpdate(
   });
   if (error) return { success: false, error: getMarketAnalysisSaveError(error) };
 
-  logAdminAction("weekly_update.created", {
+  await logAdminAction("weekly_update.created", {
     actorStudentId: actorStudent.id,
     metadata: { weeklyUpdateId: weeklyUpdate?.id, title: parsed.input.title },
   });
@@ -328,7 +328,7 @@ export async function adminCreateQuickMarketUpdate(
     video_provider: "mux", mux_playback_policy: "public",
   });
   if (error || !weeklyUpdate) return { success: false, error: error ?? "Concept kon niet worden opgeslagen." };
-  logAdminAction("weekly_update.created", { actorStudentId: actorStudent.id, metadata: { weeklyUpdateId: weeklyUpdate.id, title } });
+  await logAdminAction("weekly_update.created", { actorStudentId: actorStudent.id, metadata: { weeklyUpdateId: weeklyUpdate.id, title } });
   revalidateWeeklyUpdatePaths(slug);
   return { success: true, weeklyUpdateId: weeklyUpdate.id };
 }
@@ -357,9 +357,37 @@ export async function adminPublishQuickMarketUpdate(idRaw: unknown): Promise<Act
   if (!transitioned) return { success: false, error: "De update is intussen gewijzigd. Vernieuw de pagina." };
   const published = await getWeeklyUpdateAdmin(id);
   if (published) await notifyFirstPublication({ weeklyUpdate: published, actorStudentId: actorStudent.id });
-  logAdminAction("weekly_update.updated", { actorStudentId: actorStudent.id, metadata: { weeklyUpdateId: id, title: update.title } });
+  await logAdminAction("weekly_update.updated", { actorStudentId: actorStudent.id, metadata: { weeklyUpdateId: id, title: update.title } });
   revalidateWeeklyUpdatePaths(update.slug);
   return { success: true };
+}
+
+/** Retry a partial delivery without republishing or duplicating the event. */
+export async function adminRepairWeeklyUpdateNotification(
+  idRaw: unknown
+): Promise<ActionResult<{ recipientCount?: number }>> {
+  const { actorStudent } = await requireAdmin();
+  const id = parsePositiveInteger(idRaw);
+  if (!id) return { success: false, error: "Ongeldig marktinzicht." };
+  const update = await getWeeklyUpdateAdmin(id);
+  if (!update || !update.is_published || update.access_tier !== "subscription") {
+    return { success: false, error: "Alleen een gepubliceerd Academy- of abonnementsinzicht heeft deze melding." };
+  }
+
+  const result = await notifyWeeklyUpdatePublished({
+    weeklyUpdate: update,
+    actorStudentId: actorStudent.id,
+  });
+  if (result.error) {
+    return { success: false, error: "Meldingen konden niet worden gecontroleerd. Probeer opnieuw." };
+  }
+
+  await logAdminAction("weekly_update.notification_repaired", {
+    actorStudentId: actorStudent.id,
+    metadata: { weeklyUpdateId: id, recipientCount: result.notified },
+  });
+  revalidatePath("/notifications");
+  return { success: true, recipientCount: result.notified };
 }
 
 export async function adminUpdateWeeklyUpdate(
@@ -427,7 +455,7 @@ export async function adminUpdateWeeklyUpdate(
     }
   }
 
-  logAdminAction("weekly_update.updated", {
+  await logAdminAction("weekly_update.updated", {
     actorStudentId: actorStudent.id,
     metadata: { weeklyUpdateId, title: input.title },
   });
@@ -449,7 +477,7 @@ export async function adminDeleteWeeklyUpdate(
   const { error } = await deleteWeeklyUpdateAdmin(weeklyUpdateId);
   if (error) return { success: false, error };
 
-  logAdminAction("weekly_update.deleted", {
+  await logAdminAction("weekly_update.deleted", {
     actorStudentId: actorStudent.id,
     metadata: { weeklyUpdateId, title: weeklyUpdate.title },
   });
@@ -491,7 +519,7 @@ export async function adminCreateWeeklyUpdateMuxUpload(
     });
     if (error) return { success: false, error };
 
-    logAdminAction("weekly_update.mux_upload_created", {
+    await logAdminAction("weekly_update.mux_upload_created", {
       actorStudentId: actorStudent.id,
       metadata: { weeklyUpdateId, uploadId: upload.id },
     });
@@ -502,7 +530,7 @@ export async function adminCreateWeeklyUpdateMuxUpload(
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Could not create Mux upload.",
+        error instanceof Error ? error.message : "Mux-upload kon niet worden voorbereid.",
     };
   }
 }
@@ -551,7 +579,7 @@ export async function adminCreateWeeklyUpdateWithMuxUpload(
     });
     if (updated.error) return { success: false, error: updated.error };
 
-    logAdminAction("weekly_update.created_with_mux_upload", {
+    await logAdminAction("weekly_update.created_with_mux_upload", {
       actorStudentId: actorStudent.id,
       metadata: { weeklyUpdateId: weeklyUpdate.id, uploadId: upload.id },
     });
@@ -567,12 +595,12 @@ export async function adminCreateWeeklyUpdateWithMuxUpload(
     await updateWeeklyUpdateVideoAdmin(weeklyUpdate.id, {
       mux_status: "errored",
       mux_error_message:
-        error instanceof Error ? error.message : "Could not create Mux upload.",
+        error instanceof Error ? error.message : "Mux-upload kon niet worden voorbereid.",
     });
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Could not create Mux upload.",
+        error instanceof Error ? error.message : "Mux-upload kon niet worden voorbereid.",
     };
   }
 }
@@ -668,7 +696,7 @@ export async function adminSyncWeeklyUpdateMuxUpload(
     });
     if (error) return { success: false, error };
 
-    logAdminAction("weekly_update.mux_upload_synced", {
+    await logAdminAction("weekly_update.mux_upload_synced", {
       actorStudentId: actorStudent.id,
       metadata: {
         weeklyUpdateId,
@@ -709,13 +737,13 @@ export async function adminCreateWeeklyUpdateThumbnailUpload(
   if (error || !data) {
     return {
       success: false,
-      error: error?.message ?? "Could not create thumbnail upload.",
+      error: error?.message ?? "Thumbnail-upload kon niet worden voorbereid.",
     };
   }
 
   const publicUrl = db.storage.from(THUMBNAIL_BUCKET).getPublicUrl(path).data.publicUrl;
 
-  logAdminAction("weekly_update.thumbnail_upload_created", {
+  await logAdminAction("weekly_update.thumbnail_upload_created", {
     actorStudentId: actorStudent.id,
     metadata: { weeklyUpdateId, path },
   });
@@ -727,7 +755,7 @@ export async function adminCreateChartUpload(
   idRaw: unknown,
   file: { type: string; size: number }
 ): Promise<ActionResult<{ path?: string; token?: string }>> {
-  await requireAdmin();
+  const { actorStudent } = await requireAdmin();
   const id = parsePositiveInteger(idRaw);
   if (!id) return { success: false, error: "Ongeldige update." };
   if (!CHART_EXTENSIONS[file.type] || !Number.isInteger(file.size) || file.size < 1 || file.size > 10 * 1024 * 1024) {
@@ -740,11 +768,15 @@ export async function adminCreateChartUpload(
   const path = `weekly-updates/${id}/${crypto.randomUUID()}.${CHART_EXTENSIONS[file.type]}`;
   const { data, error } = await createServiceClient().storage.from(CHART_BUCKET).createSignedUploadUrl(path);
   if (error || !data) return { success: false, error: error?.message ?? "Upload voorbereiden mislukt." };
+  await logAdminAction("weekly_update.chart_upload_created", {
+    actorStudentId: actorStudent.id,
+    metadata: { weeklyUpdateId: id, path },
+  });
   return { success: true, path: data.path, token: data.token };
 }
 
 export async function adminAttachChartImage(idRaw: unknown, pathRaw: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  const { actorStudent } = await requireAdmin();
   const id = parsePositiveInteger(idRaw);
   const path = asString(pathRaw);
   if (!id || !/^weekly-updates\/\d+\/[0-9a-f-]+\.(jpg|png|webp)$/.test(path) || !path.startsWith(`weekly-updates/${id}/`)) {
@@ -762,12 +794,16 @@ export async function adminAttachChartImage(idRaw: unknown, pathRaw: unknown): P
   const { data: attached, error } = await service.from("weekly_updates").update({ image_paths: [...update.image_paths, path] }).eq("id", id).eq("content_format", "chart").eq("is_published", false).select("id").maybeSingle();
   if (error) return { success: false, error: error.message };
   if (!attached) return { success: false, error: "Concept is gewijzigd; herlaad en probeer opnieuw." };
+  await logAdminAction("weekly_update.chart_image_attached", {
+    actorStudentId: actorStudent.id,
+    metadata: { weeklyUpdateId: id, path },
+  });
   revalidateWeeklyUpdatePaths(update.slug);
   return { success: true };
 }
 
 export async function adminRemoveChartImage(idRaw: unknown, pathRaw: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  const { actorStudent } = await requireAdmin();
   const id = parsePositiveInteger(idRaw);
   const update = id ? await getWeeklyUpdateAdmin(id) : null;
   const path = asString(pathRaw);
@@ -777,7 +813,12 @@ export async function adminRemoveChartImage(idRaw: unknown, pathRaw: unknown): P
   const service = createServiceClient();
   const { error } = await service.from("weekly_updates").update({ image_paths: update.image_paths.filter((item) => item !== path) }).eq("id", update.id);
   if (error) return { success: false, error: error.message };
-  await service.storage.from(CHART_BUCKET).remove([path]);
+  const { error: removeError } = await service.storage.from(CHART_BUCKET).remove([path]);
+  if (removeError) console.error("adminRemoveChartImage: storage cleanup failed", removeError.message);
+  await logAdminAction("weekly_update.chart_image_removed", {
+    actorStudentId: actorStudent.id,
+    metadata: { weeklyUpdateId: update.id, path, storageCleanupFailed: Boolean(removeError) },
+  });
   revalidateWeeklyUpdatePaths(update.slug);
   return { success: true };
 }
@@ -791,14 +832,14 @@ export async function adminUpdateWeeklyUpdateThumbnail(
   if (!weeklyUpdateId) return { success: false, error: "Ongeldige marktanalyse." };
 
   const thumbnailUrl = asNullableString(thumbnailUrlRaw);
-  if (!thumbnailUrl) return { success: false, error: "Thumbnail URL is required." };
+  if (!thumbnailUrl) return { success: false, error: "Voeg een thumbnail-URL toe." };
 
   const { error } = await updateWeeklyUpdateVideoAdmin(weeklyUpdateId, {
     thumbnail_url: thumbnailUrl,
   });
   if (error) return { success: false, error };
 
-  logAdminAction("weekly_update.thumbnail_updated", {
+  await logAdminAction("weekly_update.thumbnail_updated", {
     actorStudentId: actorStudent.id,
     metadata: { weeklyUpdateId },
   });

@@ -7,22 +7,15 @@ import { StudentProgressPanel } from "@/components/admin/StudentProgressPanel";
 import { StudentExamOverview } from "@/components/admin/StudentExamOverview";
 import { AdminDangerZone } from "@/components/admin/AdminDangerZone";
 import { MentorCopilotPanel } from "@/components/admin/MentorCopilotPanel";
+import { MentorMetaForm, MentorNoteForm } from "@/components/admin/AdminStudentMentorForms";
 import { getAdminStudentDetail } from "@/lib/admin/students";
 import { getMentorSummaryAdmin } from "@/lib/ai/mentor-copilot";
 import { requireAdmin } from "@/lib/admin/access";
-import {
-  adminCreateStudentMentorNote,
-  adminUpdateStudentMentorMeta,
-} from "@/app/actions/admin/students";
 import {
   formatConfidenceScore,
   formatIntakeChoice,
   formatWeeklyTimeCommitment,
 } from "@/lib/intake";
-
-function fieldClass() {
-  return "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition focus:border-[color-mix(in_oklab,var(--foreground)_35%,var(--border))]";
-}
 
 function mentorStatusLabel(status: string) {
   if (status === "needs_attention") return "Aandacht nodig";
@@ -139,43 +132,7 @@ export default async function AdminStudentDetailPage({
                 </span>
               </div>
 
-              <form
-                action={
-                  adminUpdateStudentMentorMeta.bind(null, student.id) as unknown as (
-                    formData: FormData
-                  ) => Promise<void>
-                }
-                className="mt-5 grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto] lg:items-end"
-              >
-                <label className="space-y-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Status
-                  </span>
-                  <select
-                    name="mentor_status"
-                    defaultValue={student.mentor_status ?? "active"}
-                    className={fieldClass()}
-                  >
-                    <option value="active">Actief</option>
-                    <option value="watch">Opvolgen</option>
-                    <option value="needs_attention">Aandacht nodig</option>
-                  </select>
-                </label>
-                <label className="space-y-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Onderwerpen (tags)
-                  </span>
-                  <input
-                    name="tags"
-                    defaultValue={tags.join(", ")}
-                    placeholder="Bijv. risicobeheer, mindset"
-                    className={fieldClass()}
-                  />
-                </label>
-                <button type="submit" className="cb-btn cb-btn-primary">
-                  Begeleiding opslaan
-                </button>
-              </form>
+              <MentorMetaForm studentId={student.id} mentorStatus={student.mentor_status} tags={tags} />
             </section>
 
             <section className="cb-panel p-6" aria-labelledby="onboarding-heading">
@@ -246,30 +203,7 @@ export default async function AdminStudentDetailPage({
               <h2 id="notes-heading" className="cb-section-title">
                 Mentornotities
               </h2>
-              <form
-                action={
-                  adminCreateStudentMentorNote.bind(null, student.id) as unknown as (
-                    formData: FormData
-                  ) => Promise<void>
-                }
-                className="mt-5 space-y-3"
-              >
-                <textarea
-                  name="body"
-                  rows={4}
-                  placeholder="Wat is besproken? Wat is de volgende stap?"
-                  className={fieldClass()}
-                />
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-[var(--foreground)]">
-                    <input name="is_pinned" type="checkbox" className="h-4 w-4" />
-                    Notitie vastzetten
-                  </label>
-                  <button type="submit" className="cb-btn cb-btn-primary">
-                    Notitie toevoegen
-                  </button>
-                </div>
-              </form>
+              <MentorNoteForm studentId={student.id} />
 
               <div className="mt-6 space-y-3">
                 {mentorNotes.length > 0 ? (

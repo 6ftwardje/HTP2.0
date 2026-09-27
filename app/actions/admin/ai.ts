@@ -19,7 +19,7 @@ export async function adminGenerateMentorSummary(
     return { success: false, error: error ?? "Genereren mislukt." };
   }
 
-  logAdminAction("student.ai_mentor_summary_generated", {
+  await logAdminAction("student.ai_mentor_summary_generated", {
     actorStudentId: actorStudent.id,
     targetStudentId,
   });

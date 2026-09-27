@@ -177,7 +177,7 @@ function intakeStep(studentId: string): StepInput {
     status: "active",
     title: "Vul je intake in",
     description:
-      "Vul je intake in om de videolessen te openen. Je mentor kan je daarna gerichter begeleiden.",
+      "Na de eerste les opent je intake de rest van de gratis startmodules. Je mentor kan je daarna gerichter begeleiden.",
     href: "/onboarding",
     cta_label: "Intake invullen",
     source_table: "student_onboarding_responses",

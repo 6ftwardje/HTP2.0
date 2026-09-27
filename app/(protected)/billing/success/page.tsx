@@ -24,7 +24,7 @@ export default async function BillingSuccessPage({ searchParams }: Props) {
             : "Je kunt nu naar de marktupdates gaan. Zie je nog een slot, vernieuw de pagina dan na enkele seconden."}
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
-          <Link href={academy ? "/modules" : "/updates/forex"} className="cb-btn cb-btn-primary">
+          <Link href={academy ? "/modules" : "/market-analysis"} className="cb-btn cb-btn-primary">
             {academy ? "Open Academy" : "Bekijk marktupdates"}
           </Link>
           <Link href="/account" className="cb-btn cb-btn-secondary">

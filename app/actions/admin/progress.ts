@@ -27,7 +27,7 @@ export async function adminMarkStudentModuleComplete(
   const { error } = await markStudentModuleComplete(studentId, moduleId);
   if (error) return { success: false, error };
 
-  logAdminAction("progress.module_marked_complete", {
+  await logAdminAction("progress.module_marked_complete", {
     actorStudentId: actorStudent.id,
     targetStudentId: studentId,
     metadata: { moduleId },
@@ -48,7 +48,7 @@ export async function adminResetStudentModuleProgress(
   const { error } = await resetStudentModuleLessonProgress(studentId, moduleId);
   if (error) return { success: false, error };
 
-  logAdminAction("progress.module_reset", {
+  await logAdminAction("progress.module_reset", {
     actorStudentId: actorStudent.id,
     targetStudentId: studentId,
     metadata: { moduleId, scope: "lessons_only" },
@@ -66,7 +66,7 @@ export async function adminResetStudentAllProgress(
   const { error } = await resetStudentAllLessonProgress(studentId);
   if (error) return { success: false, error };
 
-  logAdminAction("progress.all_lessons_reset", {
+  await logAdminAction("progress.all_lessons_reset", {
     actorStudentId: actorStudent.id,
     targetStudentId: studentId,
     metadata: { scope: "lessons_only" },
@@ -84,7 +84,7 @@ export async function adminMarkAcademyLessonsComplete(
   const { error } = await markStudentAcademyLessonsComplete(studentId);
   if (error) return { success: false, error };
 
-  logAdminAction("progress.academy_lessons_marked_complete", {
+  await logAdminAction("progress.academy_lessons_marked_complete", {
     actorStudentId: actorStudent.id,
     targetStudentId: studentId,
   });

@@ -18,6 +18,7 @@ import {
 import { listUpcomingLiveSessions } from "@/lib/live-sessions";
 import { listAdminMentorThreads } from "@/lib/mentor-chat";
 import { stripModulePrefix } from "@/lib/module-title";
+import { FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
@@ -221,6 +222,20 @@ async function StudentDashboard({
   ]);
   const { nextStep } = overview;
   const intakeComplete = onboardingIsComplete(onboarding);
+  const hasLegacyNextStep = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
+    nextStep.type !== "completed" &&
+    nextStep.module != null &&
+    overview.modules.some((summary, index) =>
+      index >= 3 && summary.module.id === nextStep.module?.id && summary.state !== "locked"
+    );
+  const needsIntake = !intakeComplete &&
+    student.access_level < FULL_COURSE_ACCESS_LEVEL &&
+    !hasLegacyNextStep;
+  const firstModule = overview.modules[0];
+  const showFirstLessonBeforeIntake = needsIntake &&
+    firstModule?.completedLessons === 0 &&
+    nextStep.type === "lesson" &&
+    nextStep.module.id === firstModule.module.id;
   const hasSubscriberAccess = canAccessSubscriberContent(student, billingOverview);
   const recentUpdates = hasSubscriberAccess ? await listPublishedWeeklyUpdates(10) : [];
   const nextLiveSession = upcomingLiveSessions[0] ?? null;
@@ -234,19 +249,21 @@ async function StudentDashboard({
   const pct = nextStep.totalLessons > 0
     ? Math.round((nextStep.completedLessons / nextStep.totalLessons) * 100)
     : 0;
-  const nextAction = !intakeComplete
+  const nextAction = needsIntake && !showFirstLessonBeforeIntake
     ? {
         title: "Vul je intake in",
-        copy: "Vertel je mentor kort waar je staat. Daarna kun je verder met je lessen.",
+        copy: "Vertel je mentor waar je staat. Daarna kun je de volgende lessen openen.",
         href: "/onboarding",
         label: "Intake invullen",
       }
     : nextStep.type === "lesson"
         ? {
             title: nextStep.lesson.title,
-            copy: asText(nextStep.lesson.takeaway) ??
-              asText(nextStep.lesson.description) ??
-              "Bekijk de les en werk daarna de opdrachten af.",
+            copy: showFirstLessonBeforeIntake
+              ? "Bekijk de eerste les meteen. Daarna vul je je intake in om verder te leren."
+              : asText(nextStep.lesson.takeaway) ??
+                asText(nextStep.lesson.description) ??
+                "Bekijk de les en werk daarna de opdrachten af.",
             href: nextStep.href,
             label: nextStep.label,
           }
@@ -295,12 +312,12 @@ async function StudentDashboard({
               {nextAction.title}
             </h2>
             <p className="mt-2 text-sm font-medium text-[var(--muted)]">
-              {intakeComplete ? moduleContext : "Eerst je intake afronden"}
+              {showFirstLessonBeforeIntake ? `${moduleContext} · zonder intake` : needsIntake ? "Intake voor je volgende les" : moduleContext}
             </p>
             <p className="mt-4 line-clamp-2 max-w-[70ch] text-sm leading-6 text-[var(--foreground)]">
               {nextAction.copy}
             </p>
-            {intakeComplete && nextStep.totalLessons > 0 && (
+            {!needsIntake && nextStep.totalLessons > 0 && (
               <div className="mt-5 max-w-[34rem]">
                 <div className="flex items-center justify-between gap-3 text-xs font-medium text-[var(--muted)]">
                   <span>{nextStep.type === "completed" ? "Trajectvoortgang" : "Modulevoortgang"} · {nextStep.completedLessons}/{nextStep.totalLessons} lessen</span>
@@ -325,6 +342,11 @@ async function StudentDashboard({
               <Link href="/modules" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] underline-offset-4 hover:text-[var(--foreground)] hover:underline focus-visible:underline">
                 Bekijk Academy
               </Link>
+              {showFirstLessonBeforeIntake && (
+                <Link href="/onboarding" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] underline-offset-4 hover:text-[var(--foreground)] hover:underline focus-visible:underline">
+                  Intake alvast invullen
+                </Link>
+              )}
             </div>
           </div>
           {nextStep.module?.thumbnail_url && (

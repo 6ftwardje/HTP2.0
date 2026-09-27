@@ -133,6 +133,22 @@ function draftFromQuestion(question: AdminExamQuestion): DraftQuestion {
   };
 }
 
+function draftSignature(draft: DraftQuestion | null): string {
+  if (!draft) return "";
+  return JSON.stringify({
+    id: draft.id ?? null,
+    moduleId: draft.moduleId,
+    questionText: draft.questionText,
+    explanation: draft.explanation,
+    isActive: draft.isActive,
+    options: draft.options.map((option) => ({
+      id: option.id ?? null,
+      optionText: option.optionText,
+      isCorrect: option.isCorrect,
+    })),
+  });
+}
+
 function validateDraft(draft: DraftQuestion): string | null {
   if (!draft.questionText.trim()) return "Vul een vraag in.";
   if (draft.options.some((option) => !option.optionText.trim())) {
@@ -172,13 +188,45 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
   const [draft, setDraft] = useState<DraftQuestion | null>(
     data.modules[0] ? createDraft(data.modules[0].module.id) : null
   );
+  const [savedDraft, setSavedDraft] = useState<DraftQuestion | null>(
+    data.modules[0] ? createDraft(data.modules[0].module.id) : null
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedChanges = draftSignature(draft) !== draftSignature(savedDraft);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const warnBeforeInternalLink = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = event.target instanceof Element ? event.target : null;
+      const link = target?.closest<HTMLAnchorElement>("a[href]");
+      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+      const destination = new URL(link.href, window.location.href);
+      if (destination.origin !== window.location.origin) return;
+      if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+      if (window.confirm("Je hebt niet-opgeslagen wijzigingen. Wil je die verwerpen?")) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    document.addEventListener("click", warnBeforeInternalLink, true);
+    return () => {
+      window.removeEventListener("beforeunload", warnBeforeLeaving);
+      document.removeEventListener("click", warnBeforeInternalLink, true);
+    };
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     if (!selectedModuleId && data.modules[0]) {
       setSelectedModuleId(data.modules[0].module.id);
-      setDraft(createDraft(data.modules[0].module.id));
+      const nextDraft = createDraft(data.modules[0].module.id);
+      setDraft(nextDraft);
+      setSavedDraft(nextDraft);
     }
   }, [data.modules, selectedModuleId]);
 
@@ -194,15 +242,35 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
       );
   }, [data.questions, search, selectedModuleId]);
 
-  function chooseModule(moduleId: number) {
-    setSelectedModuleId(moduleId);
-    setDraft(createDraft(moduleId));
+  function confirmDiscardChanges() {
+    return !hasUnsavedChanges || window.confirm("Je hebt niet-opgeslagen wijzigingen. Wil je die verwerpen?");
+  }
+
+  function startNewQuestion(moduleId = selectedModuleId) {
+    if (isPending || !confirmDiscardChanges()) return;
+    const nextDraft = createDraft(moduleId);
+    setDraft(nextDraft);
+    setSavedDraft(nextDraft);
     setError(null);
     setMessage(null);
   }
 
+  function chooseModule(moduleId: number) {
+    if (isPending || !confirmDiscardChanges()) return false;
+    const nextDraft = createDraft(moduleId);
+    setSelectedModuleId(moduleId);
+    setDraft(nextDraft);
+    setSavedDraft(nextDraft);
+    setError(null);
+    setMessage(null);
+    return true;
+  }
+
   function editQuestion(question: AdminExamQuestion) {
-    setDraft(draftFromQuestion(question));
+    if (isPending || !confirmDiscardChanges()) return;
+    const nextDraft = draftFromQuestion(question);
+    setDraft(nextDraft);
+    setSavedDraft(nextDraft);
     setError(null);
     setMessage(null);
   }
@@ -267,7 +335,9 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
       }
 
       setMessage(draft.id ? "Vraag opgeslagen." : "Vraag toegevoegd.");
-      setDraft(createDraft(draft.moduleId));
+      const nextDraft = createDraft(draft.moduleId);
+      setDraft(nextDraft);
+      setSavedDraft(nextDraft);
       router.refresh();
     });
   }
@@ -297,14 +367,18 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
         return;
       }
       setDraft({ ...draft, isActive });
+      setSavedDraft((previous) => previous ? { ...previous, isActive } : previous);
       setMessage(isActive ? "Vraag geactiveerd." : "Vraag gedeactiveerd.");
       router.refresh();
     });
   }
 
   function archiveQuestion(question: AdminExamQuestion) {
+    if (isPending) return;
     const confirmed = window.confirm(
-      "Deze vraag archiveren? Eerdere examenpogingen blijven bewaard, maar studenten krijgen deze vraag niet meer."
+      draft?.id === question.id && hasUnsavedChanges
+        ? "Deze vraag archiveren en je niet-opgeslagen wijzigingen verwerpen? Eerdere examenpogingen blijven bewaard."
+        : "Deze vraag archiveren? Eerdere examenpogingen blijven bewaard, maar studenten krijgen deze vraag niet meer."
     );
     if (!confirmed) return;
 
@@ -317,7 +391,11 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
         return;
       }
       setMessage("Vraag gearchiveerd.");
-      if (draft?.id === question.id) setDraft(createDraft(question.module_id));
+      if (draft?.id === question.id) {
+        const nextDraft = createDraft(question.module_id);
+        setDraft(nextDraft);
+        setSavedDraft(nextDraft);
+      }
       router.refresh();
     });
   }
@@ -342,7 +420,12 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             </span>
             <select
               value={selectedModuleId}
-              onChange={(event) => chooseModule(Number(event.currentTarget.value))}
+              onChange={(event) => {
+                if (!chooseModule(Number(event.currentTarget.value))) {
+                  event.currentTarget.value = String(selectedModuleId);
+                }
+              }}
+              disabled={isPending}
               className={fieldClass()}
             >
               {data.modules.map((summary) => (
@@ -402,6 +485,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                     <button
                       type="button"
                       onClick={() => editQuestion(question)}
+                      disabled={isPending}
                       className="min-w-0 flex-1 text-left"
                     >
                       <p className="line-clamp-2 text-sm font-bold leading-6 text-[var(--foreground)]">
@@ -424,6 +508,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                         type="button"
                         className={iconButtonClass()}
                         onClick={() => setQuestionActive(question, !question.is_active)}
+                        disabled={isPending}
                         aria-label={question.is_active ? "Vraag deactiveren" : "Vraag activeren"}
                       >
                         <Icon name="check" />
@@ -432,6 +517,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                         type="button"
                         className={iconButtonClass()}
                         onClick={() => editQuestion(question)}
+                        disabled={isPending}
                         aria-label="Vraag bewerken"
                       >
                         <Icon name="edit" />
@@ -440,6 +526,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                         type="button"
                         className={iconButtonClass("danger")}
                         onClick={() => archiveQuestion(question)}
+                        disabled={isPending}
                         aria-label="Vraag archiveren"
                       >
                         <Icon name="trash" />
@@ -461,11 +548,16 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
               <h2 className="mt-1 text-xl font-extrabold text-[var(--foreground)]">
                 Examenvraag
               </h2>
+              {hasUnsavedChanges && (
+                <p className="mt-1 text-sm font-semibold text-amber-800 dark:text-amber-200" role="status">
+                  Niet opgeslagen wijzigingen
+                </p>
+              )}
             </div>
             <button
               type="button"
               className="cb-btn cb-btn-secondary"
-              onClick={() => setDraft(createDraft(selectedModuleId))}
+              onClick={() => startNewQuestion()}
               disabled={isPending}
             >
               <Icon name="plus" />
@@ -481,6 +573,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             </span>
             <textarea
               value={draft.questionText}
+              disabled={isPending}
               onChange={(event) =>
                 setDraft({ ...draft, questionText: event.currentTarget.value })
               }
@@ -495,6 +588,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             </span>
             <textarea
               value={draft.explanation}
+              disabled={isPending}
               onChange={(event) =>
                 setDraft({ ...draft, explanation: event.currentTarget.value })
               }
@@ -507,6 +601,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             <input
               type="checkbox"
               checked={draft.isActive}
+              disabled={isPending}
               onChange={(event) =>
                 setDraft({ ...draft, isActive: event.currentTarget.checked })
               }
@@ -538,6 +633,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                     ],
                   })
                 }
+                disabled={isPending}
               >
                 <Icon name="plus" />
                 Optie toevoegen
@@ -552,6 +648,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                 <button
                   type="button"
                   onClick={() => markCorrect(option.key)}
+                  disabled={isPending}
                   className={[
                     "inline-flex h-10 w-10 items-center justify-center rounded-lg border",
                     option.isCorrect
@@ -564,6 +661,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                 </button>
                 <input
                   value={option.optionText}
+                  disabled={isPending}
                   onChange={(event) =>
                     updateOption(option.key, {
                       optionText: event.currentTarget.value,
@@ -577,7 +675,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                   type="button"
                   className={iconButtonClass("danger")}
                   onClick={() => removeOption(option.key)}
-                  disabled={draft.options.length <= 2}
+                  disabled={isPending || draft.options.length <= 2}
                   aria-label={`Optie ${index + 1} verwijderen`}
                 >
                   <Icon name="trash" />
@@ -615,7 +713,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
               type="button"
               className="cb-btn cb-btn-secondary"
               disabled={isPending}
-              onClick={() => setDraft(createDraft(selectedModuleId))}
+              onClick={() => startNewQuestion()}
             >
               Annuleren
             </button>

@@ -2,8 +2,9 @@ import { ADMIN_ACCESS_LEVEL } from "./admin/constants.ts";
 
 // Only these event types are intended for students. Staff notifications can
 // outlive a role change, so a recipient row alone is not an access check.
-// This protects the app display, not direct database reads: RLS and the
-// notification-shell RPC still need the same role check before deployment.
+// Keep this list in sync with can_read_notification_event() in the
+// notification-visibility migration. RLS and the shell RPC enforce the same
+// rule for direct database access.
 export const STUDENT_NOTIFICATION_EVENT_TYPES = [
   "mentor_reply",
   "weekly_update.published",

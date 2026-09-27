@@ -69,7 +69,7 @@ export async function adminSaveExamQuestion(
   const { questionId, error } = await saveExamQuestionAdmin(input, actorStudent.id);
   if (error) return { success: false, error };
 
-  logAdminAction(input.id ? "exam.question_updated" : "exam.question_created", {
+  await logAdminAction(input.id ? "exam.question_updated" : "exam.question_created", {
     actorStudentId: actorStudent.id,
     metadata: {
       moduleId: input.moduleId,
@@ -97,7 +97,7 @@ export async function adminSetExamQuestionActive(
   );
   if (error) return { success: false, error };
 
-  logAdminAction("exam.question_active_changed", {
+  await logAdminAction("exam.question_active_changed", {
     actorStudentId: actorStudent.id,
     metadata: { questionId, isActive },
   });
@@ -116,7 +116,7 @@ export async function adminArchiveExamQuestion(
   const { error } = await archiveExamQuestionAdmin(questionId, actorStudent.id);
   if (error) return { success: false, error };
 
-  logAdminAction("exam.question_archived", {
+  await logAdminAction("exam.question_archived", {
     actorStudentId: actorStudent.id,
     metadata: { questionId },
   });

@@ -62,8 +62,29 @@ export function getWeeklyUpdateAccessOption(value: WeeklyUpdateAccessTier) {
   );
 }
 
-export function getWeeklyUpdateAccessLabel(value: WeeklyUpdateAccessTier) {
+export function getWeeklyUpdateAccessLabel(
+  value: WeeklyUpdateAccessTier,
+  paidProductsActive = true
+) {
+  if (value === "subscription" && !paidProductsActive) return "Academy";
   return getWeeklyUpdateAccessOption(value).label;
+}
+
+/** Publication recipients must match the actual reader gate during the dormant billing phase. */
+export function getWeeklyUpdateNotificationAudience(
+  value: WeeklyUpdateAccessTier,
+  paidProductsActive: boolean
+): { kind: "access_level"; minAccessLevel: number } | { kind: "entitlement"; key: string } | null {
+  const option = getWeeklyUpdateAccessOption(value);
+  if (!option.selectable) return null;
+  if (value === "subscription" && !paidProductsActive) {
+    return { kind: "access_level", minAccessLevel: 2 };
+  }
+  if (option.entitlementKey) return { kind: "entitlement", key: option.entitlementKey };
+  if (option.minAccessLevel !== null) {
+    return { kind: "access_level", minAccessLevel: option.minAccessLevel };
+  }
+  return null;
 }
 
 export function canStudentAccessWeeklyUpdate(

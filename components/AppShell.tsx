@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/notification-popover";
 import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 import { useNotificationsRealtime } from "@/lib/realtime-hooks";
+import { useMobileDrawer } from "@/components/useMobileDrawer";
 
 const coreNav = [
   {
@@ -264,49 +264,11 @@ export function AppShell({
   unreadNotificationCount?: number;
   floatingNotifications?: FloatingNotification[];
 }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const menuTriggerRef = useRef<HTMLButtonElement>(null);
-  const menuCloseRef = useRef<HTMLButtonElement>(null);
-  const restoreMenuFocusRef = useRef(false);
+  const { mobileOpen, menuTriggerRef, menuCloseRef, menuPanelRef, openMobileMenu, closeMobileMenu } = useMobileDrawer();
   const pathname = usePathname();
   const showFloatingNotifications = pathname !== "/notifications";
 
   useNotificationsRealtime(currentStudentId);
-
-  const closeMobileMenu = useCallback((restoreFocus = true) => {
-    restoreMenuFocusRef.current = restoreFocus;
-    setMobileOpen(false);
-  }, []);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeMobileMenu();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [closeMobileMenu, mobileOpen]);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const menuTrigger = menuTriggerRef.current;
-    menuCloseRef.current?.focus();
-    return () => {
-      if (restoreMenuFocusRef.current) menuTrigger?.focus();
-      restoreMenuFocusRef.current = false;
-    };
-  }, [mobileOpen]);
-
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
 
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
@@ -331,7 +293,7 @@ export function AppShell({
             className="fixed inset-0 z-40 bg-stone-900/35 backdrop-blur-[2px] md:hidden"
             onClick={() => closeMobileMenu()}
           />
-          <aside id="mobile-nav" className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r-[0.5px] border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] text-[var(--foreground)] shadow-2xl md:hidden">
+          <aside ref={menuPanelRef} id="mobile-nav" role="dialog" aria-modal="true" aria-label="Navigatiemenu" className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r-[0.5px] border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] text-[var(--foreground)] shadow-2xl md:hidden">
             <div className="flex shrink-0 items-center justify-between border-b-[0.5px] border-[var(--border)] px-4 py-3">
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
                 Menu
@@ -367,10 +329,7 @@ export function AppShell({
             ref={menuTriggerRef}
             type="button"
             className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
-            onClick={() => {
-              restoreMenuFocusRef.current = true;
-              setMobileOpen(true);
-            }}
+            onClick={openMobileMenu}
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"
           >

@@ -140,9 +140,9 @@ function SelectChevron() {
   );
 }
 
-export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
+export function MarketInsightLibrary({ updates, initialMarket = "all" }: { updates: Update[]; initialMarket?: MarketFilter }) {
   const [format, setFormat] = useState<FormatFilter>("all");
-  const [market, setMarket] = useState<MarketFilter>("all");
+  const [market, setMarket] = useState<MarketFilter>(initialMarket);
   const [status, setStatus] = useState<StatusFilter>("all");
   const items = useMemo<Item[]>(() => {
     const allItems = updates.filter((update) => update.type !== "live_session").map((update): Item => {

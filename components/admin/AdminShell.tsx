@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/ui/Brand";
+import { useMobileDrawer } from "@/components/useMobileDrawer";
 
 const adminNav = [
   {
@@ -201,29 +201,9 @@ export function AdminShell({
   children: React.ReactNode;
   studentName: string | null;
 }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { mobileOpen, menuTriggerRef, menuCloseRef, menuPanelRef, openMobileMenu, closeMobileMenu } = useMobileDrawer();
   const pathname = usePathname();
   const isWideWorkspace = pathname.startsWith("/admin/videos");
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [mobileOpen]);
-
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
 
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
@@ -231,7 +211,7 @@ export function AdminShell({
         <div className="flex h-full min-h-0 flex-col px-5 py-7">
           <SidebarContent
             studentName={studentName}
-            onNavigate={() => setMobileOpen(false)}
+            onNavigate={() => closeMobileMenu(false)}
           />
         </div>
       </aside>
@@ -242,17 +222,18 @@ export function AdminShell({
             type="button"
             aria-label="Menu sluiten"
             className="fixed inset-0 z-40 bg-stone-900/35 backdrop-blur-[2px] md:hidden"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => closeMobileMenu()}
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] shadow-2xl md:hidden">
+          <aside ref={menuPanelRef} id="admin-mobile-nav" role="dialog" aria-modal="true" aria-label="Beheermenu" className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[min(300px,88vw)] flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] shadow-2xl md:hidden">
             <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-4 py-3">
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
                 Beheermenu
               </span>
               <button
+                ref={menuCloseRef}
                 type="button"
-                className="rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
-                onClick={() => setMobileOpen(false)}
+                className="min-h-11 rounded-lg px-3 py-2 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+                onClick={() => closeMobileMenu()}
               >
                 Sluiten
               </button>
@@ -260,7 +241,7 @@ export function AdminShell({
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-6">
               <SidebarContent
                 studentName={studentName}
-                onNavigate={() => setMobileOpen(false)}
+                onNavigate={() => closeMobileMenu(false)}
               />
             </div>
           </aside>
@@ -274,10 +255,12 @@ export function AdminShell({
 
         <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_82%,var(--card)_18%)] px-4 py-3 backdrop-blur-md md:hidden">
           <button
+            ref={menuTriggerRef}
             type="button"
             className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
-            onClick={() => setMobileOpen(true)}
+            onClick={openMobileMenu}
             aria-expanded={mobileOpen}
+            aria-controls="admin-mobile-nav"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path

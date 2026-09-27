@@ -116,16 +116,20 @@ export async function markNotificationRead(
   if (!student) return { success: false, error: "Niet ingelogd." };
 
   const db = await createClient();
-  const { error } = await db
+  const { data, error } = await db
     .from("notification_recipients")
     .update({ read_at: new Date().toISOString() })
     .eq("id", notificationId)
-    .eq("student_id", student.id);
+    .eq("student_id", student.id)
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     console.error("markNotificationRead", error.message);
     return { success: false, error: "Melding bijwerken mislukt." };
   }
+
+  if (!data) return { success: false, error: "Melding niet gevonden of niet toegankelijk." };
 
   return { success: true };
 }

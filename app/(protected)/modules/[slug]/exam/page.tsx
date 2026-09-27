@@ -6,7 +6,9 @@ import { getPublishedLessonsByModuleId } from "@/lib/lessons";
 import { getExamByModuleId, getOrStartExamAttemptForModule } from "@/lib/exams";
 import { areAllLessonsCompleted } from "@/lib/progress";
 import { getModuleAccessMap } from "@/lib/module-gate";
+import { FREE_ACCESS_MODULE_LIMIT, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 import { getPublishedModules } from "@/lib/modules";
+import { getStudentOnboardingResponse, onboardingIsComplete } from "@/lib/onboarding";
 import { ExamForm } from "./ExamForm";
 import { asText } from "@/lib/as-text";
 import { stripModulePrefix } from "@/lib/module-title";
@@ -24,10 +26,11 @@ export default async function ModuleExamPage({ params }: Props) {
   if (!student) notFound();
   const moduleTitle = stripModulePrefix(moduleData.title, moduleData.order_index);
 
-  const [exam, lessons, allModules] = await Promise.all([
+  const [exam, lessons, allModules, onboarding] = await Promise.all([
     getExamByModuleId(moduleData.id),
     getPublishedLessonsByModuleId(moduleData.id),
     getPublishedModules(),
+    getStudentOnboardingResponse(student.id),
   ]);
 
   const lessonIds = lessons.map((l) => l.id);
@@ -36,7 +39,12 @@ export default async function ModuleExamPage({ params }: Props) {
     areAllLessonsCompleted(student.id, lessonIds),
   ]);
   const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
-  const examUnlocked = !!exam && allLessonsCompleted;
+  const moduleIndex = allModules.findIndex((module) => module.id === moduleData.id);
+  const hasLegacyModuleAccess = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
+    moduleIndex >= FREE_ACCESS_MODULE_LIMIT && canAccessModule;
+  const needsIntake = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
+    !onboardingIsComplete(onboarding) && !hasLegacyModuleAccess;
+  const examUnlocked = !!exam && allLessonsCompleted && !needsIntake;
 
   if (!canAccessModule) {
     return (
@@ -48,11 +56,35 @@ export default async function ModuleExamPage({ params }: Props) {
           ]}
           eyebrow="Toegang"
           title="Module vergrendeld"
-          description="Slaag eerst voor de toets van de vorige module."
+          description={student.access_level < FULL_COURSE_ACCESS_LEVEL
+            ? "Je gratis toegang omvat de eerste drie modules."
+            : "Deze module is nog niet beschikbaar."}
         />
         <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center sm:p-10">
           <Link href="/modules" className="cb-btn cb-btn-primary">
             Terug naar modules
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (needsIntake) {
+    return (
+      <div>
+        <PageHeader
+          breadcrumbs={[
+            { label: "Academy", href: "/modules" },
+            { label: moduleTitle, href: `/modules/${moduleData.slug}` },
+            { label: "Toets" },
+          ]}
+          eyebrow="Toets"
+          title="Vul eerst je intake in"
+          description="Na de eerste les vul je je intake in. Daarna kun je de overige lessen afronden en de toets maken."
+        />
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-8">
+          <Link href="/onboarding" className="cb-btn cb-btn-primary">
+            Intake invullen
           </Link>
         </div>
       </div>
@@ -95,7 +127,9 @@ export default async function ModuleExamPage({ params }: Props) {
           ]}
           eyebrow="Toets"
           title="Toets vergrendeld"
-          description="Rond eerst alle lessen in deze module af."
+          description={needsIntake
+            ? "Vul je intake in om de overige lessen en de toets te openen."
+            : "Rond eerst alle lessen in deze module af."}
         />
         <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center sm:p-10">
           <Link
