@@ -6,13 +6,21 @@ import type {
   Student,
   WeeklyUpdate,
   WeeklyUpdateAccessTier,
+  WeeklyUpdateContentFormat,
 } from "@/lib/types";
 
 export type AdminWeeklyUpdateRow = WeeklyUpdate & {
   mentor: Pick<Student, "id" | "name" | "email"> | null;
 };
 
+export type AdminDashboardDraft = Pick<
+  WeeklyUpdate,
+  "id" | "title" | "content_format" | "updated_at"
+>;
+
 export type WeeklyUpdateInput = {
+  content_format: WeeklyUpdateContentFormat;
+  body: string | null;
   title: string;
   slug: string;
   summary: string | null;
@@ -32,6 +40,8 @@ export type WeeklyUpdateInput = {
   needs_review: boolean;
   is_published: boolean;
   published_at: string | null;
+  published_by_student_id?: string | null;
+  published_by_display_name?: string | null;
 };
 
 type WeeklyUpdateVideoUpdate = Partial<
@@ -79,6 +89,27 @@ export async function listWeeklyUpdatesAdmin(): Promise<AdminWeeklyUpdateRow[]> 
   }
 
   return (data ?? []) as AdminWeeklyUpdateRow[];
+}
+
+export async function listDashboardDraftsAdmin(): Promise<AdminDashboardDraft[]> {
+  await requireAdmin();
+
+  if (process.env.NODE_ENV === "test") return [];
+
+  const db = await createClient();
+  const { data, error } = await db
+    .from("weekly_updates")
+    .select("id, title, content_format, updated_at")
+    .eq("is_published", false)
+    .order("updated_at", { ascending: false })
+    .limit(3);
+
+  if (error) {
+    console.error("listDashboardDraftsAdmin", error.message);
+    return [];
+  }
+
+  return (data ?? []) as AdminDashboardDraft[];
 }
 
 export async function listWeeklyUpdateMentorsAdmin(): Promise<
@@ -145,23 +176,26 @@ export async function createWeeklyUpdateAdmin(
 
 export async function updateWeeklyUpdateAdmin(
   weeklyUpdateId: number,
-  input: WeeklyUpdateInput
-): Promise<{ error: string | null }> {
+  input: WeeklyUpdateInput,
+  publishTransition = false
+): Promise<{ error: string | null; transitioned: boolean }> {
   await requireAdmin();
 
-  if (process.env.NODE_ENV === "test") return { error: null };
+  if (process.env.NODE_ENV === "test") return { error: null, transitioned: publishTransition };
 
   const db = await createClient();
-  const { data, error } = await db
+  let query = db
     .from("weekly_updates")
     .update(input)
-    .eq("id", weeklyUpdateId)
-    .select("id")
+    .eq("id", weeklyUpdateId);
+  if (publishTransition) query = query.eq("is_published", false);
+  const { data, error } = await query.select("id")
     .maybeSingle();
 
-  if (error) return { error: error.message };
-  if (!data) return { error: "Weekly update not found." };
-  return { error: null };
+  if (error) return { error: error.message, transitioned: false };
+  if (!data && publishTransition) return { error: null, transitioned: false };
+  if (!data) return { error: "Weekly update not found.", transitioned: false };
+  return { error: null, transitioned: publishTransition };
 }
 
 export async function updateWeeklyUpdateVideoAdmin(

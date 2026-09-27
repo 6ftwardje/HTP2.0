@@ -61,7 +61,7 @@ export default async function LiveSessionsPage() {
         description="Bekijk de agenda, neem deel aan de wekelijkse livesessie en herbekijk beschikbare replays."
       />
 
-      <main className="space-y-9">
+      <div className="space-y-9">
         {nextSession ? (
           <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-soft)]">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -178,7 +178,7 @@ export default async function LiveSessionsPage() {
             <p className="mt-5 cb-body">Er zijn nog geen eerdere livesessies.</p>
           )}
         </section>
-      </main>
+      </div>
     </div>
   );
 }

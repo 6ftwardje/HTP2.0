@@ -133,14 +133,30 @@ function draftFromQuestion(question: AdminExamQuestion): DraftQuestion {
   };
 }
 
+function draftSignature(draft: DraftQuestion | null): string {
+  if (!draft) return "";
+  return JSON.stringify({
+    id: draft.id ?? null,
+    moduleId: draft.moduleId,
+    questionText: draft.questionText,
+    explanation: draft.explanation,
+    isActive: draft.isActive,
+    options: draft.options.map((option) => ({
+      id: option.id ?? null,
+      optionText: option.optionText,
+      isCorrect: option.isCorrect,
+    })),
+  });
+}
+
 function validateDraft(draft: DraftQuestion): string | null {
-  if (!draft.questionText.trim()) return "Question text is required.";
+  if (!draft.questionText.trim()) return "Vul een vraag in.";
   if (draft.options.some((option) => !option.optionText.trim())) {
-    return "Answer options cannot be empty.";
+    return "Vul alle antwoordopties in.";
   }
-  if (draft.options.length < 2) return "Add at least two answer options.";
+  if (draft.options.length < 2) return "Voeg minstens twee antwoordopties toe.";
   if (draft.options.filter((option) => option.isCorrect).length !== 1) {
-    return "Mark exactly one answer as correct.";
+    return "Duid precies één antwoord als juist aan.";
   }
   return null;
 }
@@ -150,13 +166,13 @@ function ModuleStatus({ summary }: { summary: AdminExamModuleSummary }) {
   return (
     <div className="mt-2 flex flex-wrap gap-2">
       <span className={ready ? "cb-badge cb-badge-completed" : "cb-badge cb-badge-locked"}>
-        {summary.validActiveQuestionCount}/10 valid active
+        {summary.validActiveQuestionCount}/10 geldige actieve vragen
       </span>
       <span className="cb-badge cb-badge-available">
-        {summary.activeQuestionCount} active
+        {summary.activeQuestionCount} actief
       </span>
       <span className="cb-badge cb-badge-locked">
-        {summary.totalQuestionCount} total
+        {summary.totalQuestionCount} totaal
       </span>
     </div>
   );
@@ -172,13 +188,45 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
   const [draft, setDraft] = useState<DraftQuestion | null>(
     data.modules[0] ? createDraft(data.modules[0].module.id) : null
   );
+  const [savedDraft, setSavedDraft] = useState<DraftQuestion | null>(
+    data.modules[0] ? createDraft(data.modules[0].module.id) : null
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedChanges = draftSignature(draft) !== draftSignature(savedDraft);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const warnBeforeInternalLink = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = event.target instanceof Element ? event.target : null;
+      const link = target?.closest<HTMLAnchorElement>("a[href]");
+      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+      const destination = new URL(link.href, window.location.href);
+      if (destination.origin !== window.location.origin) return;
+      if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+      if (window.confirm("Je hebt niet-opgeslagen wijzigingen. Wil je die verwerpen?")) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    document.addEventListener("click", warnBeforeInternalLink, true);
+    return () => {
+      window.removeEventListener("beforeunload", warnBeforeLeaving);
+      document.removeEventListener("click", warnBeforeInternalLink, true);
+    };
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     if (!selectedModuleId && data.modules[0]) {
       setSelectedModuleId(data.modules[0].module.id);
-      setDraft(createDraft(data.modules[0].module.id));
+      const nextDraft = createDraft(data.modules[0].module.id);
+      setDraft(nextDraft);
+      setSavedDraft(nextDraft);
     }
   }, [data.modules, selectedModuleId]);
 
@@ -194,15 +242,35 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
       );
   }, [data.questions, search, selectedModuleId]);
 
-  function chooseModule(moduleId: number) {
-    setSelectedModuleId(moduleId);
-    setDraft(createDraft(moduleId));
+  function confirmDiscardChanges() {
+    return !hasUnsavedChanges || window.confirm("Je hebt niet-opgeslagen wijzigingen. Wil je die verwerpen?");
+  }
+
+  function startNewQuestion(moduleId = selectedModuleId) {
+    if (isPending || !confirmDiscardChanges()) return;
+    const nextDraft = createDraft(moduleId);
+    setDraft(nextDraft);
+    setSavedDraft(nextDraft);
     setError(null);
     setMessage(null);
   }
 
+  function chooseModule(moduleId: number) {
+    if (isPending || !confirmDiscardChanges()) return false;
+    const nextDraft = createDraft(moduleId);
+    setSelectedModuleId(moduleId);
+    setDraft(nextDraft);
+    setSavedDraft(nextDraft);
+    setError(null);
+    setMessage(null);
+    return true;
+  }
+
   function editQuestion(question: AdminExamQuestion) {
-    setDraft(draftFromQuestion(question));
+    if (isPending || !confirmDiscardChanges()) return;
+    const nextDraft = draftFromQuestion(question);
+    setDraft(nextDraft);
+    setSavedDraft(nextDraft);
     setError(null);
     setMessage(null);
   }
@@ -262,12 +330,14 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
       });
 
       if (!res.success) {
-        setError(res.error ?? "Could not save question.");
+        setError(res.error ?? "De vraag kon niet worden opgeslagen.");
         return;
       }
 
-      setMessage(draft.id ? "Question saved." : "Question added.");
-      setDraft(createDraft(draft.moduleId));
+      setMessage(draft.id ? "Vraag opgeslagen." : "Vraag toegevoegd.");
+      const nextDraft = createDraft(draft.moduleId);
+      setDraft(nextDraft);
+      setSavedDraft(nextDraft);
       router.refresh();
     });
   }
@@ -278,10 +348,10 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
     startTransition(async () => {
       const res = await adminSetExamQuestionActive(question.id, isActive);
       if (!res.success) {
-        setError(res.error ?? "Could not update question.");
+        setError(res.error ?? "De vraag kon niet worden bijgewerkt.");
         return;
       }
-      setMessage(isActive ? "Question activated." : "Question deactivated.");
+      setMessage(isActive ? "Vraag geactiveerd." : "Vraag gedeactiveerd.");
       router.refresh();
     });
   }
@@ -293,18 +363,22 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
     startTransition(async () => {
       const res = await adminSetExamQuestionActive(draft.id, isActive);
       if (!res.success) {
-        setError(res.error ?? "Could not update question.");
+        setError(res.error ?? "De vraag kon niet worden bijgewerkt.");
         return;
       }
       setDraft({ ...draft, isActive });
-      setMessage(isActive ? "Question activated." : "Question deactivated.");
+      setSavedDraft((previous) => previous ? { ...previous, isActive } : previous);
+      setMessage(isActive ? "Vraag geactiveerd." : "Vraag gedeactiveerd.");
       router.refresh();
     });
   }
 
   function archiveQuestion(question: AdminExamQuestion) {
+    if (isPending) return;
     const confirmed = window.confirm(
-      "Archive this question? Historical attempts stay intact, but students will no longer receive it."
+      draft?.id === question.id && hasUnsavedChanges
+        ? "Deze vraag archiveren en je niet-opgeslagen wijzigingen verwerpen? Eerdere examenpogingen blijven bewaard."
+        : "Deze vraag archiveren? Eerdere examenpogingen blijven bewaard, maar studenten krijgen deze vraag niet meer."
     );
     if (!confirmed) return;
 
@@ -313,11 +387,15 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
     startTransition(async () => {
       const res = await adminArchiveExamQuestion(question.id);
       if (!res.success) {
-        setError(res.error ?? "Could not archive question.");
+        setError(res.error ?? "De vraag kon niet worden gearchiveerd.");
         return;
       }
-      setMessage("Question archived.");
-      if (draft?.id === question.id) setDraft(createDraft(question.module_id));
+      setMessage("Vraag gearchiveerd.");
+      if (draft?.id === question.id) {
+        const nextDraft = createDraft(question.module_id);
+        setDraft(nextDraft);
+        setSavedDraft(nextDraft);
+      }
       router.refresh();
     });
   }
@@ -325,7 +403,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
   if (!selectedModule || !draft) {
     return (
       <div className="cb-panel p-6">
-        <p className="cb-caption">No modules found.</p>
+        <p className="cb-caption">Er zijn nog geen modules.</p>
       </div>
     );
   }
@@ -342,7 +420,12 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             </span>
             <select
               value={selectedModuleId}
-              onChange={(event) => chooseModule(Number(event.currentTarget.value))}
+              onChange={(event) => {
+                if (!chooseModule(Number(event.currentTarget.value))) {
+                  event.currentTarget.value = String(selectedModuleId);
+                }
+              }}
+              disabled={isPending}
               className={fieldClass()}
             >
               {data.modules.map((summary) => (
@@ -357,7 +440,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
           </label>
 
           <div className="mt-5 border-t border-[var(--border)] pt-5">
-            <div className="cb-eyebrow">Question bank</div>
+            <div className="cb-eyebrow">Vragenbank</div>
             <h2 className="mt-2 text-xl font-extrabold text-[var(--foreground)]">
               {stripModulePrefix(
                 selectedModule.module.title,
@@ -367,8 +450,8 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             <ModuleStatus summary={selectedModule} />
             {validWarning && (
               <p className="mt-4 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-800 dark:text-amber-200">
-                Add {10 - selectedModule.validActiveQuestionCount} more valid active{" "}
-                {10 - selectedModule.validActiveQuestionCount === 1 ? "question" : "questions"} before students can start.
+                Voeg nog {10 - selectedModule.validActiveQuestionCount} geldige actieve{" "}
+                {10 - selectedModule.validActiveQuestionCount === 1 ? "vraag" : "vragen"} toe voordat studenten het examen kunnen starten.
               </p>
             )}
           </div>
@@ -380,7 +463,8 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             <input
               value={search}
               onChange={(event) => setSearch(event.currentTarget.value)}
-              placeholder="Search questions"
+              placeholder="Zoek examenvragen"
+              aria-label="Zoek examenvragen"
               className="w-full bg-transparent text-sm font-semibold text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]"
             />
           </div>
@@ -389,7 +473,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
         <div className="space-y-3">
           {moduleQuestions.length === 0 ? (
             <div className="cb-panel p-5">
-              <p className="cb-caption">No questions for this module yet.</p>
+              <p className="cb-caption">Nog geen examenvragen voor deze module.</p>
             </div>
           ) : (
             moduleQuestions.map((question) => {
@@ -401,6 +485,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                     <button
                       type="button"
                       onClick={() => editQuestion(question)}
+                      disabled={isPending}
                       className="min-w-0 flex-1 text-left"
                     >
                       <p className="line-clamp-2 text-sm font-bold leading-6 text-[var(--foreground)]">
@@ -408,12 +493,12 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         <span className={question.is_active ? "cb-badge cb-badge-completed" : "cb-badge cb-badge-locked"}>
-                          {question.is_active ? "Active" : "Inactive"}
+                          {question.is_active ? "Actief" : "Inactief"}
                         </span>
-                        {invalid && <span className="cb-badge cb-badge-locked">Invalid</span>}
+                        {invalid && <span className="cb-badge cb-badge-locked">Ongeldig</span>}
                         {question.attemptCount > 0 && (
                           <span className="cb-badge cb-badge-available">
-                            {question.attemptCount} attempts
+                            {question.attemptCount} {question.attemptCount === 1 ? "poging" : "pogingen"}
                           </span>
                         )}
                       </div>
@@ -423,7 +508,8 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                         type="button"
                         className={iconButtonClass()}
                         onClick={() => setQuestionActive(question, !question.is_active)}
-                        aria-label={question.is_active ? "Deactivate question" : "Activate question"}
+                        disabled={isPending}
+                        aria-label={question.is_active ? "Vraag deactiveren" : "Vraag activeren"}
                       >
                         <Icon name="check" />
                       </button>
@@ -431,7 +517,8 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                         type="button"
                         className={iconButtonClass()}
                         onClick={() => editQuestion(question)}
-                        aria-label="Edit question"
+                        disabled={isPending}
+                        aria-label="Vraag bewerken"
                       >
                         <Icon name="edit" />
                       </button>
@@ -439,7 +526,8 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                         type="button"
                         className={iconButtonClass("danger")}
                         onClick={() => archiveQuestion(question)}
-                        aria-label="Archive question"
+                        disabled={isPending}
+                        aria-label="Vraag archiveren"
                       >
                         <Icon name="trash" />
                       </button>
@@ -456,19 +544,24 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
         <div className="border-b border-[var(--border)] px-5 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="cb-eyebrow">{draft.id ? "Edit question" : "New question"}</div>
+              <div className="cb-eyebrow">{draft.id ? "Bestaande vraag" : "Nieuwe vraag"}</div>
               <h2 className="mt-1 text-xl font-extrabold text-[var(--foreground)]">
-                Exam question editor
+                Examenvraag
               </h2>
+              {hasUnsavedChanges && (
+                <p className="mt-1 text-sm font-semibold text-amber-800 dark:text-amber-200" role="status">
+                  Niet opgeslagen wijzigingen
+                </p>
+              )}
             </div>
             <button
               type="button"
               className="cb-btn cb-btn-secondary"
-              onClick={() => setDraft(createDraft(selectedModuleId))}
+              onClick={() => startNewQuestion()}
               disabled={isPending}
             >
               <Icon name="plus" />
-              New question
+              Nieuwe vraag
             </button>
           </div>
         </div>
@@ -476,10 +569,11 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
         <div className="grid gap-5 p-5">
           <label className="space-y-1.5">
             <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-              Question
+              Vraag
             </span>
             <textarea
               value={draft.questionText}
+              disabled={isPending}
               onChange={(event) =>
                 setDraft({ ...draft, questionText: event.currentTarget.value })
               }
@@ -490,10 +584,11 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
 
           <label className="space-y-1.5">
             <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-              Explanation
+              Uitleg bij het antwoord
             </span>
             <textarea
               value={draft.explanation}
+              disabled={isPending}
               onChange={(event) =>
                 setDraft({ ...draft, explanation: event.currentTarget.value })
               }
@@ -506,20 +601,21 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
             <input
               type="checkbox"
               checked={draft.isActive}
+              disabled={isPending}
               onChange={(event) =>
                 setDraft({ ...draft, isActive: event.currentTarget.checked })
               }
               className="h-4 w-4"
             />
             <span className="text-sm font-semibold text-[var(--foreground)]">
-              Active question
+              Actieve vraag
             </span>
           </label>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-                Answer options
+                Antwoordopties
               </span>
               <button
                 type="button"
@@ -537,9 +633,10 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                     ],
                   })
                 }
+                disabled={isPending}
               >
                 <Icon name="plus" />
-                Add option
+                Optie toevoegen
               </button>
             </div>
 
@@ -551,32 +648,35 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                 <button
                   type="button"
                   onClick={() => markCorrect(option.key)}
+                  disabled={isPending}
                   className={[
                     "inline-flex h-10 w-10 items-center justify-center rounded-lg border",
                     option.isCorrect
                       ? "border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_15%,var(--card))] text-[var(--foreground)]"
                       : "border-[var(--border)] text-[var(--muted)]",
                   ].join(" ")}
-                  aria-label={`Mark option ${index + 1} correct`}
+                  aria-label={`Optie ${index + 1} als juist aanduiden`}
                 >
                   {option.isCorrect && <Icon name="check" />}
                 </button>
                 <input
                   value={option.optionText}
+                  disabled={isPending}
                   onChange={(event) =>
                     updateOption(option.key, {
                       optionText: event.currentTarget.value,
                     })
                   }
-                  placeholder={`Option ${index + 1}`}
+                  placeholder={`Optie ${index + 1}`}
+                  aria-label={`Antwoordoptie ${index + 1}`}
                   className={fieldClass()}
                 />
                 <button
                   type="button"
                   className={iconButtonClass("danger")}
                   onClick={() => removeOption(option.key)}
-                  disabled={draft.options.length <= 2}
-                  aria-label={`Remove option ${index + 1}`}
+                  disabled={isPending || draft.options.length <= 2}
+                  aria-label={`Optie ${index + 1} verwijderen`}
                 >
                   <Icon name="trash" />
                 </button>
@@ -592,7 +692,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
                 disabled={isPending}
                 onClick={() => setDraftQuestionActive(!draft.isActive)}
               >
-                {draft.isActive ? "Deactivate" : "Activate"}
+                {draft.isActive ? "Deactiveren" : "Activeren"}
               </button>
             </div>
           )}
@@ -613,9 +713,9 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
               type="button"
               className="cb-btn cb-btn-secondary"
               disabled={isPending}
-              onClick={() => setDraft(createDraft(selectedModuleId))}
+              onClick={() => startNewQuestion()}
             >
-              Cancel
+              Annuleren
             </button>
             <button
               type="button"
@@ -623,7 +723,7 @@ export function AdminExamManager({ data }: { data: AdminExamManagementData }) {
               disabled={isPending}
               onClick={saveDraft}
             >
-              {isPending ? "Saving..." : "Save question"}
+              {isPending ? "Opslaan..." : "Vraag opslaan"}
             </button>
           </div>
         </div>

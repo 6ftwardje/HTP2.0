@@ -5,35 +5,32 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   adminCreateWeeklyUpdate,
+  adminCreateChartUpload,
+  adminAttachChartImage,
   adminCreateWeeklyUpdateMuxUpload,
   adminCreateWeeklyUpdateThumbnailUpload,
   adminCreateWeeklyUpdateWithMuxUpload,
   adminDeleteWeeklyUpdate,
+  adminRepairWeeklyUpdateNotification,
   adminSyncWeeklyUpdateMuxUpload,
   adminUpdateWeeklyUpdate,
   adminUpdateWeeklyUpdateThumbnail,
 } from "@/app/actions/admin/weekly-updates";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
+import { WeeklyUpdateFields, type MentorOption } from "@/components/admin/WeeklyUpdateFields";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
+import { marketUpdateAuthorName } from "@/lib/market-update-author";
 import {
   getIsoWeekNumber,
   getMarketAnalysisTypeLabel,
   getMarketLabel,
-  MARKET_ANALYSIS_TYPE_OPTIONS,
-  MARKET_OPTIONS,
 } from "@/lib/market-analysis";
 import type {
-  MarketAnalysisType,
-  Student,
   WeeklyUpdateAccessTier,
+  WeeklyUpdateContentFormat,
 } from "@/lib/types";
-import {
-  getWeeklyUpdateAccessLabel,
-  WEEKLY_UPDATE_ACCESS_OPTIONS,
-} from "@/lib/weekly-update-access";
-
-type MentorOption = Pick<Student, "id" | "name" | "email">;
+import { getWeeklyUpdateAccessLabel } from "@/lib/weekly-update-access";
 
 type PanelState =
   | { type: "empty" }
@@ -41,10 +38,6 @@ type PanelState =
   | { type: "edit"; update: AdminWeeklyUpdateRow };
 
 type ConfirmState = { type: "delete"; update: AdminWeeklyUpdateRow } | null;
-
-function fieldClass() {
-  return "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition focus:border-[color-mix(in_oklab,var(--foreground)_35%,var(--border))]";
-}
 
 function iconButtonClass(tone: "normal" | "danger" = "normal") {
   return `inline-flex h-9 w-9 items-center justify-center rounded-lg border transition ${
@@ -135,23 +128,25 @@ function putFileWithProgress(
 }
 
 function statusBadge(update: AdminWeeklyUpdateRow) {
+  if (update.content_format === "chart") return <span className="cb-badge cb-badge-available">Chart · {update.image_paths.length}/4</span>;
+  if (update.content_format === "text") return <span className="cb-badge cb-badge-available">Tekst</span>;
   if (update.video_provider !== "mux") {
-    return <span className="cb-badge cb-badge-locked">Legacy</span>;
+    return <span className="cb-badge cb-badge-locked">Oud formaat</span>;
   }
   if (update.mux_status === "ready") {
-    return <span className="cb-badge cb-badge-completed">Ready</span>;
+    return <span className="cb-badge cb-badge-completed">Klaar</span>;
   }
   if (update.mux_status === "errored") {
-    return <span className="cb-badge cb-badge-locked">Error</span>;
+    return <span className="cb-badge cb-badge-locked">Fout</span>;
   }
   if (update.mux_upload_id) {
-    return <span className="cb-badge cb-badge-available">Processing</span>;
+    return <span className="cb-badge cb-badge-available">In verwerking</span>;
   }
-  return <span className="cb-badge cb-badge-locked">No video</span>;
+  return <span className="cb-badge cb-badge-locked">Geen video</span>;
 }
 
-function accessLabel(value: WeeklyUpdateAccessTier) {
-  return getWeeklyUpdateAccessLabel(value);
+function accessLabel(value: WeeklyUpdateAccessTier, paidProductsActive: boolean) {
+  return getWeeklyUpdateAccessLabel(value, paidProductsActive);
 }
 
 function formatDate(value: string) {
@@ -173,245 +168,8 @@ function UploadProgress({ progress }: { progress: number | null }) {
         />
       </div>
       <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
-        {progress}% uploaded
+        {progress}% geüpload
       </p>
-    </div>
-  );
-}
-
-function ThumbnailField({
-  update,
-  onFileChange,
-}: {
-  update?: AdminWeeklyUpdateRow;
-  onFileChange: (file: File | null) => void;
-}) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    update?.thumbnail_url ?? null
-  );
-  const objectUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (objectUrlRef.current) {
-      URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = null;
-    }
-    setPreviewUrl(update?.thumbnail_url ?? null);
-  }, [update?.thumbnail_url]);
-
-  useEffect(() => {
-    return () => {
-      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    };
-  }, []);
-
-  return (
-    <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_86%,var(--card)_14%)]">
-      <CourseThumbnail
-        src={previewUrl}
-        title={update?.title ?? "Marktanalyse thumbnail"}
-        eyebrow={getMarketAnalysisTypeLabel(update?.type ?? null)}
-        className="aspect-[16/9] w-full"
-      />
-      <div className="grid gap-3 p-3">
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Thumbnail URL
-          </span>
-          <input
-            name="thumbnail_url"
-            defaultValue={update?.thumbnail_url ?? ""}
-            placeholder="https://..."
-            className={fieldClass()}
-            onChange={(event) =>
-              setPreviewUrl(event.currentTarget.value.trim() || null)
-            }
-          />
-        </label>
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Upload image
-          </span>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif"
-            className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]"
-            onChange={(event) => {
-              const file = event.currentTarget.files?.[0] ?? null;
-              onFileChange(file);
-              if (objectUrlRef.current) {
-                URL.revokeObjectURL(objectUrlRef.current);
-                objectUrlRef.current = null;
-              }
-              if (!file) {
-                setPreviewUrl(update?.thumbnail_url ?? null);
-                return;
-              }
-              const nextUrl = URL.createObjectURL(file);
-              objectUrlRef.current = nextUrl;
-              setPreviewUrl(nextUrl);
-            }}
-          />
-        </label>
-      </div>
-    </div>
-  );
-}
-
-function WeeklyUpdateFields({
-  update,
-  mentors,
-  onThumbnailFileChange,
-}: {
-  update?: AdminWeeklyUpdateRow;
-  mentors: MentorOption[];
-  onThumbnailFileChange: (file: File | null) => void;
-}) {
-  const [analysisType, setAnalysisType] = useState<MarketAnalysisType | "">(
-    update?.type ?? ""
-  );
-
-  useEffect(() => {
-    setAnalysisType(update?.type ?? "");
-  }, [update?.id, update?.type]);
-
-  return (
-    <div className="grid gap-3">
-      <ThumbnailField update={update} onFileChange={onThumbnailFileChange} />
-      <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Format <span className="text-red-600">*</span>
-        </span>
-        <select
-          name="type"
-          value={analysisType}
-          required
-          className={fieldClass()}
-          onChange={(event) =>
-            setAnalysisType(event.currentTarget.value as MarketAnalysisType | "")
-          }
-        >
-          <option value="" disabled>Kies format</option>
-          {MARKET_ANALYSIS_TYPE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
-        <span className="block text-xs leading-5 text-[var(--muted)]">
-          Kies Weekvooruitblik of Marktbreakdown. Live marktsessies plan je in het livebeheer.
-        </span>
-      </label>
-      <fieldset className="space-y-2">
-        <legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Markten {analysisType === "market_update" ? <span className="text-red-600">*</span> : null}
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {[...MARKET_OPTIONS, { value: "macro" as const, label: "Macro" }].map((option) => (
-            <label key={option.value} className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm">
-              <input name="markets" type="checkbox" value={option.value} defaultChecked={update?.markets?.includes(option.value) || update?.market === option.value} />
-              <span>{option.label}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      {analysisType === "market_update" ? (
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Event of aanleiding
-          </span>
-          <input name="event_context" defaultValue={update?.event_context ?? ""} placeholder="Bijv. rentebesluit ECB" className={fieldClass()} />
-        </label>
-      ) : <input type="hidden" name="event_context" value={update?.event_context ?? ""} />}
-      <input type="hidden" name="market" value={update?.market ?? ""} />
-      {analysisType === "weekly_outlook" ? (
-        <div className="grid gap-3 rounded-lg border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_72%,var(--background)_28%)] px-3 py-2.5">
-          <div className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Week & publicatie</div>
-          <p className="mt-1 text-sm text-[var(--foreground)]">
-            {update?.week_start_date
-              ? `Week ${getIsoWeekNumber(update.week_start_date)} · ${formatDate(update.week_start_date)}`
-              : "Weeknummer en maandagdatum worden automatisch gekoppeld."}
-          </p>
-          <p className="mt-1 text-xs text-[var(--muted)]">De publicatiedatum wordt vastgelegd bij publiceren.</p>
-          <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Week of periode</span><input name="period_label" defaultValue={update?.period_label ?? ""} placeholder="Bijv. Week 39" className={fieldClass()} /></label>
-        </div>
-      ) : <input type="hidden" name="period_label" value={update?.period_label ?? ""} />}
-      <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Titel
-        </span>
-        <input name="title" defaultValue={update?.title ?? ""} required className={fieldClass()} />
-      </label>
-      <div className="grid gap-3">
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Slug
-          </span>
-          <input name="slug" defaultValue={update?.slug ?? ""} placeholder="auto from title" className={fieldClass()} />
-        </label>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Host
-          </span>
-          <select name="mentor_student_id" defaultValue={update?.mentor_student_id ?? ""} className={fieldClass()}>
-            <option value="">No mentor</option>
-            {mentors.map((mentor) => (
-              <option key={mentor.id} value={mentor.id}>
-                {mentor.name ?? mentor.email}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Access
-          </span>
-          <select name="access_tier" defaultValue={update?.access_tier ?? "subscription"} className={fieldClass()}>
-            {WEEKLY_UPDATE_ACCESS_OPTIONS.map((option) => (
-              <option
-                key={option.value}
-                value={option.value}
-                disabled={!option.selectable}
-              >
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <span className="block text-xs leading-5 text-[var(--muted)]">
-            Marktupdates en Weekly Outlook-replays horen altijd bij de subscription.
-          </span>
-        </label>
-      </div>
-      <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Korte omschrijving / samenvatting
-        </span>
-        <textarea name="summary" defaultValue={update?.summary ?? ""} rows={4} className={fieldClass()} />
-      </label>
-      <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Actualiteitsstatus</span>
-        <select name="actuality_status" defaultValue={update?.actuality_status ?? "current"} className={fieldClass()}>
-          <option value="current">Actueel</option><option value="still_relevant">Nog relevant</option><option value="archive">Archief</option>
-        </select>
-      </label>
-      <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Belangrijke scenario&apos;s of aandachtspunten
-        </span>
-        <textarea
-          name="key_takeaways"
-          defaultValue={(update?.key_takeaways ?? []).join("\n")}
-          rows={5}
-          placeholder="One takeaway per line"
-          className={fieldClass()}
-        />
-      </label>
-      <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken / timestamps</span><textarea name="chapters" defaultValue={(update?.chapters ?? []).map((chapter) => `${Math.floor(chapter.seconds / 60)}:${String(chapter.seconds % 60).padStart(2, "0")} ${chapter.title}`).join("\n")} rows={4} placeholder="00:00 Introductie" className={fieldClass()} /></label>
-      <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Gerelateerde content</span><textarea name="related_content" defaultValue={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} rows={3} placeholder="Les risicobeheer | /lessons/risicobeheer" className={fieldClass()} /></label>
-      <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5">
-        <input name="is_published" type="checkbox" defaultChecked={update?.is_published ?? false} className="h-4 w-4" />
-        <span className="text-sm font-semibold text-[var(--foreground)]">Published</span>
-      </label>
     </div>
   );
 }
@@ -436,14 +194,15 @@ function DeleteConfirmModal({
     >
       <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-2xl">
         <h2 id="delete-market-analysis-title" className="text-lg font-semibold text-[var(--foreground)]">
-          Video verwijderen?
+          Marktinzicht verwijderen?
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
-          <span className="font-semibold">{confirm.update.title}</span> en de bijbehorende kijkstatus worden verwijderd.
+          <span className="font-semibold">{confirm.update.title}</span> wordt definitief verwijderd en is daarna niet meer beschikbaar voor studenten.
+          {confirm.update.content_format === "video" ? " Ook de bijbehorende kijkstatus wordt verwijderd." : null}
         </p>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button type="button" className="cb-btn cb-btn-secondary justify-center text-sm" disabled={pending} onClick={onCancel}>
-            Cancel
+            Annuleren
           </button>
           <button
             type="button"
@@ -452,7 +211,7 @@ function DeleteConfirmModal({
             onClick={onConfirm}
           >
             <Icon name="trash" />
-            Delete
+            Verwijderen
           </button>
         </div>
       </div>
@@ -464,13 +223,25 @@ function DeleteConfirmModal({
 export function AdminWeeklyUpdatesManager({
   updates,
   mentors,
+  initialUpdateId,
+  paidProductsActive,
 }: {
   updates: AdminWeeklyUpdateRow[];
   mentors: MentorOption[];
+  initialUpdateId?: number | null;
+  paidProductsActive: boolean;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [panel, setPanel] = useState<PanelState>({ type: "empty" });
+  const chartFileRef = useRef<HTMLInputElement | null>(null);
+  const hasUnsavedChanges = useRef(false);
+  const initialUpdate = updates.find((update) => update.id === initialUpdateId);
+  const [contentFormat, setContentFormat] = useState<WeeklyUpdateContentFormat>(
+    initialUpdate?.content_format ?? "video"
+  );
+  const [panel, setPanel] = useState<PanelState>(
+    initialUpdate ? { type: "edit", update: initialUpdate } : { type: "empty" }
+  );
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -504,6 +275,33 @@ export function AdminWeeklyUpdatesManager({
   }, []);
 
   useEffect(() => {
+    const warnOnLeave = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const confirmInternalNavigation = (event: MouseEvent) => {
+      if (!hasUnsavedChanges.current || event.defaultPrevented || event.button !== 0) return;
+      const anchor = event.target instanceof Element ? event.target.closest("a") : null;
+      if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.href === window.location.href) return;
+      if (!window.confirm("Je hebt niet-opgeslagen wijzigingen. Wil je die verwerpen?")) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      hasUnsavedChanges.current = false;
+    };
+    window.addEventListener("beforeunload", warnOnLeave);
+    window.addEventListener("click", confirmInternalNavigation, true);
+    return () => {
+      window.removeEventListener("beforeunload", warnOnLeave);
+      window.removeEventListener("click", confirmInternalNavigation, true);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!confirm) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -519,8 +317,11 @@ export function AdminWeeklyUpdatesManager({
   }
 
   function resetPanel(nextPanel: PanelState) {
+    if (hasUnsavedChanges.current && !window.confirm("Je hebt niet-opgeslagen wijzigingen. Wil je die verwerpen?")) return;
+    hasUnsavedChanges.current = false;
     resetFeedback();
     setThumbnailFile(null);
+    setContentFormat(nextPanel.type === "edit" ? nextPanel.update.content_format : "video");
     setPanel(nextPanel);
   }
 
@@ -533,7 +334,7 @@ export function AdminWeeklyUpdatesManager({
     weeklyUpdateId: number,
     file: File
   ): Promise<boolean> {
-    setMessage("Preparing thumbnail upload...");
+    setMessage("Thumbnailupload voorbereiden...");
     const signed = await adminCreateWeeklyUpdateThumbnailUpload(weeklyUpdateId, {
       name: file.name,
       type: file.type,
@@ -541,11 +342,11 @@ export function AdminWeeklyUpdatesManager({
     });
 
     if (!signed.success || !signed.path || !signed.token || !signed.publicUrl) {
-      setError(signed.error ?? "Could not prepare thumbnail upload.");
+      setError(signed.error ?? "De thumbnailupload kon niet worden voorbereid.");
       return false;
     }
 
-    setMessage("Uploading thumbnail...");
+    setMessage("Thumbnail uploaden...");
     const supabase = createBrowserSupabaseClient();
     const { error: uploadError } = await supabase.storage
       .from("course-thumbnails")
@@ -560,14 +361,14 @@ export function AdminWeeklyUpdatesManager({
       return false;
     }
 
-    setMessage("Saving thumbnail...");
+    setMessage("Thumbnail opslaan...");
     const updated = await adminUpdateWeeklyUpdateThumbnail(
       weeklyUpdateId,
       signed.publicUrl
     );
 
     if (!updated.success) {
-      setError(updated.error ?? "Could not save thumbnail.");
+      setError(updated.error ?? "De thumbnail kon niet worden opgeslagen.");
       return false;
     }
 
@@ -575,13 +376,27 @@ export function AdminWeeklyUpdatesManager({
     return true;
   }
 
+  async function uploadChartsForUpdate(id: number, files: File[]): Promise<boolean> {
+    if (!files.length) return true;
+    for (const file of files) {
+      setMessage(`Chart uploaden: ${file.name}`);
+      const signed = await adminCreateChartUpload(id, { type: file.type, size: file.size });
+      if (!signed.success || !signed.path || !signed.token) { setError(signed.error ?? "Upload mislukt."); return false; }
+      const { error: uploadError } = await createBrowserSupabaseClient().storage.from("market-update-charts").uploadToSignedUrl(signed.path, signed.token, file, { contentType: file.type, upsert: false });
+      if (uploadError) { setError(uploadError.message); return false; }
+      const attached = await adminAttachChartImage(id, signed.path);
+      if (!attached.success) { setError(attached.error ?? "Chart koppelen mislukt."); return false; }
+    }
+    return true;
+  }
+
   async function uploadForExistingUpdate(weeklyUpdateId: number, file: File) {
-    setMessage("Creating Mux upload...");
+    setMessage("Videoupload voorbereiden...");
     setProgress(0);
     const created = await adminCreateWeeklyUpdateMuxUpload(weeklyUpdateId);
     if (!created.success || !created.uploadId || !created.uploadUrl) {
       setProgress(null);
-      setError(created.error ?? "Could not create Mux upload.");
+      setError(created.error ?? "De videoupload kon niet worden voorbereid.");
       return;
     }
 
@@ -592,9 +407,9 @@ export function AdminWeeklyUpdatesManager({
     }
 
     try {
-      setMessage("Uploading to Mux...");
+      setMessage("Video uploaden...");
       await putFileWithProgress(created.uploadUrl, file, setProgress);
-      setMessage("Upload complete. Syncing status...");
+      setMessage("Upload voltooid. Videostatus bijwerken...");
       const synced = await adminSyncWeeklyUpdateMuxUpload(
         weeklyUpdateId,
         created.uploadId
@@ -603,14 +418,15 @@ export function AdminWeeklyUpdatesManager({
         setProgress(null);
         setError(
           synced.error ??
-            "Video uploaded, but Mux status could not be synced. Try Sync again."
+            "De video is geüpload, maar de status kon niet worden bijgewerkt. Probeer het opnieuw."
         );
-        setMessage("Video uploaded safely. Mux status still needs to be synced.");
+        setMessage("De video is opgeslagen. Werk de videostatus nog bij.");
         refresh();
         return;
       }
       setThumbnailFile(null);
       setProgress(null);
+      hasUnsavedChanges.current = false;
       refresh(
         synced.status === "ready"
           ? "De video is klaar."
@@ -618,7 +434,7 @@ export function AdminWeeklyUpdatesManager({
       );
     } catch (uploadError) {
       setProgress(null);
-      setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+      setError(uploadError instanceof Error ? uploadError.message : "De upload is mislukt.");
     }
   }
 
@@ -626,6 +442,12 @@ export function AdminWeeklyUpdatesManager({
     resetFeedback();
     const file = fileInputRef.current?.files?.[0] ?? null;
     const selectedThumbnailFile = thumbnailFile;
+    const selectedChartFiles = Array.from(chartFileRef.current?.files ?? []);
+    const selectedFormat = formData.get("content_format");
+    if (selectedFormat === "chart" && selectedChartFiles.length + (update?.image_paths.length ?? 0) > 4) {
+      setError("Maximaal vier chartafbeeldingen per update.");
+      return;
+    }
 
     startTransition(async () => {
       if (update) {
@@ -634,6 +456,8 @@ export function AdminWeeklyUpdatesManager({
           setError(saved.error ?? "De video kon niet worden opgeslagen.");
           return;
         }
+
+        if (selectedFormat === "chart" && selectedChartFiles.length && !(await uploadChartsForUpdate(update.id, selectedChartFiles))) return;
 
         if (selectedThumbnailFile) {
           const uploaded = await uploadThumbnailForUpdate(
@@ -649,8 +473,24 @@ export function AdminWeeklyUpdatesManager({
         }
 
         setThumbnailFile(null);
+        hasUnsavedChanges.current = false;
         setPanel({ type: "empty" });
-        refresh("Video opgeslagen.");
+        refresh("Marktupdate opgeslagen.");
+        return;
+      }
+
+      if (selectedFormat !== "video") {
+        const created = await adminCreateWeeklyUpdate(formData);
+        if (!created.success || !created.weeklyUpdateId) { setError(created.error ?? "Concept maken mislukt."); return; }
+        if (selectedFormat === "chart" && selectedChartFiles.length && !(await uploadChartsForUpdate(created.weeklyUpdateId, selectedChartFiles))) {
+          hasUnsavedChanges.current = false;
+          setPanel({ type: "empty" });
+          refresh("Concept opgeslagen; open het opnieuw om de chartupload te hervatten.");
+          return;
+        }
+        setPanel({ type: "empty" });
+        hasUnsavedChanges.current = false;
+        refresh("Concept opgeslagen. Open het opnieuw om te publiceren.");
         return;
       }
 
@@ -674,15 +514,16 @@ export function AdminWeeklyUpdatesManager({
               return;
             }
           }
-          setMessage("Uploading to Mux...");
+          setMessage("Video uploaden...");
           await putFileWithProgress(created.uploadUrl, file, setProgress);
-          setMessage("Upload complete. Syncing status...");
+          setMessage("Upload voltooid. Videostatus bijwerken...");
           const synced = await adminSyncWeeklyUpdateMuxUpload(
             created.weeklyUpdateId,
             created.uploadId
           );
           if (!synced.success) {
             setProgress(null);
+            hasUnsavedChanges.current = false;
             setPanel({ type: "empty" });
             setError(
               synced.error ??
@@ -695,6 +536,7 @@ export function AdminWeeklyUpdatesManager({
             return;
           }
           setThumbnailFile(null);
+          hasUnsavedChanges.current = false;
           setPanel({ type: "empty" });
           setProgress(null);
           refresh(
@@ -704,7 +546,7 @@ export function AdminWeeklyUpdatesManager({
           );
         } catch (uploadError) {
           setProgress(null);
-          setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+          setError(uploadError instanceof Error ? uploadError.message : "De upload is mislukt.");
         }
         return;
       }
@@ -722,6 +564,7 @@ export function AdminWeeklyUpdatesManager({
         if (!uploaded) return;
       }
       setThumbnailFile(null);
+      hasUnsavedChanges.current = false;
       setPanel({ type: "empty" });
       refresh("Video toegevoegd.");
     });
@@ -732,7 +575,7 @@ export function AdminWeeklyUpdatesManager({
     startTransition(async () => {
       const result = await adminSyncWeeklyUpdateMuxUpload(update.id);
       if (!result.success) {
-        setError(result.error ?? "Could not sync Mux status.");
+        setError(result.error ?? "De videostatus kon niet worden bijgewerkt.");
         return;
       }
       if (result.status === "errored") {
@@ -742,7 +585,7 @@ export function AdminWeeklyUpdatesManager({
       }
       refresh(
         result.status === "ready"
-          ? "Video is ready."
+          ? "De video is klaar."
           : "Mux verwerkt de video nog. Probeer straks opnieuw te syncen."
       );
     });
@@ -753,7 +596,7 @@ export function AdminWeeklyUpdatesManager({
     startTransition(async () => {
       const result = await adminDeleteWeeklyUpdate(update.id);
       if (!result.success) {
-        setError(result.error ?? "De video kon niet worden verwijderd.");
+        setError(result.error ?? "De marktanalyse kon niet worden verwijderd.");
         return;
       }
       setDeletedIds((current) => {
@@ -763,18 +606,19 @@ export function AdminWeeklyUpdatesManager({
       });
       if (panel.type === "edit" && panel.update.id === update.id) {
         setThumbnailFile(null);
+        hasUnsavedChanges.current = false;
         setPanel({ type: "empty" });
       }
-      refresh("Video verwijderd.");
+      refresh("Marktanalyse verwijderd.");
     });
   }
 
   const panelTitle =
     panel.type === "create"
-      ? "Nieuwe video"
+      ? "Nieuw marktinzicht"
       : panel.type === "edit"
-        ? "Video bewerken"
-        : "Selecteer een video";
+        ? "Marktinzicht bewerken"
+        : "Selecteer een marktinzicht";
 
   return (
     <div className="grid gap-5 lg:h-[calc(100dvh-10rem)] lg:min-h-[620px] lg:grid-cols-[minmax(0,1fr)_minmax(420px,500px)] lg:overflow-hidden">
@@ -791,7 +635,7 @@ export function AdminWeeklyUpdatesManager({
             className="cb-btn cb-btn-primary text-sm"
             onClick={() => resetPanel({ type: "create" })}
           >
-            <Icon name="plus" /> Video toevoegen
+            <Icon name="plus" /> Marktinzicht toevoegen
           </button>
         </div>
 
@@ -803,7 +647,7 @@ export function AdminWeeklyUpdatesManager({
             className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-bold ${archiveFilter === "all" ? "bg-[var(--foreground)] text-[var(--background)]" : "text-[var(--muted)]"}`}
             onClick={() => setArchiveFilter("all")}
           >
-            Alle video’s ({availableUpdates.length})
+            Alle inzichten ({availableUpdates.length})
           </button>
           <button
             type="button"
@@ -821,8 +665,8 @@ export function AdminWeeklyUpdatesManager({
             <div className="p-8 text-center">
               <p className="cb-body">
                 {archiveFilter === "uncategorized"
-                  ? "Geen video’s wachten op handmatige classificatie."
-                  : "Nog geen marktinzichten. Voeg de eerste video toe."}
+                  ? "Geen marktinzichten wachten op handmatige classificatie."
+                  : "Nog geen marktinzichten. Voeg het eerste inzicht toe."}
               </p>
             </div>
           ) : (
@@ -840,13 +684,13 @@ export function AdminWeeklyUpdatesManager({
                   className="grid min-w-0 gap-3 text-left sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center"
                   onClick={() => resetPanel({ type: "edit", update })}
                 >
-                  <CourseThumbnail
+                  {update.content_format === "chart" && update.image_paths.length > 0 ? <img src={`/api/market-updates/${update.id}/images/0`} alt="" className="aspect-[16/10] w-full rounded-xl object-contain" /> : update.content_format === "text" ? <div className="flex aspect-[16/10] items-center justify-center rounded-xl bg-[var(--surface-hover)] text-xs font-bold">Tekstupdate</div> : <CourseThumbnail
                     src={update.thumbnail_url}
                     title={update.title}
                     eyebrow={update.type === "market_update" ? getMarketLabel(update.market) : getMarketAnalysisTypeLabel(update.type)}
                     className="aspect-[16/10] rounded-xl"
                     muted={!update.is_published}
-                  />
+                  />}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="truncate text-base font-semibold text-[var(--foreground)]">
@@ -854,10 +698,10 @@ export function AdminWeeklyUpdatesManager({
                       </h3>
                       {statusBadge(update)}
                       <span className={update.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
-                        {update.is_published ? "Published" : "Draft"}
+                        {update.is_published ? "Gepubliceerd" : "Concept"}
                       </span>
                       <span className="cb-badge cb-badge-locked">
-                        {accessLabel(update.access_tier)}
+                        {accessLabel(update.access_tier, paidProductsActive)}
                       </span>
                       <span className={update.type ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                         {getMarketAnalysisTypeLabel(update.type)}
@@ -871,7 +715,9 @@ export function AdminWeeklyUpdatesManager({
                       {update.type === "weekly_outlook"
                         ? `Week ${getIsoWeekNumber(update.week_start_date)} · ${formatDate(update.week_start_date)}`
                         : formatDate(update.published_at ?? update.created_at)}
-                      {update.mentor ? ` · ${update.mentor.name ?? update.mentor.email}` : ""}
+                      {update.content_format !== "video" && update.is_published
+                        ? ` · Geplaatst door ${marketUpdateAuthorName(update)}`
+                        : update.mentor ? ` · ${update.mentor.name ?? update.mentor.email}` : ""}
                     </p>
                     {update.summary ? (
                       <p className="mt-1 line-clamp-1 text-sm text-[var(--muted)]">
@@ -884,39 +730,43 @@ export function AdminWeeklyUpdatesManager({
                   <button
                     type="button"
                     className={iconButtonClass()}
-                    aria-label={`Edit ${update.title}`}
-                    title="Video bewerken"
+                    aria-label={`${update.title} bewerken`}
+                    title="Marktinzicht bewerken"
                     onClick={() => resetPanel({ type: "edit", update })}
                   >
                     <Icon name="edit" />
                   </button>
-                  <button
-                    type="button"
-                    className={iconButtonClass()}
-                    aria-label={`Upload video for ${update.title}`}
-                    title="Upload video"
-                    onClick={() => {
-                      resetPanel({ type: "edit", update });
-                      window.setTimeout(() => fileInputRef.current?.focus(), 0);
-                    }}
-                  >
-                    <Icon name="upload" />
-                  </button>
-                  <button
-                    type="button"
-                    className={iconButtonClass()}
-                    aria-label={`Sync ${update.title}`}
-                    title="Sync Mux status"
-                    disabled={!update.mux_upload_id || pending}
-                    onClick={() => syncUpdate(update)}
-                  >
-                    <Icon name="refresh" />
-                  </button>
+                  {update.content_format === "video" ? (
+                    <>
+                      <button
+                        type="button"
+                        className={iconButtonClass()}
+                        aria-label={`Video uploaden voor ${update.title}`}
+                        title="Video uploaden"
+                        onClick={() => {
+                          resetPanel({ type: "edit", update });
+                          window.setTimeout(() => fileInputRef.current?.focus(), 0);
+                        }}
+                      >
+                        <Icon name="upload" />
+                      </button>
+                      <button
+                        type="button"
+                        className={iconButtonClass()}
+                        aria-label={`Videostatus bijwerken voor ${update.title}`}
+                        title="Videostatus bijwerken"
+                        disabled={!update.mux_upload_id || pending}
+                        onClick={() => syncUpdate(update)}
+                      >
+                        <Icon name="refresh" />
+                      </button>
+                    </>
+                  ) : null}
                   <button
                     type="button"
                     className={iconButtonClass("danger")}
-                    aria-label={`Delete ${update.title}`}
-                    title="Video verwijderen"
+                    aria-label={`${update.title} verwijderen`}
+                    title="Marktinzicht verwijderen"
                     onClick={() => {
                       resetFeedback();
                       setConfirm({ type: "delete", update });
@@ -945,7 +795,7 @@ export function AdminWeeklyUpdatesManager({
               className="rounded-lg px-2 py-1 text-sm font-semibold text-[var(--muted)] hover:bg-[color-mix(in_oklab,var(--card)_70%,var(--foreground)_6%)]"
               onClick={() => resetPanel({ type: "empty" })}
             >
-              Close
+              Sluiten
             </button>
           ) : null}
         </div>
@@ -953,24 +803,24 @@ export function AdminWeeklyUpdatesManager({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
           {panel.type === "empty" ? (
             <p className="cb-body">
-              Selecteer een video uit de bibliotheek of voeg een nieuwe marktanalyse toe.
+              Selecteer een marktinzicht uit de bibliotheek of voeg een nieuw inzicht toe.
             </p>
           ) : panel.type === "create" ? (
-            <form action={(formData) => runSave(formData)} className="space-y-4">
-              <WeeklyUpdateFields key="create" mentors={mentors} onThumbnailFileChange={setThumbnailFile} />
-              <label className="space-y-1.5">
-                <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Video file</span>
+            <form action={(formData) => runSave(formData)} onInput={() => { hasUnsavedChanges.current = true; }} onChange={() => { hasUnsavedChanges.current = true; }} className="space-y-4">
+              <WeeklyUpdateFields key="create" mentors={mentors} paidProductsActive={paidProductsActive} onThumbnailFileChange={setThumbnailFile} onContentFormatChange={setContentFormat} chartFileRef={chartFileRef} />
+              {contentFormat === "video" ? <label className="space-y-1.5">
+                <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Videobestand</span>
                 <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
-              </label>
+              </label> : null}
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Bezig..." : "Video toevoegen"}
+                {pending || progress !== null ? "Bezig..." : contentFormat === "video" ? "Video toevoegen" : "Concept opslaan"}
               </button>
             </form>
           ) : selectedUpdate ? (
-            <form action={(formData) => runSave(formData, selectedUpdate)} className="space-y-4">
-              <WeeklyUpdateFields key={selectedUpdate.id} update={selectedUpdate} mentors={mentors} onThumbnailFileChange={setThumbnailFile} />
-              <div className="rounded-xl border border-[var(--border)] p-3">
+            <form action={(formData) => runSave(formData, selectedUpdate)} onInput={() => { hasUnsavedChanges.current = true; }} onChange={() => { hasUnsavedChanges.current = true; }} className="space-y-4">
+              <WeeklyUpdateFields key={selectedUpdate.id} update={selectedUpdate} mentors={mentors} paidProductsActive={paidProductsActive} onThumbnailFileChange={setThumbnailFile} onContentFormatChange={setContentFormat} chartFileRef={chartFileRef} />
+              {contentFormat === "video" ? <div className="rounded-xl border border-[var(--border)] p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="cb-eyebrow">Video</div>
@@ -983,7 +833,7 @@ export function AdminWeeklyUpdatesManager({
                       disabled={pending}
                       onClick={() => syncUpdate(selectedUpdate)}
                     >
-                      <Icon name="refresh" /> Sync
+                      <Icon name="refresh" /> Status bijwerken
                     </button>
                   ) : null}
                 </div>
@@ -996,15 +846,38 @@ export function AdminWeeklyUpdatesManager({
                   <p className="mt-3 text-sm font-semibold text-red-700 dark:text-red-300">{selectedUpdate.mux_error_message}</p>
                 ) : null}
                 <label className="mt-3 block space-y-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Replace/upload video</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Video vervangen of uploaden</span>
                   <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
                 </label>
-              </div>
+              </div> : null}
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Bezig..." : "Video opslaan"}
+                {pending || progress !== null ? "Bezig..." : "Marktupdate opslaan"}
               </button>
             </form>
+          ) : null}
+
+          {selectedUpdate?.is_published && selectedUpdate.access_tier === "subscription" ? (
+            <button
+              type="button"
+              className="cb-btn cb-btn-secondary mt-4 w-full justify-center text-sm"
+              disabled={pending}
+              onClick={() => {
+                resetFeedback();
+                startTransition(async () => {
+                  const result = await adminRepairWeeklyUpdateNotification(selectedUpdate.id);
+                  if (result.success) {
+                    setMessage(result.recipientCount
+                      ? "Melding gecontroleerd; ontbrekende ontvangers zijn toegevoegd."
+                      : "Geen huidige ontvangers voor dit inzicht.");
+                  } else {
+                    setError(result.error ?? "Melding controleren mislukt.");
+                  }
+                });
+              }}
+            >
+              Melding controleren
+            </button>
           ) : null}
 
           {message ? <p className="mt-4 cb-caption">{message}</p> : null}

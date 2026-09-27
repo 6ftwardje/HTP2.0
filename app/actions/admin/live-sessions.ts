@@ -4,6 +4,8 @@ import { fromZonedTime } from "date-fns-tz";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/access";
 import { logAdminAction } from "@/lib/admin/audit";
+import { ensureNotificationRecipients } from "@/lib/admin/notification-delivery";
+import { repairableLiveSessionNotificationType } from "@/lib/admin/live-session-notification-repair";
 import { createServiceClient } from "@/lib/supabase/service";
 import { paidProductsEnabled } from "@/lib/billing";
 import type { LiveSession } from "@/lib/types";
@@ -63,15 +65,6 @@ async function notifyLiveSession(
 ) {
   const db = createServiceClient();
   const targetId = session.id;
-  const { data: existing } = await db
-    .from("notification_events")
-    .select("id")
-    .eq("type", type)
-    .eq("target_table", "live_sessions")
-    .eq("target_id", targetId)
-    .maybeSingle();
-  if (existing) return;
-
   const date = new Intl.DateTimeFormat("nl-BE", {
     weekday: "long",
     day: "numeric",
@@ -83,32 +76,51 @@ async function notifyLiveSession(
   const recipients = await subscriberIds();
   if (recipients.length === 0) return;
 
-  const { data: event, error } = await db
-    .from("notification_events")
-    .insert({
-      type,
-      actor_student_id: actorStudentId,
-      target_table: "live_sessions",
-      target_id: targetId,
-      title:
-        type === "live_session.cancelled"
-          ? "Livesessie geannuleerd"
-          : "Nieuwe Weekly Outlook gepland",
-      body:
-        type === "live_session.cancelled"
-          ? `${session.title}: ${session.cancellation_reason}`
-          : `${session.title} · ${date}`,
-      href: "/live-sessions",
-      metadata: { starts_at: session.starts_at },
-    })
-    .select("id")
-    .single();
-  if (error || !event) throw new Error(error?.message ?? "Melding aanmaken mislukt.");
-
-  const { error: recipientError } = await db.from("notification_recipients").insert(
-    recipients.map((studentId) => ({ event_id: event.id, student_id: studentId }))
-  );
-  if (recipientError) throw new Error(recipientError.message);
+  await ensureNotificationRecipients({
+    findEventId: async () => {
+      const { data, error } = await db
+        .from("notification_events")
+        .select("id")
+        .eq("type", type)
+        .eq("target_table", "live_sessions")
+        .eq("target_id", targetId)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.id ?? null;
+    },
+    createEvent: async () => {
+      const { data, error } = await db
+        .from("notification_events")
+        .insert({
+          type,
+          actor_student_id: actorStudentId,
+          target_table: "live_sessions",
+          target_id: targetId,
+          title:
+            type === "live_session.cancelled"
+              ? "Livesessie geannuleerd"
+              : "Nieuwe Weekly Outlook gepland",
+          body:
+            type === "live_session.cancelled"
+              ? `${session.title}: ${session.cancellation_reason}`
+              : `${session.title} · ${date}`,
+          href: "/live-sessions",
+          metadata: { starts_at: session.starts_at },
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (!data) throw new Error("Melding aanmaken mislukt.");
+      return data.id;
+    },
+    addRecipients: async (eventId) => {
+      const { error } = await db.from("notification_recipients").upsert(
+        recipients.map((studentId) => ({ event_id: eventId, student_id: studentId })),
+        { onConflict: "event_id,student_id", ignoreDuplicates: true }
+      );
+      if (error) throw error;
+    },
+  });
 }
 
 function revalidateLiveSessions() {
@@ -192,7 +204,7 @@ export async function adminCreateLiveSession(
   }
 
   if (publish) await notifyLiveSession(data as LiveSession, actorStudent.id, "live_session.scheduled");
-  logAdminAction("live_session.created", {
+  await logAdminAction("live_session.created", {
     actorStudentId: actorStudent.id,
     metadata: { liveSessionId: data.id, title, startsAt: startsAt.toISOString() },
   });
@@ -215,7 +227,7 @@ export async function adminSetLiveSessionStatus(
     .select("id")
     .maybeSingle();
   if (error || !data) actionError(error?.message ?? "De status kon niet worden aangepast.");
-  logAdminAction("live_session.status_updated", {
+  await logAdminAction("live_session.status_updated", {
     actorStudentId: actorStudent.id,
     metadata: { liveSessionId: sessionId, status },
   });
@@ -280,7 +292,7 @@ export async function adminPublishLiveSession(
   }
 
   await notifyLiveSession(data as LiveSession, actorStudent.id, "live_session.scheduled");
-  logAdminAction("live_session.published", {
+  await logAdminAction("live_session.published", {
     actorStudentId: actorStudent.id,
     metadata: { liveSessionId: sessionId },
   });
@@ -311,9 +323,9 @@ export async function adminCancelLiveSession(
   if (data.is_published) {
     await notifyLiveSession(data as LiveSession, actorStudent.id, "live_session.cancelled");
   }
-  logAdminAction("live_session.cancelled", {
+  await logAdminAction("live_session.cancelled", {
     actorStudentId: actorStudent.id,
-    metadata: { liveSessionId: sessionId, reason },
+    metadata: { liveSessionId: sessionId },
   });
   revalidateLiveSessions();
 }
@@ -356,9 +368,30 @@ export async function adminAttachLiveSessionReplay(
     .eq("id", sessionId);
   if (error) actionError(error.message);
 
-  logAdminAction("live_session.replay_attached", {
+  await logAdminAction("live_session.replay_attached", {
     actorStudentId: actorStudent.id,
     metadata: { liveSessionId: sessionId, replayId },
+  });
+  revalidateLiveSessions();
+}
+
+export async function adminRepairLiveSessionNotification(sessionId: string): Promise<void> {
+  const { actorStudent } = await requireAdmin();
+  const db = createServiceClient();
+  const { data, error } = await db
+    .from("live_sessions")
+    .select("id, title, starts_at, ends_at, status, is_published, cancellation_reason")
+    .eq("id", sessionId)
+    .maybeSingle();
+  if (error || !data) actionError(error?.message ?? "Sessie niet gevonden.");
+
+  const type = repairableLiveSessionNotificationType(data);
+  if (!type) actionError("Voor deze sessie is geen melding te herstellen.");
+
+  await notifyLiveSession(data as LiveSession, actorStudent.id, type);
+  await logAdminAction("live_session.notification_checked", {
+    actorStudentId: actorStudent.id,
+    metadata: { liveSessionId: sessionId, notificationType: type },
   });
   revalidateLiveSessions();
 }

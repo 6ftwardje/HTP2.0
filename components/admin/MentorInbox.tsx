@@ -28,7 +28,7 @@ function formatShortDate(value: string | null) {
 function statusLabel(status: string) {
   if (status === "pending_mentor") return "Te beantwoorden";
   if (status === "pending_student") return "Wacht op student";
-  if (status === "snoozed") return "Snoozed";
+  if (status === "snoozed") return "Later opvolgen";
   if (status === "closed") return "Gesloten";
   return "Open";
 }
@@ -43,7 +43,7 @@ function senderLabel(message: ConversationMessage) {
   if (message.is_internal) return "Interne notitie";
   if (message.sender_role === "student") return "Student";
   if (message.sender_role === "ai") return "AI";
-  return "Rousso";
+  return "Mentor";
 }
 
 export function MentorInbox({
@@ -240,7 +240,7 @@ export function MentorInbox({
                 name="body"
                 rows={4}
                 maxLength={5000}
-                placeholder="Antwoord als Rousso..."
+                placeholder="Typ je antwoord..."
                 className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-7 outline-none focus:border-[color-mix(in_oklab,var(--accent)_55%,var(--border))]"
                 required
               />
@@ -283,7 +283,7 @@ export function MentorInbox({
                     <option value="open">Open</option>
                     <option value="pending_mentor">Te beantwoorden</option>
                     <option value="pending_student">Wacht op student</option>
-                    <option value="snoozed">Snoozed</option>
+                    <option value="snoozed">Later opvolgen</option>
                     <option value="closed">Gesloten</option>
                   </select>
                 </label>
@@ -296,9 +296,9 @@ export function MentorInbox({
                     defaultValue={detail.thread.priority}
                     className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
                   >
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
+                    <option value="normal">Normaal</option>
+                    <option value="high">Hoog</option>
+                    <option value="urgent">Dringend</option>
                   </select>
                 </label>
                 <label className="block">
@@ -308,7 +308,7 @@ export function MentorInbox({
                   <input
                     name="category"
                     defaultValue={detail.thread.category ?? ""}
-                    placeholder="strategy, mindset, sales..."
+                    placeholder="Bijv. strategie, mindset, planning"
                     className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
                   />
                 </label>

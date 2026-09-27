@@ -25,6 +25,7 @@ out/
 # Testing
 coverage/
 output/playwright/
+.playwright-cli/
 tsconfig.tsbuildinfo
 
 # Misc

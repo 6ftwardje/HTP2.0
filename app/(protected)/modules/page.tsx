@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { ensureCurrentStudent } from "@/lib/students";
 import { getPublishedModules } from "@/lib/modules";
-import { getLessonCountsByModuleIds } from "@/lib/lessons";
-import { buildModuleAccessMap } from "@/lib/module-gate";
+import { getLessonCountsByModuleIds, getPublishedLessonsByModuleId } from "@/lib/lessons";
+import { getProgressByLessonIds } from "@/lib/progress";
+import { buildModuleAccessMap, getLegacyAcademyModuleIds } from "@/lib/module-gate";
+import { FULL_COURSE_ACCESS_LEVEL, FREE_ACCESS_MODULE_LIMIT } from "@/lib/module-access-policy";
 import { getExamsByModuleIds, getPassedExamIdsForStudent } from "@/lib/exams";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ModuleStateBadge } from "@/components/StatusBadge";
@@ -21,12 +23,14 @@ export default async function ModulesPage() {
   ]);
   const moduleIds = modules.map((module) => module.id);
 
-  const [lessonCountMap, examMap, onboarding] = await Promise.all([
+  const [lessonCountMap, examMap, onboarding, legacyAccessModuleIds] = await Promise.all([
     getLessonCountsByModuleIds(moduleIds),
     getExamsByModuleIds(moduleIds),
     student ? getStudentOnboardingResponse(student.id) : Promise.resolve(null),
+    student ? getLegacyAcademyModuleIds(student.id) : Promise.resolve(new Set<number>()),
   ]);
   const intakeComplete = onboardingIsComplete(onboarding);
+  const needsIntake = !!student && !intakeComplete && student.access_level < FULL_COURSE_ACCESS_LEVEL;
 
   const passedExamIds = student
     ? await getPassedExamIdsForStudent(
@@ -34,20 +38,25 @@ export default async function ModulesPage() {
         [...examMap.values()].map((exam) => exam.id)
       )
     : new Set<number>();
-  const examIdByModuleId = new Map(
-    [...examMap.values()].map((exam) => [exam.module_id, exam.id])
-  );
   const moduleAccessMap = student
     ? buildModuleAccessMap(
         modules,
         onboarding,
-        passedExamIds,
-        examIdByModuleId,
-        student.access_level
+        student.access_level,
+        legacyAccessModuleIds
       )
     : new Map<number, boolean>();
 
   const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
+  const firstLesson = needsIntake && orderedModules[0]
+    ? (await getPublishedLessonsByModuleId(orderedModules[0].id))[0]
+    : null;
+  const firstLessonProgress = firstLesson && student
+    ? await getProgressByLessonIds(student.id, [firstLesson.id])
+    : null;
+  const introCompleted = firstLesson
+    ? firstLessonProgress?.get(firstLesson.id)?.watched === true
+    : false;
 
   const moduleStateMap = new Map<number, "locked" | "available" | "completed">();
   for (const mod of orderedModules) {
@@ -71,18 +80,22 @@ export default async function ModulesPage() {
       </div>
     ) : (
       <div className="space-y-5">
-        {!intakeComplete && (
+        {needsIntake && (
           <section className="rounded-xl border border-[color-mix(in_oklab,var(--accent)_28%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_8%,var(--card))] p-5 sm:p-6">
-            <div className="cb-eyebrow text-[var(--accent)]">Intake vereist</div>
-            <h2 className="mt-3 cb-section-title">
-              Vul je intake in om videolessen te starten
+            <h2 className="cb-section-title">
+              {legacyAccessModuleIds.size > 0
+                ? "Maak je intake af"
+                : introCompleted ? "Ga verder na je eerste les" : "Begin met de eerste les"}
             </h2>
             <p className="mt-2 cb-caption max-w-2xl">
-              Je kunt de modules alvast bekijken. De videocourse opent zodra je
-              jouw ervaring, doelen en huidige uitdaging hebt ingevuld.
+              {legacyAccessModuleIds.size > 0
+                ? "Je eerder geopende modules blijven beschikbaar. Vul je intake in om ook de overige gratis modules te openen en je mentor context te geven."
+                : introCompleted
+                ? "Vul nu je intake in om de overige lessen te openen en je mentor context te geven."
+                : "Maak eerst kennis met het traject. Vul daarna je intake in om verder te leren en je mentor context te geven."}
             </p>
-            <Link href="/onboarding" className="mt-5 inline-flex cb-btn cb-btn-primary">
-              Intake invullen
+            <Link href={introCompleted || legacyAccessModuleIds.size > 0 ? "/onboarding" : `/modules/${orderedModules[0].slug}`} className="mt-5 inline-flex cb-btn cb-btn-primary">
+              {introCompleted || legacyAccessModuleIds.size > 0 ? "Intake invullen" : "Open de eerste module"}
             </Link>
           </section>
         )}
@@ -93,11 +106,13 @@ export default async function ModulesPage() {
             const lessonCount = lessonCountMap.get(mod.id) ?? 0;
             const shortDesc = asText(mod.short_description);
             const moduleTitle = stripModulePrefix(mod.title, mod.order_index);
-            const lockedCopy = !intakeComplete
-              ? "Vul eerst je intake in"
-              : student && student.access_level < 2 && index >= 3
-                ? "Beschikbaar met full course"
-                : "Komt vrij na de vorige toets";
+            const isPaidModule = student && student.access_level < FULL_COURSE_ACCESS_LEVEL && index >= FREE_ACCESS_MODULE_LIMIT;
+            const lockedCopy = isPaidModule
+              ? "Volledige Academy-toegang nodig"
+              : needsIntake
+                ? "Vul je intake in na de eerste les"
+                : "Nog niet beschikbaar";
+            const showLessonCount = (!needsIntake && !isPaidModule) || legacyAccessModuleIds.has(mod.id);
             return (
               <li key={mod.id}>
                 {canOpen ? (
@@ -119,9 +134,9 @@ export default async function ModulesPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
                           <ModuleStateBadge state={state} />
-                          <span className="cb-caption">
-                          {lessonCount} {lessonCount === 1 ? "les" : "lessen"}
-                        </span>
+                          {showLessonCount && <span className="cb-caption">
+                            {lessonCount} {lessonCount === 1 ? "les" : "lessen"}
+                          </span>}
                       </div>
                       <h2 className="mt-2 text-lg font-semibold leading-snug text-[var(--foreground)]">
                         {moduleTitle}
@@ -133,7 +148,7 @@ export default async function ModulesPage() {
                       )}
                     </div>
                     <div className="mt-5 text-sm font-semibold text-[var(--foreground)]">
-                      {intakeComplete ? "Openen" : "Module bekijken"}
+                      {needsIntake && !legacyAccessModuleIds.has(mod.id) ? "Eerste les bekijken" : "Openen"}
                       </div>
                     </div>
                   </Link>
@@ -153,9 +168,9 @@ export default async function ModulesPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
                           <ModuleStateBadge state={state} />
-                          <span className="cb-caption">
-                          {lessonCount} {lessonCount === 1 ? "les" : "lessen"}
-                        </span>
+                          {showLessonCount && <span className="cb-caption">
+                            {lessonCount} {lessonCount === 1 ? "les" : "lessen"}
+                          </span>}
                       </div>
                       <h2 className="mt-2 text-lg font-semibold leading-snug text-[var(--foreground)]">
                         {moduleTitle}
@@ -185,7 +200,7 @@ export default async function ModulesPage() {
         breadcrumbs={[{ label: "Academy" }]}
         eyebrow="Jouw opleiding"
         title="Modules"
-        description="Werk in volgorde. Rond de lessen en toets af om het volgende blok vrij te spelen."
+        description="Volg de lessen in je eigen tempo. De eerste drie modules zijn gratis; voor de rest heb je volledige Academy-toegang nodig."
       />
       <div className="min-w-0">{main}</div>
     </div>

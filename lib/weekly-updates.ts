@@ -118,6 +118,7 @@ export async function listPublishedMarketUpdatesByMarket(
     )
     .eq("is_published", true)
     .eq("type", "market_update")
+    .eq("content_format", "video")
     .eq("market", market)
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })

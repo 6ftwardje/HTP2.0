@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const MIN_VISIBLE_MS = 320;
 const SHOW_DELAY_MS = 80;
 const MAX_VISIBLE_MS = 12000;
-const USER_INITIATED_REQUEST_MS = 1500;
 
 function isModifiedClick(event: MouseEvent) {
   return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
@@ -39,16 +38,16 @@ function shouldStartForLink(anchor: HTMLAnchorElement) {
     return false;
   }
 
-  return !isSameDocumentHashLink(url);
+  return !isSameDocumentHashLink(url) && url.href !== window.location.href;
 }
 
 export function TopLoadingBar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const routeKey = `${pathname}?${searchParams.toString()}`;
   const [visible, setVisible] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const visibleRef = useRef(false);
-  const activeRequests = useRef(0);
-  const lastUserIntentAt = useRef(0);
   const visibleSince = useRef(0);
   const showTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
@@ -97,7 +96,6 @@ export function TopLoadingBar() {
 
     clearTimer(maxTimer);
     maxTimer.current = window.setTimeout(() => {
-      activeRequests.current = 0;
       finish();
     }, MAX_VISIBLE_MS);
   }, [finish, setBarVisible]);
@@ -110,71 +108,24 @@ export function TopLoadingBar() {
 
       const target = event.target as Element | null;
       const anchor = target?.closest("a");
-      const button = target?.closest("button");
-
-      if (anchor || button) {
-        lastUserIntentAt.current = Date.now();
-      }
 
       if (anchor instanceof HTMLAnchorElement && shouldStartForLink(anchor)) {
-        start();
-      }
-    };
-
-    const onSubmit = (event: SubmitEvent) => {
-      if (!event.defaultPrevented) {
-        lastUserIntentAt.current = Date.now();
-        start();
+        queueMicrotask(() => {
+          if (!event.defaultPrevented) start();
+        });
       }
     };
 
     window.addEventListener("click", onClick, true);
-    window.addEventListener("submit", onSubmit, true);
-    window.addEventListener("beforeunload", start);
 
     return () => {
       window.removeEventListener("click", onClick, true);
-      window.removeEventListener("submit", onSubmit, true);
-      window.removeEventListener("beforeunload", start);
     };
   }, [start]);
 
   useEffect(() => {
-    const originalFetch = window.fetch;
-
-    window.fetch = async (...args) => {
-      const isUserInitiated =
-        visibleRef.current ||
-        showTimer.current !== null ||
-        Date.now() - lastUserIntentAt.current < USER_INITIATED_REQUEST_MS;
-
-      if (!isUserInitiated) {
-        return originalFetch(...args);
-      }
-
-      activeRequests.current += 1;
-      start();
-
-      try {
-        return await originalFetch(...args);
-      } finally {
-        activeRequests.current -= 1;
-
-        if (activeRequests.current <= 0) {
-          activeRequests.current = 0;
-          finish();
-        }
-      }
-    };
-
-    return () => {
-      window.fetch = originalFetch;
-    };
-  }, [finish, start]);
-
-  useEffect(() => {
     finish();
-  }, [finish, pathname]);
+  }, [finish, routeKey]);
 
   return (
     <div

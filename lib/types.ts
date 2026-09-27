@@ -155,6 +155,8 @@ export type MarketInsightFormat =
 
 export type MarketInsightActuality = "current" | "still_relevant" | "archive";
 
+export type WeeklyUpdateContentFormat = "video" | "chart" | "text";
+
 export type MarketInsightChapter = {
   title: string;
   seconds: number;
@@ -162,6 +164,9 @@ export type MarketInsightChapter = {
 
 export type WeeklyUpdate = {
   id: number;
+  content_format: WeeklyUpdateContentFormat;
+  body: string | null;
+  image_paths: string[];
   title: string;
   slug: string;
   summary: string | null;
@@ -171,6 +176,8 @@ export type WeeklyUpdate = {
   week_start_date: string;
   mentor_student_id: string | null;
   created_by_student_id: string | null;
+  published_by_student_id?: string | null;
+  published_by_display_name?: string | null;
   access_tier: WeeklyUpdateAccessTier;
   video_provider: "mux" | "vimeo" | "youtube";
   video_url: string | null;

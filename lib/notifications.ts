@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudent } from "@/lib/students";
 import type { NotificationEvent, NotificationWithEvent } from "@/lib/types";
+import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
+import { STUDENT_NOTIFICATION_EVENT_TYPES } from "@/lib/notification-visibility";
 
 export type NotificationActionResult =
   | { success: true }
@@ -30,12 +32,15 @@ export async function getUnreadNotificationCount(): Promise<number> {
   if (!student) return 0;
 
   const db = await createClient();
-  const { count, error } = await db
+  const baseQuery = db
     .from("notification_recipients")
-    .select("id", { count: "exact", head: true })
+    .select("id, event:notification_events!inner(type)", { count: "exact", head: true })
     .eq("student_id", student.id)
     .is("read_at", null)
     .is("archived_at", null);
+  const { count, error } = await (student.access_level === ADMIN_ACCESS_LEVEL
+    ? baseQuery
+    : baseQuery.in("event.type", [...STUDENT_NOTIFICATION_EVENT_TYPES]));
 
   if (error) {
     if (!isMissingTable(error)) console.error("getUnreadNotificationCount", error.message);
@@ -52,13 +57,17 @@ export async function listMyNotifications(): Promise<{
   if (!student) return { notifications: [], missingMigration: false };
 
   const db = await createClient();
-  const { data, error } = await db
+  const baseQuery = db
     .from("notification_recipients")
     .select(
-      "id, event_id, student_id, read_at, archived_at, created_at, event:notification_events(id, type, actor_student_id, target_table, target_id, title, body, href, metadata, created_at)"
+      "id, event_id, student_id, read_at, archived_at, created_at, event:notification_events!inner(id, type, actor_student_id, target_table, target_id, title, body, href, metadata, created_at)"
     )
     .eq("student_id", student.id)
-    .is("archived_at", null)
+    .is("archived_at", null);
+  const visibleQuery = student.access_level === ADMIN_ACCESS_LEVEL
+    ? baseQuery
+    : baseQuery.in("event.type", [...STUDENT_NOTIFICATION_EVENT_TYPES]);
+  const { data, error } = await visibleQuery
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -107,16 +116,20 @@ export async function markNotificationRead(
   if (!student) return { success: false, error: "Niet ingelogd." };
 
   const db = await createClient();
-  const { error } = await db
+  const { data, error } = await db
     .from("notification_recipients")
     .update({ read_at: new Date().toISOString() })
     .eq("id", notificationId)
-    .eq("student_id", student.id);
+    .eq("student_id", student.id)
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     console.error("markNotificationRead", error.message);
     return { success: false, error: "Melding bijwerken mislukt." };
   }
+
+  if (!data) return { success: false, error: "Melding niet gevonden of niet toegankelijk." };
 
   return { success: true };
 }

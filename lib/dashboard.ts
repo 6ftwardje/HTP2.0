@@ -2,9 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getExamsByModuleIds, getPassedExamIdsForStudent } from "@/lib/exams";
 import { getLessonActionProgress, normalizeLessonActions } from "@/lib/lesson-actions";
 import { getPublishedLessonsByModuleIds } from "@/lib/lessons";
-import { buildModuleAccessMap } from "@/lib/module-gate";
+import { buildModuleAccessMap, getLegacyAcademyModuleIds } from "@/lib/module-gate";
+import { chooseNextAvailableModule } from "@/lib/module-access-policy";
 import { getPublishedModules } from "@/lib/modules";
-import { getStudentOnboardingResponse } from "@/lib/onboarding";
+import { getStudentOnboardingResponse, onboardingIsComplete } from "@/lib/onboarding";
 import { getProgressByLessonIds } from "@/lib/progress";
 import type { DashboardStats, Exam, Lesson, Module } from "@/lib/types";
 import type { StudentOnboardingResponse } from "@/lib/types";
@@ -83,19 +84,16 @@ async function buildDashboardOverview(
   exams: Exam[],
   onboarding: StudentOnboardingResponse | null,
   passedExamIds: Set<number>,
-  progressMap: Map<number, { watched: boolean; watched_at: string | null }>
+  progressMap: Map<number, { watched: boolean; watched_at: string | null }>,
+  legacyAccessModuleIds: ReadonlySet<number>
 ): Promise<DashboardOverview> {
   const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
   const examMap = new Map(exams.map((exam) => [exam.module_id, exam]));
-  const examIdByModuleId = new Map(
-    exams.map((exam) => [exam.module_id, exam.id])
-  );
   const accessMap = buildModuleAccessMap(
     orderedModules,
     onboarding,
-    passedExamIds,
-    examIdByModuleId,
-    accessLevel
+    accessLevel,
+    legacyAccessModuleIds
   );
 
   const lessonsByModule = new Map<number, Lesson[]>();
@@ -126,8 +124,11 @@ async function buildDashboardOverview(
     };
   });
 
-  const currentSummary =
-    summaries.find((summary) => summary.state === "available") ?? null;
+  const currentSummary = chooseNextAvailableModule(
+    summaries,
+    accessLevel < 2 && !onboardingIsComplete(onboarding),
+    legacyAccessModuleIds
+  );
 
   if (!currentSummary) {
     const completedLessons = summaries.reduce(
@@ -237,10 +238,11 @@ export async function getDashboardOverview(
 ): Promise<DashboardOverview> {
   const modules = await getPublishedModules();
   const moduleIds = modules.map((module) => module.id);
-  const [examMap, lessons, onboarding] = await Promise.all([
+  const [examMap, lessons, onboarding, legacyAccessModuleIds] = await Promise.all([
     getExamsByModuleIds(moduleIds),
     getPublishedLessonsByModuleIds(moduleIds),
     getStudentOnboardingResponse(studentId),
+    getLegacyAcademyModuleIds(studentId),
   ]);
   const lessonIds = lessons.map((lesson) => lesson.id);
   const [passedExamIds, progressMap] = await Promise.all([
@@ -258,7 +260,8 @@ export async function getDashboardOverview(
     [...examMap.values()],
     onboarding,
     passedExamIds,
-    progressMap
+    progressMap,
+    legacyAccessModuleIds
   );
 }
 
@@ -267,7 +270,10 @@ export async function getDashboardOverviewReadModel(
   accessLevel = 1
 ): Promise<DashboardOverview> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_my_dashboard_read_model");
+  const [{ data, error }, legacyAccessModuleIds] = await Promise.all([
+    supabase.rpc("get_my_dashboard_read_model"),
+    getLegacyAcademyModuleIds(studentId),
+  ]);
   const payload = data as DashboardReadModel | null;
 
   if (
@@ -299,6 +305,7 @@ export async function getDashboardOverviewReadModel(
           watched_at: progress.watched_at,
         },
       ])
-    )
+    ),
+    legacyAccessModuleIds
   );
 }

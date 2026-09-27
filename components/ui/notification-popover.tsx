@@ -54,8 +54,6 @@ export function NotificationPopover({
 }) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
-  const handledUnreadAtRef = useRef(0);
-  const handledFallbackSignalRef = useRef<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -65,41 +63,9 @@ export function NotificationPopover({
       notifications.map((notification) => [notification.id, notification])
     ).values()
   );
-  const latestUnreadNotification = dedupedNotifications.find(
-    (notification) => !notification.read
-  );
-  const latestUnreadAt = latestUnreadNotification
-    ? Date.parse(latestUnreadNotification.timestamp)
-    : 0;
-  const unreadFallbackSignal =
-    unreadCount > 0 && !latestUnreadNotification ? `count:${unreadCount}` : null;
-
   function closePopover() {
     setIsOpen(false);
   }
-
-  useEffect(() => {
-    if (unreadCount <= 0) {
-      handledFallbackSignalRef.current = null;
-      return;
-    }
-
-    if (latestUnreadAt > 0) {
-      if (latestUnreadAt > handledUnreadAtRef.current) {
-        handledUnreadAtRef.current = latestUnreadAt;
-        setIsOpen(true);
-      }
-      return;
-    }
-
-    if (
-      unreadFallbackSignal &&
-      unreadFallbackSignal !== handledFallbackSignalRef.current
-    ) {
-      handledFallbackSignalRef.current = unreadFallbackSignal;
-      setIsOpen(true);
-    }
-  }, [latestUnreadAt, unreadCount, unreadFallbackSignal]);
 
   useEffect(() => {
     if (!isOpen) return;

@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { paidProductsEnabled } from "@/lib/billing";
 import type { WeeklyUpdate, WeeklyUpdateAccessTier } from "@/lib/types";
-import { getWeeklyUpdateAccessOption } from "@/lib/weekly-update-access";
+import {
+  getWeeklyUpdateAccessLabel,
+  getWeeklyUpdateAccessOption,
+  getWeeklyUpdateNotificationAudience,
+} from "@/lib/weekly-update-access";
 
 const WEEKLY_UPDATE_PUBLISHED_EVENT_TYPE = "weekly_update.published";
 
@@ -21,11 +26,13 @@ export async function notifyWeeklyUpdatePublished({
     | "access_tier"
     | "type"
     | "market"
+    | "content_format"
   >;
   actorStudentId: string;
 }): Promise<{ notified: number; skipped: boolean; error: string | null }> {
-  const accessOption = getWeeklyUpdateAccessOption(weeklyUpdate.access_tier);
-  if (!accessOption.selectable) {
+  const paidProductsActive = paidProductsEnabled();
+  const audience = getWeeklyUpdateNotificationAudience(weeklyUpdate.access_tier, paidProductsActive);
+  if (!audience) {
     return { notified: 0, skipped: true, error: null };
   }
 
@@ -47,17 +54,13 @@ export async function notifyWeeklyUpdatePublished({
     return { notified: 0, skipped: false, error: existing.error.message };
   }
 
-  if (existing.data?.id) {
-    return { notified: 0, skipped: true, error: null };
-  }
-
   let recipients: string[] = [];
-  if (accessOption.entitlementKey) {
+  if (audience.kind === "entitlement") {
     const now = new Date().toISOString();
     const entitlements = await db
       .from("student_entitlements")
       .select("student_id")
-      .eq("entitlement_key", accessOption.entitlementKey)
+      .eq("entitlement_key", audience.key)
       .is("revoked_at", null)
       .lte("starts_at", now)
       .or(`ends_at.is.null,ends_at.gt.${now}`);
@@ -67,11 +70,11 @@ export async function notifyWeeklyUpdatePublished({
     recipients = Array.from(
       new Set((entitlements.data ?? []).map((row) => row.student_id).filter(Boolean))
     );
-  } else if (accessOption.minAccessLevel !== null) {
+  } else {
     const students = await db
       .from("students")
       .select("id")
-      .gte("access_level", accessOption.minAccessLevel);
+      .gte("access_level", audience.minAccessLevel);
     if (students.error) {
       return { notified: 0, skipped: false, error: students.error.message };
     }
@@ -82,56 +85,66 @@ export async function notifyWeeklyUpdatePublished({
     return { notified: 0, skipped: false, error: null };
   }
 
-  const event = await db
-    .from("notification_events")
-    .insert({
-      type: WEEKLY_UPDATE_PUBLISHED_EVENT_TYPE,
-      actor_student_id: actorStudentId,
-      target_table: "weekly_updates",
-      target_id: targetId,
-      title:
-        weeklyUpdate.type === "weekly_outlook"
-          ? "Nieuwe weekly outlook"
-          : "Nieuwe markt update",
-      body: weeklyUpdate.title,
-      href:
-        weeklyUpdate.type === "market_update"
-          ? `/updates/watch/${weeklyUpdate.slug}`
-          : `/market-analysis/${weeklyUpdate.slug}`,
-      metadata: {
-        type: weeklyUpdate.type,
-        market: weeklyUpdate.market,
-        access_tier: weeklyUpdate.access_tier,
-        access_label: accessOption.label,
-        summary: weeklyUpdate.summary,
-      },
-    })
-    .select("id")
-    .single();
+  let eventId = existing.data?.id ?? null;
+  if (!eventId) {
+    const event = await db
+      .from("notification_events")
+      .insert({
+        type: WEEKLY_UPDATE_PUBLISHED_EVENT_TYPE,
+        actor_student_id: actorStudentId,
+        target_table: "weekly_updates",
+        target_id: targetId,
+        title:
+          weeklyUpdate.type === "weekly_outlook"
+            ? "Nieuwe weekvooruitblik"
+            : "Nieuw marktinzicht",
+        body: weeklyUpdate.title,
+        href: `/market-analysis/${weeklyUpdate.slug}`,
+        metadata: {
+          type: weeklyUpdate.type,
+          market: weeklyUpdate.market,
+          access_tier: weeklyUpdate.access_tier,
+          access_label: getWeeklyUpdateAccessLabel(weeklyUpdate.access_tier, paidProductsActive),
+          summary: weeklyUpdate.summary,
+        },
+      })
+      .select("id")
+      .single();
 
-  if (event.error || !event.data?.id) {
     if (event.error?.code === "23505") {
-      return { notified: 0, skipped: true, error: null };
+      const retry = await db
+        .from("notification_events")
+        .select("id")
+        .eq("type", WEEKLY_UPDATE_PUBLISHED_EVENT_TYPE)
+        .eq("target_table", "weekly_updates")
+        .eq("target_id", targetId)
+        .maybeSingle();
+      if (retry.error || !retry.data?.id) {
+        return { notified: 0, skipped: false, error: retry.error?.message ?? "Melding kon niet worden opgehaald." };
+      }
+      eventId = retry.data.id;
+    } else if (event.error || !event.data?.id) {
+      if (isMissingTable(event.error ?? null)) {
+        console.warn("notifyWeeklyUpdatePublished: notification tables missing");
+        return { notified: 0, skipped: true, error: null };
+      }
+      return { notified: 0, skipped: false, error: event.error?.message ?? "Melding aanmaken mislukt." };
+    } else {
+      eventId = event.data.id;
     }
-    if (isMissingTable(event.error ?? null)) {
-      console.warn("notifyWeeklyUpdatePublished: notification tables missing");
-      return { notified: 0, skipped: true, error: null };
-    }
-    return {
-      notified: 0,
-      skipped: false,
-      error: event.error?.message ?? "Could not create notification event.",
-    };
   }
 
   const recipientRows = recipients.map((studentId) => ({
-    event_id: event.data.id,
+    event_id: eventId,
     student_id: studentId,
   }));
 
   const inserted = await db
     .from("notification_recipients")
-    .upsert(recipientRows, { onConflict: "event_id,student_id" });
+    .upsert(recipientRows, {
+      onConflict: "event_id,student_id",
+      ignoreDuplicates: true,
+    });
 
   if (inserted.error) {
     if (isMissingTable(inserted.error)) {

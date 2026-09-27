@@ -21,13 +21,13 @@ export default async function NotificationsPage() {
     <div>
       <PageHeader
         eyebrow="Meldingen"
-        title="Notification center"
-        description="Nieuwe mentorantwoorden en platformupdates verschijnen hier. E-mail en push kunnen later via dezelfde voorkeuren worden aangesloten."
+        title="Meldingen"
+        description="Antwoorden van je mentor en belangrijke berichten op één plek."
         actions={
           unreadCount > 0 ? (
             <form action={markNotificationsRead}>
               <button className="cb-btn cb-btn-secondary px-4 py-2 text-sm" type="submit">
-                Alles gelezen
+                Markeer alles als gelezen
               </button>
             </form>
           ) : null
@@ -37,11 +37,15 @@ export default async function NotificationsPage() {
       {missingMigration ? (
         <section className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-6">
           <h2 className="text-lg font-extrabold text-[var(--foreground)]">
-            Notificaties zijn bijna klaar
+            Meldingen tijdelijk niet beschikbaar
           </h2>
           <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            Pas de nieuwe Supabase migration toe om het notification center te activeren.
+            We kunnen je meldingen nu niet laden. Probeer het later opnieuw.
+            Je kunt je mentorberichten rechtstreeks in de chat bekijken.
           </p>
+          <Link href="/mentor" className="mt-4 inline-flex text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline">
+            Open mentorchat →
+          </Link>
         </section>
       ) : notifications.length === 0 ? (
         <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6">

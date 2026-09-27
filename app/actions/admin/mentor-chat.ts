@@ -50,7 +50,7 @@ export async function adminReplyToMentorThread(
   if (error) return { success: false, error };
 
   await markAdminMentorThreadRead(threadId);
-  logAdminAction(isInternal ? "mentor_chat.internal_note_created" : "mentor_chat.replied", {
+  await logAdminAction(isInternal ? "mentor_chat.internal_note_created" : "mentor_chat.replied", {
     actorStudentId: actorStudent.id,
     metadata: { threadId },
   });
@@ -78,7 +78,7 @@ export async function adminUpdateMentorThread(
 
   if (error) return { success: false, error };
 
-  logAdminAction("mentor_chat.thread_updated", {
+  await logAdminAction("mentor_chat.thread_updated", {
     actorStudentId: actorStudent.id,
     metadata: { threadId, status, priority, category: categoryRaw || null },
   });

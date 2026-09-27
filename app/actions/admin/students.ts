@@ -17,7 +17,7 @@ export async function adminUpdateStudentAccessLevel(
   const { actorStudent } = await requireAdmin();
   const level = parseAccessLevel(rawLevel);
   if (level === null) {
-    return { success: false, error: "Invalid access level" };
+    return { success: false, error: "Ongeldig toegangsniveau." };
   }
 
   if (
@@ -26,7 +26,7 @@ export async function adminUpdateStudentAccessLevel(
   ) {
     return {
       success: false,
-      error: "You cannot remove your own admin access from this account.",
+      error: "Je kunt je eigen adminrechten niet verwijderen.",
     };
   }
 
@@ -35,7 +35,7 @@ export async function adminUpdateStudentAccessLevel(
     return { success: false, error };
   }
 
-  logAdminAction("student.access_level_updated", {
+  await logAdminAction("student.access_level_updated", {
     actorStudentId: actorStudent.id,
     targetStudentId,
     metadata: { access_level: level },
@@ -66,35 +66,48 @@ function parseTags(value: unknown) {
 export async function adminUpdateStudentMentorMeta(
   targetStudentId: string,
   formData: FormData
-) {
+): Promise<{ success: boolean; error?: string }> {
   const { actorStudent } = await requireAdmin();
   const mentorStatus = parseMentorStatus(formData.get("mentor_status"));
   if (!mentorStatus) {
-    return;
+    return { success: false, error: "Kies een geldige begeleidingsstatus." };
+  }
+
+  const tags = parseTags(formData.get("tags"));
+  if (tags.length > 12 || tags.some((tag) => tag.length > 40)) {
+    return { success: false, error: "Gebruik maximaal 12 onderwerpen van hoogstens 40 tekens." };
   }
 
   const { error } = await updateStudentMentorMetaAdmin(
     targetStudentId,
     mentorStatus,
-    parseTags(formData.get("tags"))
+    tags
   );
-  if (!error) {
-    logAdminAction("student.mentor_meta_updated", {
-      actorStudentId: actorStudent.id,
-      targetStudentId,
-      metadata: { mentor_status: mentorStatus },
-    });
-    revalidatePath("/admin/students");
-    revalidatePath(`/admin/students/${targetStudentId}`);
+  if (error) {
+    console.error("adminUpdateStudentMentorMeta", error);
+    return { success: false, error: "Begeleiding kon niet worden opgeslagen. Probeer opnieuw." };
   }
+
+  await logAdminAction("student.mentor_meta_updated", {
+    actorStudentId: actorStudent.id,
+    targetStudentId,
+    metadata: { mentor_status: mentorStatus, tags },
+  });
+  revalidatePath("/admin/students");
+  revalidatePath(`/admin/students/${targetStudentId}`);
+  return { success: true };
 }
 
 export async function adminCreateStudentMentorNote(
   targetStudentId: string,
   formData: FormData
-) {
+): Promise<{ success: boolean; error?: string }> {
   const { actorStudent } = await requireAdmin();
-  const body = String(formData.get("body") ?? "");
+  const body = String(formData.get("body") ?? "").trim();
+  if (!body) return { success: false, error: "Schrijf eerst een notitie." };
+  if (body.length > 5000) {
+    return { success: false, error: "Een notitie mag maximaal 5.000 tekens bevatten." };
+  }
   const isPinned = formData.get("is_pinned") === "on";
   const { error } = await createStudentMentorNoteAdmin(
     targetStudentId,
@@ -102,11 +115,15 @@ export async function adminCreateStudentMentorNote(
     body,
     isPinned
   );
-  if (!error) {
-    logAdminAction("student.mentor_note_created", {
-      actorStudentId: actorStudent.id,
-      targetStudentId,
-    });
-    revalidatePath(`/admin/students/${targetStudentId}`);
+  if (error) {
+    console.error("adminCreateStudentMentorNote", error);
+    return { success: false, error: "Notitie kon niet worden toegevoegd. Probeer opnieuw." };
   }
+
+  await logAdminAction("student.mentor_note_created", {
+    actorStudentId: actorStudent.id,
+    targetStudentId,
+  });
+  revalidatePath(`/admin/students/${targetStudentId}`);
+  return { success: true };
 }

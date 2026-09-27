@@ -34,7 +34,7 @@ export function AccessLevelSelect({
 
     if (n !== value && n < ADMIN_ACCESS_LEVEL && !isSelf) {
       const ok = window.confirm(
-        "Lower this access level? The student will lose permissions tied to higher levels."
+        "Toegang verlagen? Deze student verliest rechten die bij een hoger niveau horen."
       );
       if (!ok) {
         setLocal(value);
@@ -45,7 +45,7 @@ export function AccessLevelSelect({
     startTransition(async () => {
       const res = await adminUpdateStudentAccessLevel(studentId, n);
       if (!res.success) {
-        setError(res.error ?? "Update failed");
+        setError(res.error ?? "Toegang wijzigen mislukt.");
         setLocal(value);
         return;
       }
@@ -60,7 +60,7 @@ export function AccessLevelSelect({
   return (
     <div className="space-y-1">
       <label className="sr-only" htmlFor={`access-${studentId}`}>
-        Access level
+        Toegangsniveau
       </label>
       <select
         id={`access-${studentId}`}
@@ -79,8 +79,7 @@ export function AccessLevelSelect({
               lvl < ADMIN_ACCESS_LEVEL
             }
           >
-            Level {lvl}
-            {lvl === ADMIN_ACCESS_LEVEL ? " — Admin" : ""}
+            {lvl === 1 ? "Basis (niveau 1)" : lvl === 2 ? "Volledige cursus (niveau 2)" : "Admin (niveau 3)"}
           </option>
         ))}
       </select>
@@ -91,7 +90,7 @@ export function AccessLevelSelect({
       )}
       {isSelf && value === ADMIN_ACCESS_LEVEL && (
         <p className="cb-caption text-xs">
-          Another admin must change your level if you need to leave the admin role.
+          Een andere admin moet jouw adminrechten wijzigen.
         </p>
       )}
     </div>
@@ -108,7 +107,7 @@ export function AccessLevelBadge({ level }: { level: number }) {
           : "cb-badge cb-badge-locked"
       }
     >
-      {isAdmin ? "Admin" : `Level ${level}`}
+      {isAdmin ? "Admin" : level === 2 ? "Volledige cursus" : "Basis"}
     </span>
   );
 }
