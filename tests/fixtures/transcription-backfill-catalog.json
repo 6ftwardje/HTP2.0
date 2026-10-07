@@ -1,0 +1,18 @@
+[
+  {
+    "internalId": "synthetic-mux-ready",
+    "title": "Synthetische Mux-video",
+    "videoProvider": "mux",
+    "durationSeconds": 1800,
+    "muxAssetId": "synthetic-asset",
+    "muxPlaybackId": "synthetic-playback",
+    "muxStatus": "ready"
+  },
+  {
+    "internalId": "synthetic-vimeo",
+    "title": "Synthetische legacyvideo",
+    "videoProvider": "vimeo",
+    "videoUrl": "https://example.invalid/video",
+    "durationSeconds": 900
+  }
+]

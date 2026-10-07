@@ -7,10 +7,12 @@ import type {
   WeeklyUpdate,
   WeeklyUpdateAccessTier,
   WeeklyUpdateContentFormat,
+  VideoTranscriptSummary,
 } from "@/lib/types";
 
 export type AdminWeeklyUpdateRow = WeeklyUpdate & {
   mentor: Pick<Student, "id" | "name" | "email"> | null;
+  transcripts: VideoTranscriptSummary[];
 };
 
 export type AdminDashboardDraft = Pick<
@@ -21,6 +23,9 @@ export type AdminDashboardDraft = Pick<
 export type WeeklyUpdateInput = {
   content_format: WeeklyUpdateContentFormat;
   body: string | null;
+  content_kind?: "video" | "article";
+  intro?: string | null;
+  article_html?: string | null;
   title: string;
   slug: string;
   summary: string | null;
@@ -77,6 +82,53 @@ export async function listWeeklyUpdatesAdmin(): Promise<AdminWeeklyUpdateRow[]> 
           id,
           name,
           email
+        ),
+        transcripts:ai_video_transcripts (
+          id,
+          weekly_update_id,
+          source_version,
+          source_language,
+          provider,
+          provider_track_id,
+          status,
+          attempt_count,
+          failure_code,
+          failure_retryable,
+          started_at,
+          ready_at,
+          failed_at,
+          created_at,
+          updated_at,
+          transcript,
+          workflows:ai_video_workflows (
+            id,
+            transcript_id,
+            step,
+            status,
+            attempt_count,
+            max_attempts,
+            next_attempt_at,
+            last_error_code,
+            last_error_retryable,
+            updated_at
+          ),
+          enrichments:ai_video_enrichments (
+            id,
+            transcript_id,
+            prompt_version,
+            model,
+            status,
+            summary,
+            key_takeaways,
+            chapters,
+            reviewed_content,
+            reviewed_by,
+            reviewed_at,
+            published_at,
+            failure_code,
+            created_at,
+            updated_at
+          )
         )
       `
     )

@@ -51,11 +51,13 @@ Productwerk na S0.1 start pas wanneer een mens schriftelijk beslist over:
 | 10 | S2.4 | Goedgekeurde samenvatting en hoofdstukken voor studenten | S2.3 | S |
 | 11 | S3.1 | Vertaalcontract en deterministische WebVTT-renderer | S0.1, S0.2 | S |
 | 12 | S3.2 | Goedgekeurde vertaling als Mux-track | S1.2, S3.1 | M |
-| 13 | S4.1 | Betrouwbare orchestratie met retries en kostenlimieten | S1.3, S2.2, S3.2 | M |
+| 13 | S4.1 | Betrouwbare MVP-orchestratie met retries en kostenlimieten | S1.3, S2.2, S4.0 | M |
 | 14 | S4.2 | Legacybackfill als dry-run met expliciete goedkeuring | S2.3, S4.1 | M |
 | 15 | S4.3 | Synthetische end-to-endacceptatie en runbook | S4.1, S4.2 | M |
 
-S3.1 en S3.2 worden overgeslagen wanneer S0.1 beslist dat vertaling niet tot de MVP behoort. S4.1 moet dan zonder vertaalstap worden herschikt in een apart backlogissue; bestaande issues worden niet stilzwijgend verbreed.
+S3.1 en S3.2 zijn op 2026-09-23 overgeslagen omdat vertaling niet tot de MVP
+behoort. S4.0 legt deze scopewijziging vast; S4.1 hangt voor de MVP af van S1.3,
+S2.2 en S4.0 en bevat geen vertaalstap.
 
 ## Git-flow
 

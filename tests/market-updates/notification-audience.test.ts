@@ -11,7 +11,10 @@ test("zonder abonnementsuitrol volgen update-meldingen de Academy-leesrechten", 
     minAccessLevel: 2,
   });
   assert.equal(getWeeklyUpdateAccessLabel("subscription", false), "Academy");
-  assert.equal(getWeeklyUpdateNotificationAudience("free", false), null);
+  assert.deepEqual(getWeeklyUpdateNotificationAudience("free", false), {
+    kind: "access_level",
+    minAccessLevel: 0,
+  });
 });
 
 test("na abonnementsuitrol blijven entitlement en Academy strikt gescheiden", () => {

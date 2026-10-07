@@ -154,14 +154,14 @@ export function MarketInsightLibrary({ updates, initialMarket = "all" }: { updat
         title: update.title,
         summary: update.content_format === "video" ? update.summary : update.body,
         date: update.published_at ?? update.created_at,
-        duration: update.content_format === "video" ? update.video_duration_seconds : null,
+        duration: update.content_format === "video" && update.content_kind !== "article" ? update.video_duration_seconds : null,
         thumbnail: update.content_format === "chart" ? `/api/market-updates/${update.id}/images/0` : update.thumbnail_url,
         contentFormat: update.content_format,
         markets: itemMarkets(update),
         host: marketUpdateAuthorName(update),
         status: actuality === "archive" ? "archive" : "current",
         href: `/market-analysis/${update.slug}`,
-        action: update.content_format === "video" ? (itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown") : "Lees update",
+        action: update.content_format === "video" && update.content_kind !== "article" ? (itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown") : "Lees update",
       };
     });
     return allItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

@@ -255,3 +255,72 @@ html[data-theme="dark"] .cb-badge-completed {
   background: color-mix(in oklab, #065f46 45%, var(--card) 55%);
   border-color: color-mix(in oklab, #34d399 40%, var(--border) 60%);
 }
+
+/* Editorial detail pages inherit the platform's light/dark design tokens. */
+.market-post { width: 100%; max-width: 980px; min-width: 0; margin: 0 auto; padding: 12px 0 28px; }
+.market-post-back { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; color: var(--muted); font-size: .9rem; text-underline-offset: 4px; }
+.market-post-back:hover { color: var(--accent); }
+.market-post-header { margin: 24px 0 32px; }
+.market-post h1 { max-width: 24ch; font-size: clamp(1.85rem, 3.6vw, 3rem); font-weight: 750; line-height: 1.12; letter-spacing: -.025em; overflow-wrap: anywhere; text-wrap: balance; }
+.market-post-byline { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 26px; }
+.avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border-radius: 50%; background: var(--surface-hover); color: var(--accent); font-size: 1rem; font-weight: 650; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.market-post-author { font-weight: 650; overflow-wrap: anywhere; }
+.market-post-meta { margin-top: 2px; font-size: .9rem; line-height: 1.6; color: var(--muted); }
+.market-post-tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin-left: 8px; }
+.market-post-tags li { padding: 3px 12px; border: 1px solid var(--border); border-radius: 999px; font-size: .85rem; color: var(--muted); }
+.market-post-intro { max-width: 70ch; margin-bottom: 28px; font-size: clamp(1.1rem, 2vw, 1.3rem); line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.market-post-content { min-width: 0; }
+.market-post-content > * + * { margin-top: 32px; }
+.market-article-body { font-size: 1.1rem; line-height: 1.8; overflow-wrap: anywhere; }
+.market-article-body > :not(figure):not(.article-chart-control) { max-width: 70ch; }
+.market-article-body p { margin: 0 0 1.2em; }
+.market-article-body h2, .market-post-text-section h2 { margin: 1.5em 0 .5em; font-size: 1.45rem; font-weight: 700; letter-spacing: -.015em; line-height: 1.3; }
+.market-article-body h3 { margin: 1.5em 0 .5em; font-size: 1.2rem; font-weight: 650; }
+.market-article-body ul, .market-article-body ol, .market-post-text-section ul { padding-left: 1.4em; margin: 1em 0; }
+.market-article-body ul, .market-post-text-section ul { list-style: disc; }
+.market-article-body ol { list-style: decimal; }
+.market-article-body li, .market-post-text-section li { margin: .5em 0; }
+.market-article-body blockquote { border-left: 1px solid var(--accent); padding-left: 1.2em; color: var(--muted); margin: 1.5em 0; }
+.market-article-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
+.market-article-body pre { overflow: auto; font-size: .85em; background: var(--surface-subtle); padding: 16px; }
+.market-article-body figure { margin: 28px 0; }
+.market-article-body img { width: 100%; height: auto; object-fit: contain; border-radius: 6px; background: var(--surface-subtle); }
+.market-article-body img:not([width]):not([height]) { min-height: 180px; }
+.market-article-body figcaption { margin-top: 8px; color: var(--muted); font-size: .85rem; line-height: 1.6; }
+.article-chart-control { display: block; width: 100%; max-width: 100%; margin: 24px 0; text-align: left; cursor: zoom-in; }
+.market-article-body p:has(> .article-chart-control) { max-width: none; }
+.chart-zoom-label { display: block; text-align: right; color: var(--muted); font-size: .85rem; margin-top: 8px; min-height: 32px; }
+.chart-failed { min-height: 180px; background: var(--surface-subtle); cursor: default; }
+.chart-failed img { display: none; }
+.market-post-text-section { max-width: 70ch; font-size: 1.08rem; line-height: 1.8; overflow-wrap: anywhere; }
+.market-post-text-section h2 { margin-top: 0; }
+.market-post-text-section p { white-space: pre-wrap; }
+.market-post-archive { max-width: 70ch; border-top: 1px solid var(--border); padding-top: 20px; font-size: .9rem; line-height: 1.7; color: var(--muted); }
+.market-post-footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+.useful-reaction { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; margin-left: -12px; border-radius: 6px; color: var(--foreground); font-size: .9rem; transition: color 160ms, background-color 160ms; }
+.useful-reaction:hover, .useful-reaction[aria-pressed="true"] { color: var(--accent); background: var(--surface-hover); }
+.useful-reaction:disabled { opacity: .65; cursor: wait; }
+.reaction-count { font-variant-numeric: tabular-nums; color: var(--muted); }
+.market-post-disclaimer { margin-top: 14px; color: var(--muted); font-size: .85rem; line-height: 1.6; }
+.market-media-state { display: flex; align-items: center; justify-content: center; aspect-ratio: 16/9; background: var(--surface-subtle); border-radius: 6px; padding: 24px; text-align: center; color: var(--muted); }
+.media-dialog { border: 1px solid var(--border); border-radius: 12px; background: var(--card); color: var(--foreground); padding: 24px; max-height: calc(100dvh - 32px); max-width: calc(100vw - 32px); overflow: auto; }
+.media-dialog::backdrop { background: rgb(0 0 0 / .78); }
+.media-dialog h2 { font-size: 1.25rem; font-weight: 650; overflow-wrap: anywhere; }
+.chart-dialog { width: min(1400px, calc(100vw - 32px)); }
+.chart-full-image { width: 100%; height: auto; object-fit: contain; margin-top: 20px; }
+.avatar-dialog { width: 480px; }
+.avatar-crop-preview { position: relative; height: 300px; margin-top: 20px; background: #10131c; }
+.market-post :focus-visible, .avatar-editor :focus-visible, .media-dialog :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.market-post ::selection { background: var(--surface-hover); color: var(--foreground); }
+@media (max-width: 600px) {
+  .market-post { padding-top: 0; }
+  .market-post-header { margin-top: 20px; margin-bottom: 26px; }
+  .market-post-tags { width: 100%; margin: 0; }
+  .market-post-byline { gap: 12px; }
+  .market-post-meta { font-size: .82rem; }
+  .market-article-body, .market-post-text-section { font-size: 1rem; line-height: 1.75; }
+  .media-dialog { padding: 16px; }
+  .avatar-crop-preview { height: 260px; }
+}
+@media (prefers-reduced-motion: reduce) { .useful-reaction { transition: none; } }

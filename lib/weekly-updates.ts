@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { paidProductsEnabled } from "@/lib/billing";
+import {
+  projectPublishedVideoEnrichment,
+  type PublishedVideoEnrichment,
+} from "@/lib/transcription/public-enrichment";
 import type { Market, Student, WeeklyUpdate, WeeklyUpdateView } from "@/lib/types";
 
 export type WeeklyUpdateWithMentor = WeeklyUpdate & {
@@ -12,10 +16,11 @@ async function contentClient() {
 }
 
 export async function listPublishedWeeklyUpdates(
-  limit = 48
+  limit = 48,
+  { freeOnly = false }: { freeOnly?: boolean } = {}
 ): Promise<WeeklyUpdateWithMentor[]> {
   const db = await contentClient();
-  const { data, error } = await db
+  let query = db
     .from("weekly_updates")
     .select(
       `
@@ -31,6 +36,11 @@ export async function listPublishedWeeklyUpdates(
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  // The pre-billing service client bypasses RLS, so filter before returning
+  // video URLs and metadata to the library's Client Component.
+  if (freeOnly) query = query.eq("access_tier", "free");
+  const { data, error } = await query;
 
   if (error) {
     console.error("listPublishedWeeklyUpdates", error.message);
@@ -101,10 +111,11 @@ export async function listPublishedMarketUpdates(
 
 export async function listPublishedMarketUpdatesByMarket(
   market: Market,
-  limit = 60
+  limit = 60,
+  { freeOnly = false }: { freeOnly?: boolean } = {}
 ): Promise<WeeklyUpdateWithMentor[]> {
   const db = await contentClient();
-  const { data, error } = await db
+  let query = db
     .from("weekly_updates")
     .select(
       `
@@ -123,6 +134,9 @@ export async function listPublishedMarketUpdatesByMarket(
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (freeOnly) query = query.eq("access_tier", "free");
+  const { data, error } = await query;
 
   if (error) {
     console.error("listPublishedMarketUpdatesByMarket", error.message);
@@ -154,6 +168,27 @@ export async function getPublishedWeeklyUpdateBySlug(
 
   if (error || !data) return null;
   return data as WeeklyUpdateWithMentor;
+}
+
+/**
+ * Returns only the reviewed public projection. This deliberately uses the
+ * service client after the page has authorized access to the parent video, so
+ * draft content, transcript text and provider metadata never enter page props.
+ */
+export async function getPublishedEnrichmentForWeeklyUpdate(
+  weeklyUpdateId: number
+): Promise<PublishedVideoEnrichment | null> {
+  const db = createServiceClient();
+  const { data, error } = await db
+    .from("ai_video_enrichments")
+    .select("status, summary, key_takeaways, chapters, published_at, transcript:ai_video_transcripts!inner(weekly_update_id)")
+    .eq("status", "published")
+    .eq("transcript.weekly_update_id", weeklyUpdateId)
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return projectPublishedVideoEnrichment(data);
 }
 
 export async function getWeeklyUpdateViewsByIds(

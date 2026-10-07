@@ -18,11 +18,13 @@ export default async function MarketAnalysisPage({ searchParams }: Props) {
   const { student } = await ensureCurrentStudent();
   if (!student) return null;
   const billing = await getBillingOverview(student.id);
-  if (!canAccessSubscriberContent(student, billing)) {
-    if (!paidProductsEnabled()) notFound();
+  const hasSubscriberAccess = canAccessSubscriberContent(student, billing);
+  const updates = await listPublishedWeeklyUpdates(100, {
+    freeOnly: !hasSubscriberAccess,
+  });
+  if (!hasSubscriberAccess && updates.length === 0 && paidProductsEnabled()) {
     return <SubscriptionPaywall overview={billing} title="Ontgrendel Marktinzicht" />;
   }
-  const updates = await listPublishedWeeklyUpdates(100);
   return (
     <div>
       <PageHeader

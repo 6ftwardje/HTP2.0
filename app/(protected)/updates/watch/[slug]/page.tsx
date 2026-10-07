@@ -1,8 +1,2 @@
-import { redirect } from "next/navigation";
-
-type Props = { params: Promise<{ slug: string }> };
-
-export default async function LegacyMarketUpdateVideoPage({ params }: Props) {
-  const { slug } = await params;
-  redirect(`/market-analysis/${encodeURIComponent(slug)}`);
-}
+// Legacy URLs retain the same authorized detail page, player and reactions.
+export { default } from "@/app/(protected)/market-analysis/[slug]/page";

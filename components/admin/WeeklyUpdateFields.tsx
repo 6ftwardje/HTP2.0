@@ -140,6 +140,11 @@ export function WeeklyUpdateFields({
       <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Soort update</span><select name="content_format" value={contentFormat} disabled={Boolean(update?.is_published || update?.image_paths.length)} onChange={(event) => { const format = event.target.value as WeeklyUpdateContentFormat; setContentFormat(format); onContentFormatChange(format); }} className={fieldClass()}><option value="text">Tekstbericht</option><option value="chart">Chart met bericht</option><option value="video">Video</option></select>{update && (update.is_published || update.image_paths.length > 0) ? <input type="hidden" name="content_format" value={contentFormat} /> : null}</label>
       <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Titel</span><input name="title" defaultValue={update?.title ?? ""} required className={fieldClass()} /></label>
       <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Bericht</span><textarea name="body" defaultValue={update?.body ?? ""} required minLength={20} maxLength={12000} rows={8} placeholder="Wat speelt er op de markt?" className={fieldClass()} /></label>
+      <label className="space-y-1.5"><span className="text-sm font-semibold">Introductie (optioneel)</span><textarea name="intro" defaultValue={update?.intro ?? ""} rows={3} className={fieldClass()} /></label>
+      <details open={Boolean(update?.article_html?.trim())} className="space-y-3 rounded-lg border border-[var(--border)] p-3">
+        <summary className="cursor-pointer text-sm font-semibold">Artikelopmaak (optioneel)</summary>
+        <label className="block space-y-1.5"><span className="text-sm font-semibold">Artikelinhoud</span><textarea name="article_html" defaultValue={update?.article_html ?? ""} rows={12} maxLength={250000} className={fieldClass()} /><span className="block text-xs leading-5 text-[var(--muted)]">HTML met alinea’s, koppen, lijsten en afbeeldingen in de gewenste volgorde. Zonder artikelinhoud wordt het bericht met eventuele charts getoond.</span></label>
+      </details>
       <fieldset className="space-y-2"><legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Markten</legend><div className="flex flex-wrap gap-2">{[...MARKET_OPTIONS, { value: "macro" as const, label: "Macro" }].map((option) => <label key={option.value} className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm"><input name="markets" type="checkbox" value={option.value} defaultChecked={update?.markets?.includes(option.value) || update?.market === option.value} />{option.label}</label>)}</div></fieldset>
       {contentFormat === "chart" ? <div className="space-y-2 rounded-xl border border-[var(--border)] p-3"><label className="block space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Charts (1–4, max. 10 MB)</span><input ref={chartFileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={update?.is_published} className={fieldClass()} /></label>{update?.image_paths.map((path, index) => <div key={path} className="flex items-center gap-3"><img src={`/api/market-updates/${update.id}/images/${index}`} alt={`Chart ${index + 1}`} className="h-20 w-32 rounded object-contain" /><span className="text-xs">Chart {index + 1}</span>{!update.is_published ? <button type="button" className="cb-btn cb-btn-secondary text-xs" onClick={async () => { const result = await adminRemoveChartImage(update.id, path); if (result.success) window.location.reload(); }}>Verwijder</button> : null}</div>)}</div> : null}
       <input type="hidden" name="type" value="market_update" /><input type="hidden" name="access_tier" value={update?.access_tier ?? "subscription"} /><input type="hidden" name="slug" value={update?.slug ?? ""} /><input type="hidden" name="market" value={update?.market ?? ""} /><input type="hidden" name="mentor_student_id" value={update?.mentor_student_id ?? ""} /><input type="hidden" name="actuality_status" value={update?.actuality_status ?? "current"} /><input type="hidden" name="summary" value={update?.summary ?? ""} /><input type="hidden" name="key_takeaways" value={(update?.key_takeaways ?? []).join("\n")} /><input type="hidden" name="event_context" value={update?.event_context ?? ""} /><input type="hidden" name="period_label" value={update?.period_label ?? ""} /><input type="hidden" name="related_content" value={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} />
@@ -150,6 +155,7 @@ export function WeeklyUpdateFields({
   return (
     <div className="grid gap-3">
       {contentFormat === "video" ? <ThumbnailField update={update} onFileChange={onThumbnailFileChange} /> : null}
+      <label className="space-y-1.5"><span className="text-sm font-semibold">Introductie (optioneel)</span><textarea name="intro" defaultValue={update?.intro ?? ""} rows={3} className={fieldClass()} /></label>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Inhoudsformaat</span>
         <select name="content_format" value={contentFormat} onChange={(event) => { const format = event.target.value as WeeklyUpdateContentFormat; setContentFormat(format); onContentFormatChange(format); if (format !== "video") setAnalysisType("market_update"); }} disabled={Boolean(update?.is_published || update?.mux_upload_id || update?.image_paths.length)} className={fieldClass()}>
@@ -257,9 +263,10 @@ export function WeeklyUpdateFields({
             ))}
           </select>
           <span className="block text-xs leading-5 text-[var(--muted)]">
+            Kies ‘Iedereen op het platform (ook free)’ om deze video ook voor free accounts beschikbaar te maken.
             {paidProductsActive
-              ? "Marktupdates en weekvooruitblikken zijn voor leden met een actief abonnement."
-              : "Zolang abonnementen uitstaan, zijn deze updates voor Academy-studenten (toegangsniveau 2 of 3)."}
+              ? " Subscription vereist een actief abonnement."
+              : " Academy is voor toegangsniveau 2 of 3."}
           </span>
         </label>
       </div>

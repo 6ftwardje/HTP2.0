@@ -12,10 +12,10 @@ export type WeeklyUpdateAccessOption = {
 export const WEEKLY_UPDATE_ACCESS_OPTIONS: WeeklyUpdateAccessOption[] = [
   {
     value: "free",
-    label: "Iedereen (legacy)",
-    description: "Oude publieke doelgroep; niet gebruiken voor nieuwe marktcontent.",
+    label: "Iedereen op het platform (ook free)",
+    description: "Alle ingelogde accounts kunnen deze video bekijken, inclusief free accounts.",
     minAccessLevel: 0,
-    selectable: false,
+    selectable: true,
   },
   {
     value: "full_course",
@@ -89,12 +89,9 @@ export function getWeeklyUpdateNotificationAudience(
 
 export function canStudentAccessWeeklyUpdate(
   accessTier: WeeklyUpdateAccessTier,
-  student: Pick<Student, "access_level"> | null
+  student: Pick<Student, "access_level"> | null,
+  hasSubscriberAccess = false
 ) {
-  const option = getWeeklyUpdateAccessOption(accessTier);
-  if (option.entitlementKey || !option.selectable || option.minAccessLevel === null) {
-    return false;
-  }
   if (!student) return false;
-  return student.access_level >= option.minAccessLevel;
+  return accessTier === "free" || hasSubscriberAccess;
 }

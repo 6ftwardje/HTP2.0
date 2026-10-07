@@ -1,144 +1,58 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { WeeklyUpdateAutoCompleteVideo } from "@/components/WeeklyUpdateAutoCompleteVideo";
-import { PageHeader } from "@/components/layout/PageHeader";
-import {
-  getIsoWeekNumber,
-  getMarketAnalysisTypeLabel,
-  getMarketLabel,
-} from "@/lib/market-analysis";
-import { getPublishedWeeklyUpdateBySlug } from "@/lib/weekly-updates";
+import { getMarketLabel } from "@/lib/market-analysis";
+import { getPublishedEnrichmentForWeeklyUpdate, getPublishedWeeklyUpdateBySlug } from "@/lib/weekly-updates";
 import { ensureCurrentStudent } from "@/lib/students";
-import {
-  canAccessSubscriberContent,
-  getBillingOverview,
-  paidProductsEnabled,
-} from "@/lib/billing";
+import { canAccessSubscriberContent, getBillingOverview, paidProductsEnabled } from "@/lib/billing";
 import { SubscriptionPaywall } from "@/components/billing/SubscriptionPaywall";
 import { getMuxPlaybackTokens } from "@/lib/mux-signing";
+import { canStudentAccessWeeklyUpdate } from "@/lib/weekly-update-access";
+import { getMarketPostDetailMeta } from "@/lib/market-post-detail";
+import { articleReadingMinutes, isMarketArticle, marketArticleHtml } from "@/lib/market-article";
 import { marketUpdateAuthorName } from "@/lib/market-update-author";
+import { MarketPostLayout } from "@/components/market-insight/MarketPostLayout";
+import { MarketPostContents } from "@/components/market-insight/MarketPostContents";
 
 type Props = { params: Promise<{ slug: string }> };
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("nl-NL", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(value));
-}
 
 export default async function MarketAnalysisDetailPage({ params }: Props) {
   const { slug } = await params;
   const { student } = await ensureCurrentStudent();
   if (!student) return null;
   const billingOverview = await getBillingOverview(student.id);
-  if (!canAccessSubscriberContent(student, billingOverview)) {
+  const hasSubscriberAccess = canAccessSubscriberContent(student, billingOverview);
+  const update = await getPublishedWeeklyUpdateBySlug(slug);
+  if (
+    (!update && !hasSubscriberAccess) ||
+    (update && !canStudentAccessWeeklyUpdate(update.access_tier, student, hasSubscriberAccess))
+  ) {
     if (!paidProductsEnabled()) notFound();
     return <SubscriptionPaywall overview={billingOverview} title="Ontgrendel deze analyse" />;
   }
-  const update = await getPublishedWeeklyUpdateBySlug(slug);
   if (!update) notFound();
-  const muxTokens = update.content_format === "video" ? getMuxPlaybackTokens({
+  const article = isMarketArticle(update);
+  const [enrichment, meta] = await Promise.all([
+    article ? Promise.resolve(null) : getPublishedEnrichmentForWeeklyUpdate(update.id),
+    getMarketPostDetailMeta(update.id),
+  ]);
+  const muxTokens = article ? null : getMuxPlaybackTokens({
     playbackId: update.mux_playback_id,
     playbackPolicy: update.mux_playback_policy,
     durationSeconds: update.video_duration_seconds,
-  }) : null;
-
-  const isOutlook = update.type === "weekly_outlook";
-  const context = isOutlook
-    ? `Week ${getIsoWeekNumber(update.week_start_date)} · ${formatDate(update.week_start_date)}`
-    : `${getMarketLabel(update.market)} · ${formatDate(update.published_at ?? update.created_at)}`;
-
-  return (
-    <div>
-      <PageHeader
-        breadcrumbs={[
-          { href: "/market-analysis", label: "Marktinzicht" },
-          { label: update.title },
-        ]}
-        eyebrow={
-          isOutlook
-            ? getMarketAnalysisTypeLabel(update.type)
-            : `${getMarketAnalysisTypeLabel(update.type)} · ${getMarketLabel(update.market)}`
-        }
-        title={update.title}
-        description={`${context} · ${update.content_format === "video" ? marketUpdateAuthorName(update) : `Geplaatst door ${marketUpdateAuthorName(update)}`}`}
-      />
-
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="min-w-0 space-y-6">
-          {update.content_format === "video" ? <WeeklyUpdateAutoCompleteVideo
-            weeklyUpdateId={update.id}
-            videoUrl={update.video_url}
-            videoProvider={update.video_provider}
-            muxPlaybackId={update.mux_playback_id}
-            muxPlaybackPolicy={update.mux_playback_policy}
-            muxTokens={muxTokens}
-            title={update.title}
-          /> : <article className="space-y-6 rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-8">
-            <div className="cb-eyebrow">{update.content_format === "chart" ? "Chartupdate" : "Tekstupdate"}</div>
-            {update.content_format === "chart" ? update.image_paths.map((_, index) => <figure key={index} className="overflow-hidden rounded-lg border border-[var(--border)]"><a href={`/api/market-updates/${update.id}/images/${index}`} target="_blank" rel="noopener noreferrer" aria-label={`Open chart ${index + 1} op volledige grootte`}><img src={`/api/market-updates/${update.id}/images/${index}`} alt={`Chart ${index + 1} bij ${update.title}`} className="h-auto w-full" /></a><figcaption className="px-3 py-2 text-xs text-[var(--muted)]">Chart {index + 1} · klik om te vergroten</figcaption></figure>) : null}
-            <div className="whitespace-pre-wrap break-words text-[1rem] leading-8 text-[var(--foreground)]">{update.body}</div>
-          </article>}
-
-          {update.summary ? (
-            <section className="rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6">
-              <div className="cb-eyebrow">Samenvatting</div>
-              <p className="mt-4 text-[0.98rem] leading-8 text-[color-mix(in_oklab,var(--foreground)_78%,var(--muted))]">
-                {update.summary}
-              </p>
-            </section>
-          ) : null}
-          {update.event_context ? (
-            <section className="border-t border-[var(--border)] pt-6">
-              <div className="cb-eyebrow">Wat is er gebeurd?</div>
-              <p className="mt-3 cb-body">{update.event_context}</p>
-            </section>
-          ) : null}
-          {(update.chapters?.length ?? 0) > 0 ? (
-            <section className="border-t border-[var(--border)] pt-6">
-              <div className="cb-eyebrow">Hoofdstukken</div>
-              <ol className="mt-3 divide-y divide-[var(--border)]">
-                {update.chapters?.map((chapter) => <li key={`${chapter.seconds}-${chapter.title}`} className="flex gap-4 py-3 text-sm"><span className="font-mono text-[var(--muted)]">{Math.floor(chapter.seconds / 60)}:{String(chapter.seconds % 60).padStart(2, "0")}</span><span className="font-semibold">{chapter.title}</span></li>)}
-              </ol>
-            </section>
-          ) : null}
-          {update.actuality_status === "archive" ? (
-            <aside className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-[var(--foreground)]">
-              Deze analyse is gebaseerd op de marktomstandigheden van {formatDate(update.published_at ?? update.created_at)}. Bekijk recentere inzichten voor de actuele situatie.
-            </aside>
-          ) : null}
-        </section>
-
-        <aside className="h-fit rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] p-5 sm:p-6 lg:sticky lg:top-6">
-          {update.content_format === "video" ? <><div className="cb-eyebrow">Key takeaways</div>
-          {update.key_takeaways.length > 0 ? (
-            <ol className="mt-5 space-y-3">
-              {update.key_takeaways.map((takeaway, index) => (
-                <li key={`${takeaway}-${index}`} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border)] text-xs font-bold text-[var(--muted)]">
-                    {index + 1}
-                  </span>
-                  <span className="text-sm leading-6 text-[var(--foreground)]">{takeaway}</span>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="mt-4 cb-body">Er zijn nog geen takeaways toegevoegd.</p>
-          )}</> : null}
-
-          <div className="mt-6 border-t border-[var(--border)] pt-5">
-            <p className="cb-caption">Deze analyse is educatief en geen financieel advies.</p>
-            <Link
-              href="/market-analysis"
-              className="mt-5 inline-flex w-full cb-btn cb-btn-secondary justify-between px-5 py-3"
-            >
-              Terug naar Marktinzicht <span aria-hidden>→</span>
-            </Link>
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
+  });
+  const minutes = article ? articleReadingMinutes(marketArticleHtml(update), update.intro) : null;
+  const duration = article ? minutes ? `${minutes} min leestijd` : null : update.video_duration_seconds ? `${Math.max(1, Math.round(update.video_duration_seconds / 60))} min video` : null;
+  const markets = update.markets?.length ? update.markets : update.market ? [update.market] : [];
+  const tags = markets.map((market) => market === "macro" ? "Macro" : getMarketLabel(market));
+  const publisherId = article ? update.published_by_student_id : null;
+  const author = publisherId && publisherId !== meta.author?.student_id
+    ? { name: marketUpdateAuthorName(update), object_path: null, student_id: publisherId }
+    : meta.author ?? { name: update.author_name ?? marketUpdateAuthorName(update), object_path: null };
+  if (article && update.published_by_display_name?.trim()) author.name = update.published_by_display_name.trim();
+  return <MarketPostLayout title={update.title}
+    author={author}
+    publishedAt={update.published_at ?? update.created_at} tags={tags} duration={duration}
+    intro={update.intro} postId={update.id} reaction={meta.reaction}>
+    <MarketPostContents update={update} summary={enrichment?.summary ?? update.summary}
+      takeaways={enrichment?.keyTakeaways ?? update.key_takeaways} chapters={enrichment?.chapters ?? update.chapters ?? []} muxTokens={muxTokens} />
+  </MarketPostLayout>;
 }

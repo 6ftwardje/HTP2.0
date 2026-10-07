@@ -10,12 +10,15 @@
     "perf:baseline": "node scripts/performance-baseline.mjs",
     "perf:verify-boundaries": "node scripts/verify-performance-boundaries.mjs",
     "start": "next start",
-    "test": "node --experimental-strip-types --test tests/access/*.test.ts tests/market-updates/*.test.ts tests/sql/*.test.ts",
+    "test": "tsx --test tests/**/*.test.ts",
+    "transcription:backfill-dry-run": "tsx scripts/transcription-backfill-dry-run.ts",
     "lint": "next lint",
-    "verify:supabase-target": "node scripts/verify-supabase-target.mjs"
+    "verify:supabase-target": "node scripts/verify-supabase-target.mjs",
+    "verify:avatar-storage": "node scripts/verify-avatar-storage.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
+    "@mux/mux-node": "^15.2.0",
     "@mux/mux-player-react": "^3.13.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.10",
@@ -24,21 +27,26 @@
     "next": "^15.5.25",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-easy-crop": "6.2.4",
+    "sanitize-html": "2.18.0",
+    "sharp": "0.35.5",
     "stripe": "^22.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/sanitize-html": "2.16.2",
     "eslint": "^9.15.0",
     "eslint-config-next": "^15.5.25",
     "playwright": "^1.61.1",
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.15",
+    "tsx": "^4.23.15",
     "typescript": "^5.6.3"
   },
   "overrides": {
     "postcss": "$postcss",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   }
 }

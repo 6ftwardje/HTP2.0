@@ -13,11 +13,20 @@ import {
   adminDeleteWeeklyUpdate,
   adminRepairWeeklyUpdateNotification,
   adminSyncWeeklyUpdateMuxUpload,
+  adminStartWeeklyUpdateTranscript,
   adminUpdateWeeklyUpdate,
   adminUpdateWeeklyUpdateThumbnail,
 } from "@/app/actions/admin/weekly-updates";
+import {
+  adminRestartTranscriptWorkflow,
+  adminRunTranscriptWorkflow,
+  adminPublishEnrichment,
+  adminRejectEnrichment,
+  adminSaveEnrichmentReview,
+} from "@/app/actions/admin/transcription-ai";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { WeeklyUpdateFields, type MentorOption } from "@/components/admin/WeeklyUpdateFields";
+import { LegacyBackfillDryRunPanel } from "@/components/admin/LegacyBackfillDryRunPanel";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
 import { marketUpdateAuthorName } from "@/lib/market-update-author";
@@ -27,6 +36,10 @@ import {
   getMarketLabel,
 } from "@/lib/market-analysis";
 import type {
+  MarketAnalysisType,
+  Student,
+  VideoEnrichmentSummary,
+  VideoTranscriptSummary,
   WeeklyUpdateAccessTier,
   WeeklyUpdateContentFormat,
 } from "@/lib/types";
@@ -36,6 +49,10 @@ type PanelState =
   | { type: "empty" }
   | { type: "create" }
   | { type: "edit"; update: AdminWeeklyUpdateRow };
+
+function fieldClass() {
+  return "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition focus:border-[color-mix(in_oklab,var(--foreground)_35%,var(--border))]";
+}
 
 type ConfirmState = { type: "delete"; update: AdminWeeklyUpdateRow } | null;
 
@@ -143,6 +160,152 @@ function statusBadge(update: AdminWeeklyUpdateRow) {
     return <span className="cb-badge cb-badge-available">In verwerking</span>;
   }
   return <span className="cb-badge cb-badge-locked">Geen video</span>;
+}
+
+function latestTranscript(update: AdminWeeklyUpdateRow): VideoTranscriptSummary | null {
+  return [...(update.transcripts ?? [])].sort((a, b) =>
+    b.updated_at.localeCompare(a.updated_at)
+  )[0] ?? null;
+}
+
+function transcriptBadge(transcript: VideoTranscriptSummary | null) {
+  if (!transcript) return <span className="cb-badge cb-badge-locked">Geen transcript</span>;
+  if (transcript.status === "ready") {
+    return <span className="cb-badge cb-badge-completed">Transcript klaar</span>;
+  }
+  if (transcript.status === "failed") {
+    return <span className="cb-badge cb-badge-locked">Transcript mislukt</span>;
+  }
+  return <span className="cb-badge cb-badge-available">Transcript in verwerking</span>;
+}
+
+function latestEnrichment(
+  transcript: VideoTranscriptSummary | null
+): VideoEnrichmentSummary | null {
+  return [...(transcript?.enrichments ?? [])].sort((a, b) =>
+    b.updated_at.localeCompare(a.updated_at)
+  )[0] ?? null;
+}
+
+function transcriptWorkflow(transcript: VideoTranscriptSummary | null) {
+  const workflows = transcript?.workflows;
+  if (!workflows) return null;
+  return Array.isArray(workflows) ? workflows[0] ?? null : workflows;
+}
+
+function EnrichmentReviewPanel({
+  update,
+  onDone,
+  onError,
+}: {
+  update: AdminWeeklyUpdateRow;
+  onDone: (message: string) => void;
+  onError: (message: string) => void;
+}) {
+  const transcript = latestTranscript(update);
+  const enrichment = latestEnrichment(transcript);
+  const [busy, startReviewTransition] = useTransition();
+  const [summary, setSummary] = useState(enrichment?.summary ?? "");
+  const [takeaways, setTakeaways] = useState(
+    (enrichment?.key_takeaways ?? []).join("\n")
+  );
+  const [chapters, setChapters] = useState(
+    (enrichment?.chapters ?? [])
+      .map((chapter) =>
+        `${Math.floor(chapter.seconds / 60)}:${String(chapter.seconds % 60).padStart(2, "0")} ${chapter.title}`
+      )
+      .join("\n")
+  );
+
+  if (!transcript || !enrichment) return null;
+
+  const content = () => ({
+    summary: summary.trim(),
+    keyTakeaways: takeaways.split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
+    chapters: chapters.split(/\r?\n/).flatMap((line) => {
+      const match = line.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})\s+(.+)$/);
+      if (!match) return [];
+      return [{
+        title: match[4].trim(),
+        seconds: Number(match[1] ?? 0) * 3600 + Number(match[2]) * 60 + Number(match[3]),
+      }];
+    }),
+  });
+  const editable = enrichment.status === "draft" || enrichment.status === "review";
+
+  const run = (action: "save" | "publish" | "reject") => {
+    if (action === "publish" && !window.confirm("Publiceer deze gecontroleerde AI-inhoud voor studenten?")) return;
+    if (action === "reject" && !window.confirm("Wijs dit AI-concept definitief af?")) return;
+    startReviewTransition(async () => {
+      const result = action === "save"
+        ? await adminSaveEnrichmentReview(enrichment.id, update.id, content())
+        : action === "publish"
+          ? await adminPublishEnrichment(enrichment.id, update.id, content(), true)
+          : await adminRejectEnrichment(enrichment.id, update.id);
+      if (!result.success) {
+        onError(result.error ?? "De AI-review kon niet worden opgeslagen.");
+        return;
+      }
+      onDone(
+        action === "publish"
+          ? "AI-inhoud gepubliceerd."
+          : action === "reject"
+            ? "AI-concept afgewezen."
+            : "AI-review opgeslagen."
+      );
+    });
+  };
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="cb-eyebrow">AI-review</div>
+          <p className="mt-1 text-sm font-semibold text-[var(--foreground)]">
+            Status: {enrichment.status} · {enrichment.model}
+          </p>
+        </div>
+        {enrichment.published_at ? (
+          <span className="cb-badge cb-badge-completed">Gepubliceerd</span>
+        ) : null}
+      </div>
+
+      <details className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
+        <summary className="cursor-pointer text-sm font-semibold">Brontranscript vergelijken</summary>
+        <div className="mt-3 max-h-56 space-y-2 overflow-y-auto text-sm leading-6 text-[var(--muted)]">
+          {(transcript.transcript ?? []).map((segment) => (
+            <p key={segment.id}>
+              <span className="mr-2 font-mono text-xs text-[var(--foreground)]">
+                {Math.floor(segment.startSeconds / 60)}:{String(Math.floor(segment.startSeconds % 60)).padStart(2, "0")}
+              </span>
+              {segment.text}
+            </p>
+          ))}
+        </div>
+      </details>
+
+      <label className="mt-3 block space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Samenvatting</span>
+        <textarea value={summary} onChange={(event) => setSummary(event.currentTarget.value)} disabled={!editable || busy} rows={4} className={fieldClass()} />
+      </label>
+      <label className="mt-3 block space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Aandachtspunten</span>
+        <textarea value={takeaways} onChange={(event) => setTakeaways(event.currentTarget.value)} disabled={!editable || busy} rows={4} className={fieldClass()} />
+      </label>
+      <label className="mt-3 block space-y-1.5">
+        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken</span>
+        <textarea value={chapters} onChange={(event) => setChapters(event.currentTarget.value)} disabled={!editable || busy} rows={4} className={fieldClass()} placeholder="00:00 Inleiding" />
+      </label>
+
+      {editable ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button type="button" disabled={busy} className="cb-btn cb-btn-secondary text-sm" onClick={() => run("save")}>Review opslaan</button>
+          <button type="button" disabled={busy} className="cb-btn cb-btn-primary text-sm" onClick={() => run("publish")}>Publiceren</button>
+          <button type="button" disabled={busy} className="cb-btn cb-btn-secondary text-sm text-red-700 dark:text-red-300" onClick={() => run("reject")}>Afwijzen</button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function accessLabel(value: WeeklyUpdateAccessTier, paidProductsActive: boolean) {
@@ -440,7 +603,8 @@ export function AdminWeeklyUpdatesManager({
 
   function runSave(formData: FormData, update?: AdminWeeklyUpdateRow) {
     resetFeedback();
-    const file = fileInputRef.current?.files?.[0] ?? null;
+    const article = formData.get("content_kind") === "article";
+    const file = article ? null : fileInputRef.current?.files?.[0] ?? null;
     const selectedThumbnailFile = thumbnailFile;
     const selectedChartFiles = Array.from(chartFileRef.current?.files ?? []);
     const selectedFormat = formData.get("content_format");
@@ -566,7 +730,7 @@ export function AdminWeeklyUpdatesManager({
       setThumbnailFile(null);
       hasUnsavedChanges.current = false;
       setPanel({ type: "empty" });
-      refresh("Video toegevoegd.");
+      refresh(article ? "Artikel toegevoegd." : "Video toegevoegd.");
     });
   }
 
@@ -587,6 +751,50 @@ export function AdminWeeklyUpdatesManager({
         result.status === "ready"
           ? "De video is klaar."
           : "Mux verwerkt de video nog. Probeer straks opnieuw te syncen."
+      );
+    });
+  }
+
+  function startTranscript(update: AdminWeeklyUpdateRow) {
+    resetFeedback();
+    const confirmed = window.confirm(
+      "Dit start een externe Mux-captionverwerking voor deze video. De captionstap wordt momenteel door Mux zonder extra toeslag aangeboden, maar telt wel als providerwrite. Doorgaan?"
+    );
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      const result = await adminStartWeeklyUpdateTranscript(update.id, true);
+      if (!result.success) {
+        setError(result.error ?? "Transcriptie kon niet worden gestart.");
+        return;
+      }
+      refresh("Transcriptie is gestart. Mux meldt de status via de beveiligde webhook.");
+    });
+  }
+
+  function runTranscriptWorkflow(update: AdminWeeklyUpdateRow, restart = false) {
+    resetFeedback();
+    const transcript = latestTranscript(update);
+    if (!transcript) return;
+    const confirmed = window.confirm(
+      restart
+        ? "Herstart deze vastgelopen workflow? Dit kan een betaalde AI-call uitvoeren, met de ingestelde limiet van maximaal EUR 2 per video."
+        : "Haal het transcript op en genereer een AI-concept? Dit kan een betaalde AI-call uitvoeren, met de ingestelde limiet van maximaal EUR 2 per video."
+    );
+    if (!confirmed) return;
+    startTransition(async () => {
+      const result = restart
+        ? await adminRestartTranscriptWorkflow(transcript.id, update.id, true)
+        : await adminRunTranscriptWorkflow(transcript.id, update.id, true);
+      if (!result.success) {
+        setError(result.error ?? "De AI-verwerking kon niet worden voortgezet.");
+        refresh();
+        return;
+      }
+      refresh(
+        result.state === "completed"
+          ? "De AI-verwerking is afgerond."
+          : "Het AI-concept staat klaar voor menselijke review."
       );
     });
   }
@@ -638,6 +846,8 @@ export function AdminWeeklyUpdatesManager({
             <Icon name="plus" /> Marktinzicht toevoegen
           </button>
         </div>
+
+        <LegacyBackfillDryRunPanel />
 
         <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--border)] px-4 py-2" role="tablist" aria-label="Filter beheer">
           <button
@@ -697,6 +907,7 @@ export function AdminWeeklyUpdatesManager({
                         {update.title}
                       </h3>
                       {statusBadge(update)}
+                      {transcriptBadge(latestTranscript(update))}
                       <span className={update.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                         {update.is_published ? "Gepubliceerd" : "Concept"}
                       </span>
@@ -850,6 +1061,81 @@ export function AdminWeeklyUpdatesManager({
                   <input ref={fileInputRef} type="file" accept="video/*" disabled={pending || progress !== null} className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--foreground)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--background)]" />
                 </label>
               </div> : null}
+              {contentFormat === "video" ? <>
+              <div className="rounded-xl border border-[var(--border)] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="cb-eyebrow">AI-transcriptie</div>
+                    <div className="mt-1">{transcriptBadge(latestTranscript(selectedUpdate))}</div>
+                  </div>
+                  {(() => {
+                    const transcript = latestTranscript(selectedUpdate);
+                    const workflow = transcriptWorkflow(transcript);
+                    const canStart =
+                      selectedUpdate.video_provider === "mux" &&
+                      selectedUpdate.mux_status === "ready" &&
+                      (!transcript ||
+                        (transcript.status === "failed" && transcript.failure_retryable));
+                    if (canStart) return (
+                      <button
+                        type="button"
+                        className="cb-btn cb-btn-secondary text-sm"
+                        disabled={pending}
+                        onClick={() => startTranscript(selectedUpdate)}
+                      >
+                        {transcript ? "Opnieuw proberen" : "Transcriptie starten"}
+                      </button>
+                    );
+                    const canProcess = transcript &&
+                      ((transcript.status === "processing" && Boolean(transcript.provider_track_id)) ||
+                        transcript.status === "ready") &&
+                      !["waiting_review", "completed"].includes(workflow?.status ?? "");
+                    if (!canProcess) return null;
+                    const restart = workflow?.status === "dead_letter";
+                    return (
+                      <button
+                        type="button"
+                        className="cb-btn cb-btn-secondary text-sm"
+                        disabled={pending}
+                        onClick={() => runTranscriptWorkflow(selectedUpdate, restart)}
+                      >
+                        {restart ? "Workflow herstarten" : "AI-verwerking voortzetten"}
+                      </button>
+                    );
+                  })()}
+                </div>
+                <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
+                  Handmatige pilot · Nederlands · menselijke review verplicht · geen automatische publicatie.
+                </p>
+                <div className="mt-3" aria-live="polite">
+                  {pending ? (
+                    <p className="text-sm font-semibold text-[var(--foreground)]">
+                      Mux-captionverwerking wordt gestart…
+                    </p>
+                  ) : error ? (
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-300">{error}</p>
+                  ) : message ? (
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{message}</p>
+                  ) : null}
+                </div>
+                {latestTranscript(selectedUpdate)?.failure_code ? (
+                  <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-300">
+                    Veilige foutcode: {latestTranscript(selectedUpdate)?.failure_code}
+                  </p>
+                ) : null}
+                {transcriptWorkflow(latestTranscript(selectedUpdate))?.last_error_code ? (
+                  <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-300">
+                    Workflowfout: {transcriptWorkflow(latestTranscript(selectedUpdate))?.last_error_code}
+                  </p>
+                ) : null}
+              </div>
+              <EnrichmentReviewPanel
+                key={latestEnrichment(latestTranscript(selectedUpdate))?.id ?? "no-enrichment"}
+                update={selectedUpdate}
+                onDone={(text) => refresh(text)}
+                onError={setError}
+              />
+              </> : null}
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
                 {pending || progress !== null ? "Bezig..." : "Marktupdate opslaan"}
