@@ -1,3 +1,5 @@
+import { AvatarEditor } from "@/components/account/AvatarEditor";
+import { getOwnAvatar } from "@/lib/market-post-detail";
 import Link from "next/link";
 import { ensureCurrentStudent } from "@/lib/students";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -32,14 +34,7 @@ export default async function AccountPage({ searchParams }: Props) {
     : null;
   const intakeComplete = onboardingIsComplete(onboarding);
 
-  const initials = student?.name
-    ? student.name
-        .split(" ")
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((p) => p[0]?.toUpperCase())
-        .join("")
-    : "";
+  const avatarPath = await getOwnAvatar(student.id);
 
   const main = (
     <div className="space-y-6">
@@ -56,9 +51,6 @@ export default async function AccountPage({ searchParams }: Props) {
       <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-8">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--border)_12%)] text-base font-bold text-[var(--foreground)]">
-              {initials || "CB"}
-            </div>
             <div className="min-w-0">
               <div className="cb-eyebrow">Lid</div>
               <div className="mt-2 text-xl font-semibold text-[var(--foreground)]">
@@ -75,6 +67,7 @@ export default async function AccountPage({ searchParams }: Props) {
           </form>
         </div>
 
+        <div className="mt-6 border-t border-[var(--border)] pt-6"><AvatarEditor name={student.name ?? "Lid"} studentId={student.id} objectPath={avatarPath} /></div>
       </section>
 
       {showPaidProducts && billingOverview ? (

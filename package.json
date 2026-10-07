@@ -13,7 +13,8 @@
     "test": "tsx --test tests/**/*.test.ts",
     "transcription:backfill-dry-run": "tsx scripts/transcription-backfill-dry-run.ts",
     "lint": "next lint",
-    "verify:supabase-target": "node scripts/verify-supabase-target.mjs"
+    "verify:supabase-target": "node scripts/verify-supabase-target.mjs",
+    "verify:avatar-storage": "node scripts/verify-avatar-storage.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
@@ -26,12 +27,16 @@
     "next": "^15.5.25",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-easy-crop": "6.2.4",
+    "sanitize-html": "2.18.0",
+    "sharp": "0.35.5",
     "stripe": "^22.6.1"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/sanitize-html": "2.16.2",
     "eslint": "^9.15.0",
     "eslint-config-next": "^15.5.25",
     "playwright": "^1.61.1",
@@ -42,6 +47,6 @@
   },
   "overrides": {
     "postcss": "$postcss",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   }
 }

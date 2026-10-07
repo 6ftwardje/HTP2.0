@@ -12,6 +12,23 @@
 - Nieuwe Academy-aankoop: drie maanden gratis entitlement, zonder automatische betaalstart.
 - Bestaande Academy-student bij introductie: één maand gratis entitlement.
 
+## Tijdelijke toegang voor free accounts
+
+In Admin → Marktinzicht kan de admin bij **Toegang** kiezen voor
+**Iedereen op het platform (ook free)**. Dit kan bij het toevoegen of achteraf
+bij het bewerken van een geüploade video. Na opslaan en publiceren verschijnt
+de video in Marktinzicht voor alle ingelogde accounts. Concepten blijven verborgen.
+
+Nieuwe video's behouden standaard **Subscription**. Free accounts zien alleen
+de expliciet vrijgegeven video's, ook via de oudere marktupdatepagina's en
+directe videolinks. Live marktsessies behouden hun bestaande toegang.
+Er is geen nieuwe databasemigratie nodig: deze keuze gebruikt de bestaande
+`access_tier = 'free'` en de bijbehorende RLS-policy.
+
+De keuze blijft gelden als `PAID_PRODUCTS_ENABLED=1` wordt ingeschakeld.
+Om de tijdelijke toegang voor een video te beëindigen, wijzig de doelgroep
+terug naar **Subscription** en sla op.
+
 ## Fase 1 — billing en toegang
 
 Status: gebouwd en in Stripe/Supabase sandbox end-to-end getest voor succesvolle

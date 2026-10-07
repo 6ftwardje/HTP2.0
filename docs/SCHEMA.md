@@ -73,3 +73,64 @@ Student-scoped policies use the pattern:
 `EXISTS (SELECT 1 FROM students WHERE students.id = <table>.student_id AND students.auth_user_id = auth.uid())`
 
 so that `student_id` is resolved from `students.id`, not directly from `auth.uid()`.
+
+## Market post detail, reactions and avatars (2026-10-07)
+
+`weekly_updates.content_kind` defaults to `video`; `article` uses sanitized
+`article_html` and an optional separate `intro`. Existing video identifiers,
+content and author FKs remain authoritative. `author_name` is only a legacy
+fallback; no display-name mapping is performed. Publication formatting uses
+`Europe/Brussels` explicitly. `updated_at` is not presented as a content revision.
+
+`market_post_reactions` has a `(post_id, student_id)` primary key and cascading
+FKs. Its own-row RLS limits direct mutations; the authenticated
+`set_market_post_reaction(post_id, active)` RPC is idempotent, checks published
+post access and returns an aggregate plus the caller's status. The aggregate
+never returns reacting identities. `can_read_market_post` mirrors the deployed
+content RLS, including the dormant subscription rollout; change this function
+alongside content policies if the subscription entitlement policy is activated.
+
+`student_avatars` stores only the versioned object path. Private
+`profile-avatars` Storage contains processed static WebP files, never source
+uploads. Only the server service role can write. Authenticated reads require
+own-profile access or an accessible post linked to that author; author RPCs
+expose only name, avatar path and the linked author key. Existing private
+`students` read policies are unchanged.
+
+`avatar_objects` tracks pending/active/garbage objects. The commit RPC locks the
+student and new object, swaps references atomically and marks the previous file
+for cleanup. Garbage cannot become active again. Pending uploads expire after
+one hour. Profile deletion queues objects before cascading avatar records. Auth account deletion removes reactions and avatar references and queues files without changing existing history retention. Deleted accounts cannot react using an unexpired JWT.
+Cleanup also rediscovers orphaned Storage files, including uploads that finish after their pending record expires. Reaction inserts and avatar commits lock the live Auth account so account deletion cannot leave a new reference behind.
+The server cleans up after mutations; configure a daily authenticated POST to
+`/api/maintenance/avatars` with `AVATAR_CLEANUP_SECRET` for abandoned uploads and
+account removals during quiet periods. Cleanup retries are safe.
+
+`guard_student_identity` blocks client reassignment of profile identity and
+self-granted access. It preserves admin changes to access levels and trusted
+service integrations. All three new migrations were applied to local Supabase and
+the linked HTP2 project (`swohtycdqbydqrtjzwwf`) on 7 October 2026. The missing
+remote tables, RPCs and bucket caused profile-photo saves to fail. Other environments
+require these versioned migrations and the server-only `SUPABASE_SERVICE_ROLE_KEY`.
+Never expose that key in public environment variables. Run
+`npm run verify:avatar-storage` against the target environment to check the tables,
+service RPCs and private WebP-only bucket without writing files or profile data.
+
+The upload route returns 400 for invalid images/crops and 500 for persistence
+failures. Server logs retain the Supabase error and failed operation (registration,
+upload or commit); responses do not expose database errors. Cross-tab notifications
+are optional and cannot turn a committed upload into an apparent client-side failure.
+
+Local verification uses synthetic data against real Auth/Postgres/Storage:
+`LOCAL_SUPABASE_ENV_FILE=/tmp/local.env node --import tsx scripts/verify-market-posts-local.ts`.
+Generate the env file with `supabase status -o env`; the script refuses remote
+hosts. Start the local app at `http://localhost:3107` against the same Supabase.
+`--keep` retains labeled fixtures for browser checks; `--cleanup` removes them.
+
+Verification on local Supabase: 72 tests, TypeScript and the production build pass. Real Auth/Postgres/Storage integration covers own-only member/admin writes, denied forged requests, persistent counts, concurrent mutations, failed/lost-response uploads, expired pending uploads finishing late and concurrent Auth deletion. Browser checks pass at 390/768/1440 px, including chart Escape/focus restoration, member/admin crop controls, theme rendering and unchanged Vimeo iframe/playback position after reacting. The public Vimeo clip did not start continuous playback in browser automation; live signed Mux, fullscreen and subtitle playback still require end-to-end verification. Build lint has two native-image warnings: private processed avatars and the original chart viewer intentionally use `img`.
+
+Versioned rollout files:
+
+- `20261007000000_market_post_reactions_avatars.sql` — content fields, FKs/indexes, own-row reaction RLS/RPCs, private avatar bucket, author projection and safe commit/cleanup.
+- `20261007010000_profile_identity_guard.sql` — immutable client identity and protected content access.
+- `20261007020000_auth_account_media_cleanup.sql` — Auth deletion cleanup, revoked-account checks and upload/account-deletion serialization.

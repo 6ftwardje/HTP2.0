@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useTransition } from "react";
 import { markWeeklyUpdateWatched } from "@/app/actions/weekly-updates";
-import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
+import { VimeoPlayer } from "@/components/VimeoPlayerCore";
 import type { MuxPlaybackTokens } from "@/lib/types";
 import {
   createVideoSeekRequest,
@@ -41,6 +41,7 @@ export function WeeklyUpdateAutoCompleteVideo({
   return (
     <div className="min-w-0 space-y-4">
       <VimeoPlayer
+        surface="insight"
         videoUrl={videoUrl}
         videoProvider={videoProvider}
         muxPlaybackId={muxPlaybackId}

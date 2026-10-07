@@ -8,7 +8,7 @@ test("maps a synthetic ready Mux track without network", async () => {
   const fakeFetch: typeof fetch = async (input) => {
     calls.push(String(input));
     return Response.json({
-      data: { id: "track_synthetic", status: "ready", language_code: "nl", text_type: "subtitles" },
+      data: { tracks: [{ id: "track_synthetic", status: "ready", language_code: "nl", text_type: "subtitles" }] },
     });
   };
   const provider = new MuxCaptionProvider("token", "secret", fakeFetch);
@@ -26,6 +26,19 @@ test("normalizes a 429 as retryable", async () => {
     (error: unknown) =>
       error instanceof TranscriptionProviderError &&
       error.code === "rate_limited" &&
+      error.retryable
+  );
+});
+
+test("treats a not-yet-propagated WebVTT file as retryable", async () => {
+  const fakeFetch: typeof fetch = async () =>
+    new Response("Not found", { status: 404 });
+  const provider = new MuxCaptionProvider("token", "secret", fakeFetch);
+  await assert.rejects(
+    provider.getWebVtt("playback_synthetic", "track_synthetic"),
+    (error: unknown) =>
+      error instanceof TranscriptionProviderError &&
+      error.code === "not_ready" &&
       error.retryable
   );
 });

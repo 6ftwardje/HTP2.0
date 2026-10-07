@@ -187,7 +187,9 @@ function latestEnrichment(
 }
 
 function transcriptWorkflow(transcript: VideoTranscriptSummary | null) {
-  return transcript?.workflows?.[0] ?? null;
+  const workflows = transcript?.workflows;
+  if (!workflows) return null;
+  return Array.isArray(workflows) ? workflows[0] ?? null : workflows;
 }
 
 function EnrichmentReviewPanel({
@@ -433,6 +435,9 @@ function WeeklyUpdateFields({
   return (
     <div className="grid gap-3">
       <ThumbnailField update={update} onFileChange={onThumbnailFileChange} />
+      <label className="space-y-1.5"><span className="text-sm font-semibold">Inhoudstype</span><select name="content_kind" defaultValue={update?.content_kind ?? "video"} className={fieldClass()}><option value="video">Video</option><option value="article">Tekst / charts</option></select></label>
+      <label className="space-y-1.5"><span className="text-sm font-semibold">Introductie (optioneel)</span><textarea name="intro" defaultValue={update?.intro ?? ""} rows={3} className={fieldClass()} /></label>
+      <label className="space-y-1.5"><span className="text-sm font-semibold">Artikelinhoud</span><textarea name="article_html" defaultValue={update?.article_html ?? ""} rows={12} maxLength={250000} className={fieldClass()} /><span className="block text-xs leading-5 text-[var(--muted)]">Voor tekst-/chartupdates: HTML met alinea’s, koppen, lijsten en afbeeldingen in de gewenste volgorde. Gebruik bij afbeeldingen een alt-tekst en de originele breedte/hoogte. Scripts en onveilige HTML worden verwijderd.</span></label>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
           Format <span className="text-red-600">*</span>
@@ -519,7 +524,7 @@ function WeeklyUpdateFields({
         </label>
         <label className="space-y-1.5">
           <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Access
+            Toegang
           </span>
           <select name="access_tier" defaultValue={update?.access_tier ?? "subscription"} className={fieldClass()}>
             {WEEKLY_UPDATE_ACCESS_OPTIONS.map((option) => (
@@ -533,7 +538,7 @@ function WeeklyUpdateFields({
             ))}
           </select>
           <span className="block text-xs leading-5 text-[var(--muted)]">
-            Marktupdates en Weekly Outlook-replays horen altijd bij de subscription.
+            Kies ‘Iedereen op het platform (ook free)’ om deze video na publicatie ook voor free accounts beschikbaar te maken. Je kunt dit later weer wijzigen naar Subscription.
           </span>
         </label>
       </div>
@@ -779,7 +784,8 @@ export function AdminWeeklyUpdatesManager({
 
   function runSave(formData: FormData, update?: AdminWeeklyUpdateRow) {
     resetFeedback();
-    const file = fileInputRef.current?.files?.[0] ?? null;
+    const article = formData.get("content_kind") === "article";
+    const file = article ? null : fileInputRef.current?.files?.[0] ?? null;
     const selectedThumbnailFile = thumbnailFile;
 
     startTransition(async () => {
@@ -805,7 +811,7 @@ export function AdminWeeklyUpdatesManager({
 
         setThumbnailFile(null);
         setPanel({ type: "empty" });
-        refresh("Video opgeslagen.");
+        refresh(article ? "Artikel opgeslagen." : "Video opgeslagen.");
         return;
       }
 
@@ -878,7 +884,7 @@ export function AdminWeeklyUpdatesManager({
       }
       setThumbnailFile(null);
       setPanel({ type: "empty" });
-      refresh("Video toegevoegd.");
+      refresh(article ? "Artikel toegevoegd." : "Video toegevoegd.");
     });
   }
 
@@ -990,7 +996,7 @@ export function AdminWeeklyUpdatesManager({
             className="cb-btn cb-btn-primary text-sm"
             onClick={() => resetPanel({ type: "create" })}
           >
-            <Icon name="plus" /> Video toevoegen
+            <Icon name="plus" /> Marktinzicht toevoegen
           </button>
         </div>
 
@@ -1166,7 +1172,7 @@ export function AdminWeeklyUpdatesManager({
               </label>
               <UploadProgress progress={progress} />
               <button type="submit" disabled={pending || progress !== null} className="cb-btn cb-btn-primary w-full justify-center text-sm">
-                {pending || progress !== null ? "Bezig..." : "Video toevoegen"}
+                {pending || progress !== null ? "Bezig..." : "Marktinzicht toevoegen"}
               </button>
             </form>
           ) : selectedUpdate ? (
@@ -1247,6 +1253,17 @@ export function AdminWeeklyUpdatesManager({
                 <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
                   Handmatige pilot · Nederlands · menselijke review verplicht · geen automatische publicatie.
                 </p>
+                <div className="mt-3" aria-live="polite">
+                  {pending ? (
+                    <p className="text-sm font-semibold text-[var(--foreground)]">
+                      Mux-captionverwerking wordt gestart…
+                    </p>
+                  ) : error ? (
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-300">{error}</p>
+                  ) : message ? (
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{message}</p>
+                  ) : null}
+                </div>
                 {latestTranscript(selectedUpdate)?.failure_code ? (
                   <p className="mt-2 text-sm font-semibold text-red-700 dark:text-red-300">
                     Veilige foutcode: {latestTranscript(selectedUpdate)?.failure_code}

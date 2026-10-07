@@ -125,13 +125,13 @@ export function MarketInsightLibrary({ updates }: { updates: Update[] }) {
         title: update.title,
         summary: update.summary,
         date: update.published_at ?? update.created_at,
-        duration: update.video_duration_seconds,
+        duration: update.content_kind === "article" ? null : update.video_duration_seconds,
         thumbnail: update.thumbnail_url,
         markets: itemMarkets(update),
         host: update.mentor?.name ?? update.mentor?.email ?? "Cryptoriez mentor",
         status: actuality === "archive" ? "archive" : "current",
         href: `/market-analysis/${update.slug}`,
-        action: itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown",
+        action: update.content_kind === "article" ? "Lees analyse" : itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown",
       };
     });
     return videoItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

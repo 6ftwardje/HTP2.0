@@ -13,12 +13,16 @@ export function MuxLessonPlayer({
   onEnded,
   tokens,
   seekRequest,
+  onError,
+  accentColor = COACHEDBY_RED,
 }: {
   playbackId: string;
   title?: string;
   onEnded?: (() => void) | null;
   tokens?: MuxPlaybackTokens | null;
   seekRequest?: VideoSeekRequest | null;
+  onError?: () => void;
+  accentColor?: string;
 }) {
   const playerRef = useRef<MuxPlayerRefAttributes | null>(null);
 
@@ -36,7 +40,8 @@ export function MuxLessonPlayer({
       className="h-full w-full"
       primaryColor="#ffffff"
       secondaryColor="#0c0a09"
-      accentColor={COACHEDBY_RED}
+      accentColor={accentColor}
+      onError={onError}
       onEnded={onEnded ?? undefined}
       streamType="on-demand"
       tokens={tokens ?? undefined}

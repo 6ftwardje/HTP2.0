@@ -244,7 +244,7 @@ export async function adminRunTranscriptWorkflow(
   try {
     const { data, error } = await db
       .from("ai_video_transcripts")
-      .select("id, weekly_update_id, status, provider_track_id, weekly_update:weekly_updates!inner(id, mux_playback_id, mux_playback_policy, video_duration_seconds)")
+      .select("id, weekly_update_id, status, provider_track_id, weekly_update:weekly_updates!inner(id, mux_asset_id, mux_playback_id, mux_playback_policy, video_duration_seconds)")
       .eq("id", transcriptId)
       .eq("weekly_update_id", weeklyUpdateId)
       .maybeSingle();
@@ -253,17 +253,19 @@ export async function adminRunTranscriptWorkflow(
     }
     const relation = data.weekly_update as unknown as {
       id: number;
+      mux_asset_id: string | null;
       mux_playback_id: string | null;
       mux_playback_policy: "public" | "signed";
       video_duration_seconds: number | null;
     } | Array<{
       id: number;
+      mux_asset_id: string | null;
       mux_playback_id: string | null;
       mux_playback_policy: "public" | "signed";
       video_duration_seconds: number | null;
     }>;
     const update = Array.isArray(relation) ? relation[0] : relation;
-    if (!update?.mux_playback_id || !update.video_duration_seconds) {
+    if (!update?.mux_asset_id || !update.mux_playback_id || !update.video_duration_seconds) {
       throw new WorkflowFailure("video_metadata_missing", false, "Mux-playback of videoduur ontbreekt.");
     }
 
@@ -285,6 +287,21 @@ export async function adminRunTranscriptWorkflow(
         throw new WorkflowFailure("mux_signing_missing", false, "Mux-signingconfiguratie ontbreekt.");
       }
       const provider = new MuxCaptionProvider(tokenId, tokenSecret);
+      const providerTrack = await provider.getTrack(update.mux_asset_id, data.provider_track_id);
+      if (providerTrack.status === "preparing") {
+        throw new WorkflowFailure(
+          "caption_not_ready",
+          true,
+          "Mux verwerkt de captions nog. Probeer over enkele minuten opnieuw."
+        );
+      }
+      if (providerTrack.status === "errored") {
+        throw new WorkflowFailure(
+          "caption_generation_failed",
+          false,
+          "Mux kon de captions niet genereren; menselijke controle is vereist."
+        );
+      }
       const vtt = await provider.getWebVtt(
         update.mux_playback_id,
         data.provider_track_id,

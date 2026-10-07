@@ -24,12 +24,13 @@ export default async function MarketUpdatesPage({ params }: Props) {
   const { student } = await ensureCurrentStudent();
   if (!student) return null;
   const billingOverview = await getBillingOverview(student.id);
-  if (!canAccessSubscriberContent(student, billingOverview)) {
-    if (!paidProductsEnabled()) notFound();
+  const hasSubscriberAccess = canAccessSubscriberContent(student, billingOverview);
+  const updates = await listPublishedMarketUpdatesByMarket(market, 60, {
+    freeOnly: !hasSubscriberAccess,
+  });
+  if (!hasSubscriberAccess && updates.length === 0 && paidProductsEnabled()) {
     return <SubscriptionPaywall overview={billingOverview} title={`Ontgrendel alle ${MARKET_OPTIONS.find((option) => option.value === market)?.label ?? "markt"}-updates`} />;
   }
-
-  const updates = await listPublishedMarketUpdatesByMarket(market, 60);
 
   return <MarketUpdatesLibrary market={market} updates={updates} />;
 }

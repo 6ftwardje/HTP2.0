@@ -15,6 +15,9 @@ export type AdminWeeklyUpdateRow = WeeklyUpdate & {
 };
 
 export type WeeklyUpdateInput = {
+  content_kind: "video" | "article";
+  intro: string | null;
+  article_html: string | null;
   title: string;
   slug: string;
   summary: string | null;

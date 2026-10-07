@@ -161,6 +161,10 @@ export type MarketInsightChapter = {
 };
 
 export type WeeklyUpdate = {
+  content_kind?: "video" | "article";
+  intro?: string | null;
+  article_html?: string | null;
+  author_name?: string | null;
   id: number;
   title: string;
   slug: string;
@@ -218,7 +222,7 @@ export type VideoTranscriptSummary = {
     text: string;
   }> | null;
   enrichments?: VideoEnrichmentSummary[];
-  workflows?: VideoWorkflowSummary[];
+  workflows?: VideoWorkflowSummary[] | VideoWorkflowSummary;
 };
 
 export type VideoWorkflowSummary = {

@@ -19,6 +19,15 @@ type MuxTrackPayload = {
   }>;
   error?: { type?: string; messages?: string[] };
 };
+type MuxAssetPayload = {
+  data?: { tracks?: Array<{
+    id?: string;
+    status?: string;
+    language_code?: string;
+    text_type?: string;
+  }> };
+  error?: { type?: string; messages?: string[] };
+};
 
 const SAFE_ID = /^[A-Za-z0-9_-]{3,128}$/;
 const LANGUAGE_CODE = /^[a-z]{2}(?:-[A-Z]{2})?$/;
@@ -51,7 +60,10 @@ function toTrack(payload: MuxTrackPayload): CaptionTrack {
   };
 }
 
-function providerError(status: number, payload?: MuxTrackPayload) {
+function providerError(
+  status: number,
+  payload?: { error?: { type?: string; messages?: string[] } }
+) {
   const message = payload?.error?.messages?.join(" ") || "Mux-captionrequest mislukt.";
   if (status === 404) return new TranscriptionProviderError(message, "not_found", false, status);
   if (status === 429) return new TranscriptionProviderError(message, "rate_limited", true, status);
@@ -132,10 +144,19 @@ export class MuxCaptionProvider implements CaptionProvider {
   async getTrack(assetId: string, trackId: string): Promise<CaptionTrack> {
     assertId("Mux asset-id", assetId);
     assertId("Mux track-id", trackId);
-    const response = await this.request(`/video/v1/assets/${assetId}/tracks/${trackId}`);
-    const payload = (await response.json().catch(() => ({}))) as MuxTrackPayload;
+    const response = await this.request(`/video/v1/assets/${assetId}`);
+    const payload = (await response.json().catch(() => ({}))) as MuxAssetPayload;
     if (!response.ok) throw providerError(response.status, payload);
-    return toTrack(payload);
+    const track = payload.data?.tracks?.find((candidate) => candidate.id === trackId);
+    if (!track) {
+      throw new TranscriptionProviderError(
+        "Mux-captiontrack is niet gevonden.",
+        "not_found",
+        false,
+        404
+      );
+    }
+    return toTrack({ data: track });
   }
 
   async getWebVtt(
@@ -151,6 +172,14 @@ export class MuxCaptionProvider implements CaptionProvider {
       { headers: { Accept: "text/vtt" } },
       false
     );
+    if (response.status === 404) {
+      throw new TranscriptionProviderError(
+        "Mux-captions zijn nog niet beschikbaar op de playback-CDN.",
+        "not_ready",
+        true,
+        response.status
+      );
+    }
     if (!response.ok) throw providerError(response.status);
     const body = await response.text();
     if (!body.trimStart().startsWith("WEBVTT")) {

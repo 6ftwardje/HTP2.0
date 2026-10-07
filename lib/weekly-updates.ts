@@ -16,10 +16,11 @@ async function contentClient() {
 }
 
 export async function listPublishedWeeklyUpdates(
-  limit = 48
+  limit = 48,
+  { freeOnly = false }: { freeOnly?: boolean } = {}
 ): Promise<WeeklyUpdateWithMentor[]> {
   const db = await contentClient();
-  const { data, error } = await db
+  let query = db
     .from("weekly_updates")
     .select(
       `
@@ -35,6 +36,11 @@ export async function listPublishedWeeklyUpdates(
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  // The pre-billing service client bypasses RLS, so filter before returning
+  // video URLs and metadata to the library's Client Component.
+  if (freeOnly) query = query.eq("access_tier", "free");
+  const { data, error } = await query;
 
   if (error) {
     console.error("listPublishedWeeklyUpdates", error.message);
@@ -105,10 +111,11 @@ export async function listPublishedMarketUpdates(
 
 export async function listPublishedMarketUpdatesByMarket(
   market: Market,
-  limit = 60
+  limit = 60,
+  { freeOnly = false }: { freeOnly?: boolean } = {}
 ): Promise<WeeklyUpdateWithMentor[]> {
   const db = await contentClient();
-  const { data, error } = await db
+  let query = db
     .from("weekly_updates")
     .select(
       `
@@ -126,6 +133,9 @@ export async function listPublishedMarketUpdatesByMarket(
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (freeOnly) query = query.eq("access_tier", "free");
+  const { data, error } = await query;
 
   if (error) {
     console.error("listPublishedMarketUpdatesByMarket", error.message);

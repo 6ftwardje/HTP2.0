@@ -27,6 +27,27 @@ Herstart na een wijziging de devserver:
 npm run dev
 ```
 
+### Profielfoto’s opslaan
+
+Profielfoto’s gebruiken de private Supabase Storage-bucket `profile-avatars`.
+De server controleert de sessie, verwerkt de foto tot een statische WebP zonder
+EXIF-metadata en slaat alleen het unieke opslagpad bij het profiel op.
+RLS beperkt lezen tot de eigenaar en toegankelijke auteurs; schrijven loopt
+uitsluitend via de geauthenticeerde serverroute. De vorige foto wordt pas na
+een bevestigde profielwijziging opgeruimd.
+
+Hiervoor zijn deze migraties nodig:
+
+- `20261007000000_market_post_reactions_avatars.sql`
+- `20261007010000_profile_identity_guard.sql`
+- `20261007020000_auth_account_media_cleanup.sql`
+
+Zet `SUPABASE_SERVICE_ROLE_KEY` in de serveromgeving en controleer na het toepassen
+van de migraties met `npm run verify:avatar-storage`. Deze controle leest alleen
+de configuratie en voorkomt dat ontbrekende tabellen of een bucket pas bij de
+eerste upload worden ontdekt. De drie migraties zijn op 7 oktober 2026 toegepast
+op het gekoppelde HTP2-project `swohtycdqbydqrtjzwwf`.
+
 ## 2. E-mail en wachtwoord activeren
 
 1. Ga naar **Authentication** -> **Providers** -> **Email**.

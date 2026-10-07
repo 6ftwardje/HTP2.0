@@ -1,5 +1,7 @@
 "use server";
 
+import { sanitizeArticle } from "@/lib/market-article";
+
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/access";
 import { logAdminAction } from "@/lib/admin/audit";
@@ -224,6 +226,10 @@ function readWeeklyUpdateInput(
     ? (accessTierRaw as WeeklyUpdateAccessTier)
     : null;
   const isPublished = asBoolean(formData.get("is_published"));
+  const contentKind = asString(formData.get("content_kind")) === "article" ? "article" : "video";
+  const articleHtml = asString(formData.get("article_html"));
+  if (articleHtml.length > 250_000) return { error: "Artikelinhoud is te groot." as const };
+  if (contentKind === "article" && isPublished && !sanitizeArticle(articleHtml).trim()) return { error: "Voeg eerst artikelinhoud toe." as const };
 
   if (!title) return { error: "Title is required." as const };
   if (!slug) return { error: "Slug is required." as const };
@@ -238,6 +244,9 @@ function readWeeklyUpdateInput(
 
   return {
     input: {
+      content_kind: contentKind as "video" | "article",
+      intro: asNullableString(formData.get("intro")),
+      article_html: articleHtml ? sanitizeArticle(articleHtml) : null,
       title,
       slug,
       summary: asNullableString(formData.get("summary")),
@@ -267,7 +276,7 @@ export async function adminCreateWeeklyUpdate(
   const { actorStudent } = await requireAdmin();
   const parsed = readWeeklyUpdateInput(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
-  if (parsed.input.is_published) {
+  if (parsed.input.is_published && parsed.input.content_kind !== "article") {
     return {
       success: false,
       error: "Upload en sync eerst een Mux-video voordat je publiceert.",
@@ -319,7 +328,7 @@ export async function adminUpdateWeeklyUpdate(
         "De slug van een gepubliceerde marktanalyse kan niet worden aangepast.",
     };
   }
-  if (willPublish && !canPublishWeeklyUpdate(currentWeeklyUpdate)) {
+  if (willPublish && parsed.input.content_kind !== "article" && !canPublishWeeklyUpdate(currentWeeklyUpdate)) {
     return {
       success: false,
       error: "Upload en sync eerst een Mux-video voordat je publiceert.",
@@ -432,7 +441,7 @@ export async function adminCreateWeeklyUpdateWithMuxUpload(
   const { actorStudent } = await requireAdmin();
   const parsed = readWeeklyUpdateInput(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
-  if (parsed.input.is_published) {
+  if (parsed.input.is_published && parsed.input.content_kind !== "article") {
     return {
       success: false,
       error: "Upload en sync eerst een Mux-video voordat je publiceert.",

@@ -25,6 +25,7 @@ export type CaptionTrack = {
 export type ProviderFailureCode =
   | "invalid_request"
   | "not_found"
+  | "not_ready"
   | "rate_limited"
   | "timeout"
   | "provider_unavailable"
