@@ -5,9 +5,8 @@ import { getModuleBySlug } from "@/lib/modules";
 import { getPublishedLessonsByModuleId } from "@/lib/lessons";
 import { getExamByModuleId, getOrStartExamAttemptForModule } from "@/lib/exams";
 import { areAllLessonsCompleted } from "@/lib/progress";
-import { getModuleAccessMap } from "@/lib/module-gate";
-import { FREE_ACCESS_MODULE_LIMIT, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
-import { getPublishedModules } from "@/lib/modules";
+import { getLegacyAcademyModuleIds } from "@/lib/module-gate";
+import { canOpenModuleWithIntake, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 import { getStudentOnboardingResponse, onboardingIsComplete } from "@/lib/onboarding";
 import { ExamForm } from "./ExamForm";
 import { asText } from "@/lib/as-text";
@@ -26,27 +25,29 @@ export default async function ModuleExamPage({ params }: Props) {
   if (!student) notFound();
   const moduleTitle = stripModulePrefix(moduleData.title, moduleData.order_index);
 
-  const [exam, lessons, allModules, onboarding] = await Promise.all([
+  const [exam, lessons, onboarding] = await Promise.all([
     getExamByModuleId(moduleData.id),
     getPublishedLessonsByModuleId(moduleData.id),
-    getPublishedModules(),
     getStudentOnboardingResponse(student.id),
   ]);
 
   const lessonIds = lessons.map((l) => l.id);
-  const [moduleAccessMap, allLessonsCompleted] = await Promise.all([
-    getModuleAccessMap(student.id, allModules),
+  const [legacyAccessModuleIds, allLessonsCompleted] = await Promise.all([
+    getLegacyAcademyModuleIds(student.id),
     areAllLessonsCompleted(student.id, lessonIds),
   ]);
-  const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
-  const moduleIndex = allModules.findIndex((module) => module.id === moduleData.id);
-  const hasLegacyModuleAccess = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
-    moduleIndex >= FREE_ACCESS_MODULE_LIMIT && canAccessModule;
-  const needsIntake = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
+  const hasLegacyModuleAccess = legacyAccessModuleIds.has(moduleData.id);
+  const canAccessModule = canOpenModuleWithIntake({
+    accessLevel: student.access_level,
+    intakeComplete: onboardingIsComplete(onboarding),
+    isFreeModule: moduleData.is_free,
+    hasLegacyModuleAccess,
+  });
+  const needsIntake = moduleData.is_free && student.access_level < FULL_COURSE_ACCESS_LEVEL &&
     !onboardingIsComplete(onboarding) && !hasLegacyModuleAccess;
-  const examUnlocked = !!exam && allLessonsCompleted && !needsIntake;
+  const examUnlocked = !!exam && allLessonsCompleted && canAccessModule;
 
-  if (!canAccessModule) {
+  if (!canAccessModule && !needsIntake) {
     return (
       <div>
         <PageHeader
@@ -57,7 +58,7 @@ export default async function ModuleExamPage({ params }: Props) {
           eyebrow="Toegang"
           title="Module vergrendeld"
           description={student.access_level < FULL_COURSE_ACCESS_LEVEL
-            ? "Je gratis toegang omvat de eerste drie modules."
+            ? "Voor de toets van deze module heb je volledige Academy-toegang nodig. Bekijk het moduleoverzicht voor de gratis modules."
             : "Deze module is nog niet beschikbaar."}
         />
         <div className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center sm:p-10">

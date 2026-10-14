@@ -24,7 +24,7 @@ export default async function AdminVideosPage() {
             Modules, lessons & media
           </h1>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-            Manage course structure, lesson order, thumbnails and Mux uploads.
+            Manage course structure, free access for level 1, lesson order, thumbnails and Mux uploads.
           </p>
         </div>
 

@@ -3,7 +3,7 @@ import { getExamsByModuleIds, getPassedExamIdsForStudent } from "@/lib/exams";
 import { getLessonActionProgress, normalizeLessonActions } from "@/lib/lesson-actions";
 import { getPublishedLessonsByModuleIds } from "@/lib/lessons";
 import { buildModuleAccessMap, getLegacyAcademyModuleIds } from "@/lib/module-gate";
-import { chooseNextAvailableModule } from "@/lib/module-access-policy";
+import { canOpenModuleWithIntake, chooseNextAvailableModule } from "@/lib/module-access-policy";
 import { getPublishedModules } from "@/lib/modules";
 import { getStudentOnboardingResponse, onboardingIsComplete } from "@/lib/onboarding";
 import { getProgressByLessonIds } from "@/lib/progress";
@@ -87,7 +87,7 @@ async function buildDashboardOverview(
   progressMap: Map<number, { watched: boolean; watched_at: string | null }>,
   legacyAccessModuleIds: ReadonlySet<number>
 ): Promise<DashboardOverview> {
-  const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
+  const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index || a.id - b.id);
   const examMap = new Map(exams.map((exam) => [exam.module_id, exam]));
   const accessMap = buildModuleAccessMap(
     orderedModules,
@@ -124,10 +124,20 @@ async function buildDashboardOverview(
     };
   });
 
+  const intakeComplete = onboardingIsComplete(onboarding);
+  const previewOnlyModuleIds = new Set(orderedModules.filter((module) =>
+    !canOpenModuleWithIntake({
+      accessLevel,
+      intakeComplete,
+      isFreeModule: module.is_free,
+      hasLegacyModuleAccess: legacyAccessModuleIds.has(module.id),
+    })
+  ).map((module) => module.id));
   const currentSummary = chooseNextAvailableModule(
     summaries,
-    accessLevel < 2 && !onboardingIsComplete(onboarding),
-    legacyAccessModuleIds
+    accessLevel < 2 && !intakeComplete,
+    legacyAccessModuleIds,
+    previewOnlyModuleIds
   );
 
   if (!currentSummary) {
@@ -281,6 +291,7 @@ export async function getDashboardOverviewReadModel(
     !payload ||
     payload.studentId !== studentId ||
     !Array.isArray(payload.modules) ||
+    payload.modules.some((module) => typeof module.is_free !== "boolean") ||
     !Array.isArray(payload.lessons) ||
     !Array.isArray(payload.exams) ||
     !Array.isArray(payload.passedExamIds) ||

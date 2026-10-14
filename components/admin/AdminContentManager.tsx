@@ -204,6 +204,21 @@ function ModuleFields({
         <input name="is_published" type="checkbox" defaultChecked={module?.is_published ?? false} className="h-4 w-4" />
         <span className="text-sm font-semibold text-[var(--foreground)]">Gepubliceerd</span>
       </label>
+      <label className="flex items-start gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5">
+        <input
+          name="is_free"
+          type="checkbox"
+          defaultChecked={module?.is_free ?? false}
+          aria-describedby="module-is-free-description"
+          className="mt-0.5 h-4 w-4 shrink-0"
+        />
+        <span className="space-y-1">
+          <span className="block text-sm font-semibold text-[var(--foreground)]">Gratis voor level 1</span>
+          <span id="module-is-free-description" className="block text-xs leading-5 text-[var(--muted)]">
+            Na de intake krijgen level 1-accounts toegang tot alle gepubliceerde lessen en het examen in deze module. De eerste les van de eerste gepubliceerde module blijft als preview beschikbaar.
+          </span>
+        </span>
+      </label>
     </div>
   );
 }
@@ -895,6 +910,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
             </h2>
             <p className="mt-1 text-xs text-[var(--muted)]">
               Gebruik de pijlen om de volgorde van modules en lessen aan te passen.
+              {" "}Bewerk een module om gratis toegang voor level 1 in te stellen.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -958,6 +974,9 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
                         </h3>
                         <span className={module.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                           {module.is_published ? "Gepubliceerd" : "Concept"}
+                        </span>
+                        <span className={module.is_free ? "cb-badge cb-badge-completed" : "cb-badge cb-badge-locked"}>
+                          {module.is_free ? "Gratis voor level 1" : "Full Academy"}
                         </span>
                       </div>
                       {module.short_description ? (
@@ -1190,6 +1209,7 @@ export function AdminContentManager({ blocks }: { blocks: AdminModuleVideoBlock[
           ) : panel.type === "edit-module" && selectedModule ? (
             <form action={(formData) => runModuleSave(formData, selectedModule)} className="space-y-4">
               <ModuleFields
+                key={`edit-module-${selectedModule.id}`}
                 module={selectedModule}
                 orderIndex={selectedModule.order_index}
                 onThumbnailFileChange={setThumbnailFile}

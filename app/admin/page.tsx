@@ -28,7 +28,7 @@ const academyManagement = [
   {
     href: "/admin/videos",
     title: "Modules en lessen",
-    description: "Beheer lessen, volgorde, afbeeldingen en video's.",
+    description: "Beheer gratis toegang, lessen, volgorde, afbeeldingen en video's.",
   },
   {
     href: "/admin/exams",

@@ -6,8 +6,8 @@ import { getModuleById, getPublishedModules } from "@/lib/modules";
 import { getLessonStatuses } from "@/lib/lesson-gate";
 import { getProgressByLessonIds } from "@/lib/progress";
 import { getExamByModuleId } from "@/lib/exams";
-import { getModuleAccessMap } from "@/lib/module-gate";
-import { canOpenLessonWithIntake, FREE_ACCESS_MODULE_LIMIT, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
+import { getLegacyAcademyModuleIds, getModuleAccessMap } from "@/lib/module-gate";
+import { canOpenLessonWithIntake, canOpenModuleWithIntake, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
 import { LessonAutoCompleteVideo } from "./LessonAutoCompleteVideo";
 import { asText } from "@/lib/as-text";
@@ -140,12 +140,13 @@ export default async function LessonPage({ params }: Props) {
 
   const allLessons = await getPublishedLessonsByModuleId(lesson.module_id);
   const lessonIds = allLessons.map((l) => l.id);
-  const [moduleData, progressMap, exam, onboarding, allModules] = await Promise.all([
+  const [moduleData, progressMap, exam, onboarding, allModules, legacyAccessModuleIds] = await Promise.all([
     getModuleById(lesson.module_id),
     getProgressByLessonIds(student.id, lessonIds),
     getExamByModuleId(lesson.module_id),
     getStudentOnboardingResponse(student.id),
     getPublishedModules(),
+    getLegacyAcademyModuleIds(student.id),
   ]);
 
   if (!moduleData) notFound();
@@ -154,14 +155,20 @@ export default async function LessonPage({ params }: Props) {
   const firstModuleId = [...allModules].sort((a, b) => a.order_index - b.order_index || a.id - b.id)[0]?.id;
   const moduleAccessMap = await getModuleAccessMap(student.id, allModules);
   const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
-  const moduleIndex = allModules.findIndex((module) => module.id === moduleData.id);
-  const hasLegacyModuleAccess = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
-    moduleIndex >= FREE_ACCESS_MODULE_LIMIT && canAccessModule;
-  const needsIntake = !intakeComplete &&
+  const hasLegacyModuleAccess = legacyAccessModuleIds.has(moduleData.id);
+  const hasFullModuleAccess = canOpenModuleWithIntake({
+    accessLevel: student.access_level,
+    intakeComplete,
+    isFreeModule: moduleData.is_free,
+    hasLegacyModuleAccess,
+  });
+  const previewOnly = !hasFullModuleAccess;
+  const needsIntake = moduleData.is_free && !intakeComplete &&
     student.access_level < FULL_COURSE_ACCESS_LEVEL && !hasLegacyModuleAccess;
   const canOpenWithIntake = canOpenLessonWithIntake({
     accessLevel: student.access_level,
     intakeComplete,
+    isFreeModule: moduleData.is_free,
     isFirstModule: moduleData.id === firstModuleId,
     isFirstLesson: allLessons[0]?.id === lesson.id,
     hasLegacyModuleAccess,
@@ -186,7 +193,7 @@ export default async function LessonPage({ params }: Props) {
   const allLessonsCompleted = allLessons.every(
     (l) => progressMap.get(l.id)?.watched === true
   );
-  const examAvailable = !!exam && allLessonsCompleted && !needsIntake;
+  const examAvailable = !!exam && allLessonsCompleted && hasFullModuleAccess;
   const lessonNotes = asText(lesson.description);
   const lessonTakeaway = asText(lesson.takeaway);
   const lessonActions = normalizeLessonActions(lesson.action_items);
@@ -291,7 +298,7 @@ export default async function LessonPage({ params }: Props) {
         </Link>
         <p className="mt-2 cb-caption">
           Module {moduleData.order_index} · Les {lesson.order_index}
-          {needsIntake ? " · vervolg na intake" : ` van ${allLessons.length}`}
+          {previewOnly ? needsIntake ? " · vervolg na intake" : " · introductieles" : ` van ${allLessons.length}`}
         </p>
       </RightRailCard>
 
@@ -409,6 +416,10 @@ export default async function LessonPage({ params }: Props) {
                 Na deze les vul je je intake in om verder te gaan.
               </p>
             )
+          ) : previewOnly ? (
+            <Link href="/modules" className="cb-btn cb-btn-primary inline-flex">
+              Bekijk gratis modules
+            </Link>
           ) : nextLesson && nextLessonStatus !== "locked" ? (
             <Link
               href={`/lessons/${nextLesson.slug}`}
@@ -453,7 +464,9 @@ export default async function LessonPage({ params }: Props) {
           <span className="flex flex-wrap items-center gap-2">
             <LessonTypeBadge type={normalizeLessonType(lesson.type)} />
             <span className="cb-caption">
-              {needsIntake ? "Eerste les, zonder intake" : `${lesson.order_index} van ${allLessons.length}`}
+              {previewOnly
+                ? needsIntake ? "Eerste les, zonder intake" : "Introductieles"
+                : `${lesson.order_index} van ${allLessons.length}`}
             </span>
           </span>
         }

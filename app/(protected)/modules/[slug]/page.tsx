@@ -4,11 +4,11 @@ import { ensureCurrentStudent } from "@/lib/students";
 import { getModuleBySlug } from "@/lib/modules";
 import { getPublishedLessonsByModuleId } from "@/lib/lessons";
 import { getLessonStatuses, lessonsWithStatus } from "@/lib/lesson-gate";
-import { getModuleAccessMap } from "@/lib/module-gate";
+import { getLegacyAcademyModuleIds, getModuleAccessMap } from "@/lib/module-gate";
 import {
   canOpenLessonWithIntake,
+  canOpenModuleWithIntake,
   FULL_COURSE_ACCESS_LEVEL,
-  FREE_ACCESS_MODULE_LIMIT,
 } from "@/lib/module-access-policy";
 import { getExamByModuleId, hasPassedExam } from "@/lib/exams";
 import { getPublishedModules } from "@/lib/modules";
@@ -51,6 +51,7 @@ export default async function ModuleDetailPage({ params }: Props) {
   if (!moduleData) notFound();
   if (!student) notFound();
   const accessLevel = student.access_level;
+  const isFreeModule = moduleData.is_free;
 
   const [lessons, allModules, exam, onboarding] = await Promise.all([
     getPublishedLessonsByModuleId(moduleData.id),
@@ -63,15 +64,21 @@ export default async function ModuleDetailPage({ params }: Props) {
   const isFirstModule = moduleData.id === firstModuleId;
   const firstLesson = lessons[0] ?? null;
 
-  const [moduleAccessMap, hasPassedThisExam] = await Promise.all([
+  const [moduleAccessMap, hasPassedThisExam, legacyAccessModuleIds] = await Promise.all([
     getModuleAccessMap(student.id, allModules),
     exam ? hasPassedExam(student.id, exam.id) : Promise.resolve(false),
+    getLegacyAcademyModuleIds(student.id),
   ]);
   const canAccessModule = moduleAccessMap.get(moduleData.id) === true;
-  const moduleIndex = allModules.findIndex((module) => module.id === moduleData.id);
-  const hasLegacyModuleAccess = accessLevel < FULL_COURSE_ACCESS_LEVEL &&
-    moduleIndex >= FREE_ACCESS_MODULE_LIMIT && canAccessModule;
-  const needsIntake = !intakeComplete &&
+  const hasLegacyModuleAccess = legacyAccessModuleIds.has(moduleData.id);
+  const hasFullModuleAccess = canOpenModuleWithIntake({
+    accessLevel,
+    intakeComplete,
+    isFreeModule: moduleData.is_free,
+    hasLegacyModuleAccess,
+  });
+  const previewOnly = canAccessModule && !hasFullModuleAccess;
+  const needsIntake = moduleData.is_free && !intakeComplete &&
     accessLevel < FULL_COURSE_ACCESS_LEVEL && !hasLegacyModuleAccess;
   const statusMap = await getLessonStatuses(student.id, lessons);
   const lessonsWithStatusList = lessonsWithStatus(lessons, statusMap);
@@ -83,14 +90,14 @@ export default async function ModuleDetailPage({ params }: Props) {
       ),
     }))
     .filter((group) => group.lessons.length > 0);
-  const paidModule = accessLevel < FULL_COURSE_ACCESS_LEVEL && moduleIndex >= FREE_ACCESS_MODULE_LIMIT;
+  const paidModule = accessLevel < FULL_COURSE_ACCESS_LEVEL && !moduleData.is_free && !hasLegacyModuleAccess;
   const lockedDescription = paidModule
-    ? "Deze module hoort bij de volledige Academy. Je gratis toegang omvat de eerste drie modules."
+    ? "Deze module hoort bij de volledige Academy. Bekijk het moduleoverzicht voor de modules die gratis beschikbaar zijn."
     : needsIntake
       ? "Bekijk eerst de introductieles en vul daarna je intake in om verder te gaan."
       : "Deze module is nog niet beschikbaar.";
   const allLessonsCompleted = lessons.every((l) => statusMap.get(l.id) === "completed");
-  const examUnlocked = !!exam && allLessonsCompleted && !needsIntake;
+  const examUnlocked = !!exam && allLessonsCompleted && hasFullModuleAccess;
 
   const completedCount = lessons.filter(
     (l) => statusMap.get(l.id) === "completed"
@@ -107,12 +114,14 @@ export default async function ModuleDetailPage({ params }: Props) {
   const nextAvailableLesson = lessonsWithStatusList.find(
     (lesson) => lesson.status === "available"
   );
-  const introPreviewAvailable = needsIntake && isFirstModule && firstLesson &&
+  const introPreviewAvailable = previewOnly && isFirstModule && firstLesson &&
     statusMap.get(firstLesson.id) !== "completed";
   const primaryHref = introPreviewAvailable
     ? `/lessons/${firstLesson.slug}`
     : needsIntake
       ? "/onboarding"
+    : previewOnly
+      ? "/modules"
     : nextAvailableLesson
       ? `/lessons/${nextAvailableLesson.slug}`
       : examUnlocked && exam
@@ -122,6 +131,8 @@ export default async function ModuleDetailPage({ params }: Props) {
     ? "Bekijk de eerste les"
     : needsIntake
       ? "Vul je intake in"
+    : previewOnly
+      ? "Bekijk gratis modules"
     : nextAvailableLesson
       ? `Ga verder met ${lowercaseFirst(nextAvailableLesson.title)}`
       : examUnlocked && exam
@@ -130,9 +141,13 @@ export default async function ModuleDetailPage({ params }: Props) {
           : "Start de toets"
         : "Bekijk de lessen";
   const nextStepCopy = introPreviewAvailable
-    ? "Begin met de introductieles. Daarna kun je je intake invullen en verder leren."
+    ? paidModule
+      ? "Bekijk de introductieles. Voor de overige lessen in deze module heb je volledige Academy-toegang nodig."
+      : "Begin met de introductieles. Daarna kun je je intake invullen en verder leren."
     : needsIntake
       ? "Vul je intake in om de volgende lessen te openen en je mentor context te geven."
+    : previewOnly
+      ? "Je hebt de introductieles bekeken. Voor de rest van deze module heb je volledige Academy-toegang nodig."
     : nextAvailableLesson
       ? `Start met ${nextAvailableLesson.title}. Dit is je eerstvolgende stap in deze module.`
       : examUnlocked && exam
@@ -171,11 +186,12 @@ export default async function ModuleDetailPage({ params }: Props) {
 
   const rail = (
     <>
-      <RightRailCard title={needsIntake ? "Na deze les" : "Voortgang"}>
-        {needsIntake ? (
+      <RightRailCard title={previewOnly ? "Na deze les" : "Voortgang"}>
+        {previewOnly ? (
           <p className="cb-caption leading-relaxed">
-            Na de eerste les vul je je intake in. Daarna verschijnen de overige
-            lessen en je volledige voortgang.
+            {paidModule
+              ? "De introductieles is gratis. Voor de overige lessen en de toets heb je volledige Academy-toegang nodig."
+              : "Na de eerste les vul je je intake in. Daarna verschijnen de overige lessen en je volledige voortgang."}
           </p>
         ) : <div className="space-y-5">
           <div>
@@ -243,6 +259,7 @@ export default async function ModuleDetailPage({ params }: Props) {
     const intakeLocked = !canOpenLessonWithIntake({
       accessLevel,
       intakeComplete,
+      isFreeModule,
       isFirstModule,
       isFirstLesson: lesson.id === firstLesson?.id,
       hasLegacyModuleAccess,
@@ -252,7 +269,7 @@ export default async function ModuleDetailPage({ params }: Props) {
     const duration = formatDuration(lesson.video_duration_seconds);
     const lessonType = normalizeLessonType(lesson.type);
     const statusLabel = intakeLocked
-      ? "Na intake"
+      ? paidModule ? "Academy-toegang nodig" : "Na intake"
       : lesson.status === "completed"
         ? "Afgerond"
         : lesson.status === "available"
@@ -386,8 +403,10 @@ export default async function ModuleDetailPage({ params }: Props) {
           <div className="cb-eyebrow">Lessen</div>
           <h2 className="cb-section-title">Inhoud van deze module</h2>
           <p className="cb-caption max-w-2xl">
-            {needsIntake
-              ? "De eerste les kun je meteen bekijken. Vul daarna je intake in voor de rest van de module."
+            {previewOnly
+              ? paidModule
+                ? "De introductieles kun je meteen bekijken. Voor de rest van deze module heb je volledige Academy-toegang nodig."
+                : "De eerste les kun je meteen bekijken. Vul daarna je intake in voor de rest van de module."
               : "Werk in volgorde. Je voortgang wordt automatisch bijgewerkt."}
           </p>
         </div>

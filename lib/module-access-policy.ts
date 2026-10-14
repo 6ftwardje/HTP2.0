@@ -1,8 +1,21 @@
 /** Keep these entitlements in sync with the lesson and exam policies in Supabase. */
-export const FREE_ACCESS_MODULE_LIMIT = 3;
 export const FULL_COURSE_ACCESS_LEVEL = 2;
 
-type OrderedModule = { id: number; order_index: number };
+type OrderedModule = { id: number; order_index: number; is_free: boolean };
+
+/** Full module access excludes the first lesson's standalone preview. */
+export function canOpenModuleWithIntake(params: {
+  accessLevel: number;
+  intakeComplete: boolean;
+  isFreeModule: boolean;
+  hasLegacyModuleAccess?: boolean;
+}): boolean {
+  return (
+    params.accessLevel >= FULL_COURSE_ACCESS_LEVEL ||
+    params.hasLegacyModuleAccess === true ||
+    (params.intakeComplete && params.isFreeModule)
+  );
+}
 
 export function buildModuleEntitlementMap(
   modules: OrderedModule[],
@@ -13,14 +26,15 @@ export function buildModuleEntitlementMap(
   const ordered = [...modules].sort(
     (a, b) => a.order_index - b.order_index || a.id - b.id
   );
-  const hasFullCourseAccess = accessLevel >= FULL_COURSE_ACCESS_LEVEL;
-
   return new Map(
     ordered.map((module, index) => [
       module.id,
-      hasFullCourseAccess ||
-        legacyAccessModuleIds.has(module.id) ||
-        (intakeComplete && index < FREE_ACCESS_MODULE_LIMIT) ||
+      canOpenModuleWithIntake({
+        accessLevel,
+        intakeComplete,
+        isFreeModule: module.is_free,
+        hasLegacyModuleAccess: legacyAccessModuleIds.has(module.id),
+      }) ||
         index === 0,
     ])
   );
@@ -30,14 +44,13 @@ export function buildModuleEntitlementMap(
 export function canOpenLessonWithIntake(params: {
   accessLevel: number;
   intakeComplete: boolean;
+  isFreeModule: boolean;
   isFirstModule: boolean;
   isFirstLesson: boolean;
   hasLegacyModuleAccess?: boolean;
 }): boolean {
   return (
-    params.accessLevel >= FULL_COURSE_ACCESS_LEVEL ||
-    params.hasLegacyModuleAccess === true ||
-    params.intakeComplete ||
+    canOpenModuleWithIntake(params) ||
     (params.isFirstModule && params.isFirstLesson)
   );
 }
@@ -50,17 +63,22 @@ export function chooseNextAvailableModule<T extends {
 }>(
   summaries: T[],
   incompleteFreeIntake: boolean,
-  legacyAccessModuleIds: ReadonlySet<number>
+  legacyAccessModuleIds: ReadonlySet<number>,
+  previewOnlyModuleIds: ReadonlySet<number> = new Set<number>()
 ): T | null {
+  const available = summaries.filter((summary) =>
+    summary.state === "available" &&
+    !(previewOnlyModuleIds.has(summary.module.id) && summary.completedLessons > 0)
+  );
   return (
     (incompleteFreeIntake
-      ? summaries.find((summary) =>
-          summary.state === "available" && legacyAccessModuleIds.has(summary.module.id)
+      ? available.find((summary) =>
+          legacyAccessModuleIds.has(summary.module.id)
         )
       : null) ??
-    summaries.find((summary) =>
-      summary.state === "available" && summary.completedLessons > 0
+    available.find((summary) =>
+      summary.completedLessons > 0
     ) ??
-    summaries.find((summary) => summary.state === "available") ?? null
+    available[0] ?? null
   );
 }

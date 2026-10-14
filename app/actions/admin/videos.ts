@@ -138,6 +138,7 @@ function readModuleInput(formData: FormData) {
       thumbnail_url: asNullableString(formData.get("thumbnail_url")),
       order_index: orderIndex,
       is_published: asBoolean(formData.get("is_published")),
+      is_free: asBoolean(formData.get("is_free")),
     },
   };
 }
@@ -180,6 +181,9 @@ function revalidateVideoPaths(lessonSlug?: string) {
   revalidatePath("/admin/videos");
   revalidatePath("/dashboard");
   revalidatePath("/modules");
+  revalidatePath("/(protected)/modules/[slug]", "page");
+  revalidatePath("/(protected)/modules/[slug]/exam", "page");
+  revalidatePath("/(protected)/lessons/[slug]", "page");
   if (lessonSlug) revalidatePath(`/lessons/${lessonSlug}`);
 }
 
@@ -351,7 +355,7 @@ export async function adminCreateModule(
 
   await logAdminAction("content.module_created", {
     actorStudentId: actorStudent.id,
-    metadata: { moduleId: module?.id, title: parsed.input.title },
+    metadata: { moduleId: module?.id, title: parsed.input.title, is_free: parsed.input.is_free },
   });
 
   revalidateVideoPaths();
@@ -374,7 +378,7 @@ export async function adminUpdateModule(
 
   await logAdminAction("content.module_updated", {
     actorStudentId: actorStudent.id,
-    metadata: { moduleId, title: parsed.input.title },
+    metadata: { moduleId, title: parsed.input.title, is_free: parsed.input.is_free },
   });
 
   revalidateVideoPaths();

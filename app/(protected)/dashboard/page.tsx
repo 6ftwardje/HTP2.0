@@ -19,6 +19,7 @@ import { listUpcomingLiveSessions } from "@/lib/live-sessions";
 import { listAdminMentorThreads } from "@/lib/mentor-chat";
 import { stripModulePrefix } from "@/lib/module-title";
 import { FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
+import { getLegacyAcademyModuleIds } from "@/lib/module-gate";
 import {
   getStudentOnboardingResponse,
   onboardingIsComplete,
@@ -212,22 +213,21 @@ async function StudentDashboard({
   student: Student;
   intakeCompleted: boolean;
 }) {
-  const [overview, onboarding, billingOverview, upcomingLiveSessions] = await Promise.all([
+  const [overview, onboarding, billingOverview, upcomingLiveSessions, legacyAccessModuleIds] = await Promise.all([
     process.env.PROJECT_SPEED_DASHBOARD_READ_MODEL === "1"
       ? getDashboardOverviewReadModel(student.id, student.access_level)
       : getDashboardOverview(student.id, student.access_level),
     getStudentOnboardingResponse(student.id),
     getBillingOverview(student.id),
     listUpcomingLiveSessions(1),
+    getLegacyAcademyModuleIds(student.id),
   ]);
   const { nextStep } = overview;
   const intakeComplete = onboardingIsComplete(onboarding);
   const hasLegacyNextStep = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
     nextStep.type !== "completed" &&
     nextStep.module != null &&
-    overview.modules.some((summary, index) =>
-      index >= 3 && summary.module.id === nextStep.module?.id && summary.state !== "locked"
-    );
+    legacyAccessModuleIds.has(nextStep.module.id);
   const needsIntake = !intakeComplete &&
     student.access_level < FULL_COURSE_ACCESS_LEVEL &&
     !hasLegacyNextStep;

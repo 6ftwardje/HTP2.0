@@ -4,7 +4,7 @@ import { getPublishedModules } from "@/lib/modules";
 import { getLessonCountsByModuleIds, getPublishedLessonsByModuleId } from "@/lib/lessons";
 import { getProgressByLessonIds } from "@/lib/progress";
 import { buildModuleAccessMap, getLegacyAcademyModuleIds } from "@/lib/module-gate";
-import { FULL_COURSE_ACCESS_LEVEL, FREE_ACCESS_MODULE_LIMIT } from "@/lib/module-access-policy";
+import { FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 import { getExamsByModuleIds, getPassedExamIdsForStudent } from "@/lib/exams";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ModuleStateBadge } from "@/components/StatusBadge";
@@ -47,7 +47,7 @@ export default async function ModulesPage() {
       )
     : new Map<number, boolean>();
 
-  const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index);
+  const orderedModules = [...modules].sort((a, b) => a.order_index - b.order_index || a.id - b.id);
   const firstLesson = needsIntake && orderedModules[0]
     ? (await getPublishedLessonsByModuleId(orderedModules[0].id))[0]
     : null;
@@ -106,7 +106,7 @@ export default async function ModulesPage() {
             const lessonCount = lessonCountMap.get(mod.id) ?? 0;
             const shortDesc = asText(mod.short_description);
             const moduleTitle = stripModulePrefix(mod.title, mod.order_index);
-            const isPaidModule = student && student.access_level < FULL_COURSE_ACCESS_LEVEL && index >= FREE_ACCESS_MODULE_LIMIT;
+            const isPaidModule = !!student && student.access_level < FULL_COURSE_ACCESS_LEVEL && !mod.is_free;
             const lockedCopy = isPaidModule
               ? "Volledige Academy-toegang nodig"
               : needsIntake
@@ -148,7 +148,7 @@ export default async function ModulesPage() {
                       )}
                     </div>
                     <div className="mt-5 text-sm font-semibold text-[var(--foreground)]">
-                      {needsIntake && !legacyAccessModuleIds.has(mod.id) ? "Eerste les bekijken" : "Openen"}
+                      {(needsIntake || isPaidModule) && !legacyAccessModuleIds.has(mod.id) ? "Eerste les bekijken" : "Openen"}
                       </div>
                     </div>
                   </Link>
@@ -200,7 +200,7 @@ export default async function ModulesPage() {
         breadcrumbs={[{ label: "Academy" }]}
         eyebrow="Jouw opleiding"
         title="Modules"
-        description="Volg de lessen in je eigen tempo. De eerste drie modules zijn gratis; voor de rest heb je volledige Academy-toegang nodig."
+        description="Volg de lessen in je eigen tempo. De gratis modules openen na je intake; voor de overige modules heb je volledige Academy-toegang nodig."
       />
       <div className="min-w-0">{main}</div>
     </div>

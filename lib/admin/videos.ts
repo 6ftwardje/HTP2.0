@@ -35,6 +35,7 @@ export type ModuleContentInput = {
   thumbnail_url: string | null;
   order_index: number;
   is_published: boolean;
+  is_free: boolean;
 };
 
 export type LessonContentInput = {

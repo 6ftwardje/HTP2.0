@@ -23,6 +23,7 @@ export type Module = {
   thumbnail_url: string | null;
   icon_url: string | null;
   is_published: boolean;
+  is_free: boolean;
   created_at: string;
   updated_at: string;
 };

@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { getLessonById, getPublishedLessonsByModuleId } from "@/lib/lessons";
 import { getPublishedModules } from "@/lib/modules";
-import { getModuleAccessMap } from "@/lib/module-gate";
+import { getLegacyAcademyModuleIds, getModuleAccessMap } from "@/lib/module-gate";
 import { getLessonStatuses } from "@/lib/lesson-gate";
-import { canOpenLessonWithIntake, FREE_ACCESS_MODULE_LIMIT, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
+import { canOpenLessonWithIntake } from "@/lib/module-access-policy";
 import { getDashboardOverview } from "@/lib/dashboard";
 import {
   normalizeLessonActions,
@@ -39,22 +39,22 @@ export async function toggleLessonAction(
     getPublishedModules(),
     getStudentOnboardingResponse(student.id),
   ]);
-  const [accessMap, statusMap] = await Promise.all([
+  const [accessMap, statusMap, legacyAccessModuleIds] = await Promise.all([
     getModuleAccessMap(student.id, modules),
     getLessonStatuses(student.id, moduleLessons),
+    getLegacyAcademyModuleIds(student.id),
   ]);
-  const moduleIndex = modules.findIndex((module) => module.id === lesson.module_id);
-  const hasLegacyModuleAccess = student.access_level < FULL_COURSE_ACCESS_LEVEL &&
-    moduleIndex >= FREE_ACCESS_MODULE_LIMIT && accessMap.get(lesson.module_id) === true;
+  const moduleData = modules.find((module) => module.id === lesson.module_id);
   if (
     accessMap.get(lesson.module_id) !== true ||
     !["available", "completed"].includes(statusMap.get(lessonId) ?? "locked") ||
     !canOpenLessonWithIntake({
       accessLevel: student.access_level,
       intakeComplete: onboardingIsComplete(onboarding),
+      isFreeModule: moduleData?.is_free === true,
       isFirstModule: modules[0]?.id === lesson.module_id,
       isFirstLesson: moduleLessons[0]?.id === lessonId,
-      hasLegacyModuleAccess,
+      hasLegacyModuleAccess: legacyAccessModuleIds.has(lesson.module_id),
     })
   ) {
     return { success: false, error: "Deze les is nog vergrendeld." };

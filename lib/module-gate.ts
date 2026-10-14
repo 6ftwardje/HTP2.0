@@ -10,12 +10,12 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { logError } from "@/lib/logger";
 
-export { FREE_ACCESS_MODULE_LIMIT, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
+export { FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 
 /**
  * Module access:
  * - before intake: free students can explore module one and watch its first lesson;
- * - after intake: free students get the first three published modules;
+ * - after intake: free students get the published modules marked free by an admin;
  * - access level 2+ gets every published module, whether intake is complete or not.
  * - an existing free student keeps only modules frozen at cutover.
  * Passing an exam after cutover never changes the paid entitlement boundary.
