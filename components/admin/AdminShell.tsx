@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
+import { NavigationIcon } from "@/components/ui/NavigationIcon";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/ui/Brand";
@@ -12,105 +13,37 @@ const adminNav = [
   {
     href: "/admin",
     label: "Overzicht",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4 14.5 12 8l8 6.5V20a1 1 0 0 1-1 1h-5v-7H10v7H5a1 1 0 0 1-1-1v-5.5Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="dashboard" />,
   },
   {
     href: "/admin/students",
     label: "Studenten",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4 20v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="students" />,
   },
   {
     href: "/admin/mentor-inbox",
     label: "Mentor-inbox",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4 5.5h16v10H8l-4 4v-14Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M8 9h8M8 12.5h5"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="mentor" />,
   },
   {
     href: "/admin/exams",
     label: "Examens",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M7 5h10M7 9h10M7 13h6M5 3h14v18l-3-2-3 2-3-2-3 2-2-1.3V3Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="exams" />,
   },
   {
     href: "/admin/videos",
     label: "Lesvideo's",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4.5 6.5h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2ZM16.5 10l5-2.5v9l-5-2.5"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="lessons" />,
   },
   {
     href: "/admin/live-sessions",
     label: "Live marktsessies",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <NavigationIcon name="live" />,
   },
   {
     href: "/admin/market-analysis",
     label: "Marktinzicht",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4 6.5h16M4 12h10M4 17.5h16M17 10l3 2-3 2v-4Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="market" />,
   },
 ];
 
@@ -177,16 +110,22 @@ function SidebarContent({
         <Link
           href="/dashboard"
           onClick={onNavigate}
-          className="mb-2 block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+          className="mb-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
         >
-          Naar Academy
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+            <NavigationIcon name="academy" />
+          </span>
+          <span>Naar Academy</span>
         </Link>
         <form action="/auth/signout" method="post">
           <button
             type="submit"
-            className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
           >
-            Uitloggen
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+              <NavigationIcon name="logout" />
+            </span>
+            <span>Uitloggen</span>
           </button>
         </form>
       </div>
@@ -262,14 +201,7 @@ export function AdminShell({
             aria-expanded={mobileOpen}
             aria-controls="admin-mobile-nav"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M4 7h16M4 12h16M4 17h16"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
+            <NavigationIcon name="menu" />
             Menu
           </button>
           <Link href="/admin" className="inline-flex items-center">

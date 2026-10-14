@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
+import { NavigationIcon } from "@/components/ui/NavigationIcon";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BRAND, BrandLogo } from "@/components/ui/Brand";
@@ -18,79 +19,27 @@ const coreNav = [
   {
     href: "/dashboard",
     label: "Dashboard",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="dashboard" />,
   },
   {
     href: "/modules",
     label: "Academy",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4 6.5h16M4 12h10M4 17.5h16"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="academy" />,
   },
   {
     href: "/mentor",
     label: "Mentor",
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M12 21a9 9 0 1 0-9-9 9 9 0 0 0 9 9Zm0-14v5l3 2"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="mentor" />,
   },
   {
     href: "/notifications",
     label: "Meldingen",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M6 9a6 6 0 1 1 12 0c0 6 2 6 2 8H4c0-2 2-2 2-8Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M9.5 20a3 3 0 0 0 5 0"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="notifications" />,
   },
   {
     href: "/account",
     label: "Profiel",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.418 0-8 2.015-8 4.5V21h16v-2.5C20 16.015 16.418 14 12 14Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="profile" />,
   },
 ] as const;
 
@@ -98,55 +47,19 @@ const updatesNav = [
   {
     href: "/market-analysis",
     label: "Marktinzicht",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path
-          d="M4 19V5M4 19h16M7 15l4-4 3 2 5-6"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="market" />,
   },
   {
     href: "/live-sessions",
     label: "Live marktsessies",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
-        <path
-          d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a9.9 9.9 0 0 0 0 14M19 5a9.9 9.9 0 0 1 0 14"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: <NavigationIcon name="live" />,
   },
 ] as const;
 
 const adminNavItem = {
   href: "/admin",
   label: "Admin",
-  icon: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M12 3.5 19 6v5.25c0 4.15-2.7 7.75-7 9.25-4.3-1.5-7-5.1-7-9.25V6l7-2.5Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.25 12.1 11 13.85l3.75-4.1"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
+  icon: <NavigationIcon name="admin" />,
 } as const;
 
 function SidebarContent({
@@ -233,16 +146,22 @@ function SidebarContent({
         <div className="flex flex-col gap-1">
           <a
             href={`mailto:${BRAND.supportEmail}`}
-            className="rounded-lg px-2 py-2 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
           >
-            Hulp nodig?
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+              <NavigationIcon name="help" />
+            </span>
+            <span>Hulp nodig?</span>
           </a>
           <form action="/auth/signout" method="post">
             <button
               type="submit"
-              className="w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
             >
-              Afmelden
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+                <NavigationIcon name="logout" />
+              </span>
+              <span>Afmelden</span>
             </button>
           </form>
         </div>
@@ -335,14 +254,7 @@ export function AppShell({
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M4 7h16M4 12h16M4 17h16"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
+            <NavigationIcon name="menu" />
             Menu
           </button>
           <Link href="/dashboard" className="inline-flex items-center">

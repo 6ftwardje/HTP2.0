@@ -21,8 +21,9 @@ export function SidebarNavItem({
     <Link
       href={href}
       onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
       className={[
-        "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors",
+        "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]",
         active
           ? [
               "bg-[color-mix(in_oklab,var(--accent)_13%,var(--card))] text-[var(--accent)]",
