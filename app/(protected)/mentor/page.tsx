@@ -1,39 +1,18 @@
-import { PageHeader } from "@/components/layout/PageHeader";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { MentorChatPanel } from "@/components/mentor/MentorChatPanel";
-import { getOrCreateStudentMentorConversation } from "@/lib/mentor-chat";
+import { getChatAccess, getOrCreateStudentMentorConversation } from "@/lib/mentor-chat";
 
 export default async function MentorPage() {
-  const { conversation, missingMigration, error } =
-    await getOrCreateStudentMentorConversation();
-
-  return (
-    <div>
-      <PageHeader
-        title="Stel je vraag aan een mentor"
-        description="Vraag hulp bij een les, je analyse of je volgende stap. Je krijgt antwoord in dit gesprek."
-      />
-
-      {missingMigration || error ? (
-        <section className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-6">
-          <h2 className="text-lg font-extrabold text-[var(--foreground)]">
-            Chat tijdelijk niet beschikbaar
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--muted)]">
-            We kunnen je gesprek nu niet openen. Probeer het later opnieuw of
-            mail ons als je hulp nodig hebt.
-          </p>
-          <a href="mailto:info@hettradeplatform.be" className="mt-4 inline-flex text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline">
-            Mail ons →
-          </a>
-        </section>
-      ) : conversation ? (
-        <div className="max-w-4xl">
-          <MentorChatPanel
-            thread={conversation.thread}
-            messages={conversation.messages}
-          />
-        </div>
-      ) : null}
-    </div>
-  );
+  const access = await getChatAccess();
+  if (access.isMentor) redirect("/mentor-inbox");
+  const { conversation, mentor, missingMigration, error } = await getOrCreateStudentMentorConversation();
+  if (missingMigration || error || !conversation) {
+    return <section className="flex h-full w-full flex-col items-center justify-center bg-[var(--card)] px-6 py-12 text-center">
+      <h1 className="text-xl font-semibold tracking-tight">Chat tijdelijk niet beschikbaar</h1>
+      <p className="mt-3 max-w-md text-sm leading-7 text-[var(--muted)]">We kunnen je gesprek nu niet openen. Probeer het opnieuw of mail ons als je hulp nodig hebt.</p>
+      <div className="mt-6 flex items-center gap-5"><Link href="/mentor" className="cb-btn cb-btn-primary">Opnieuw proberen</Link><a href="mailto:info@hettradeplatform.be" className="text-sm font-medium text-[var(--muted)] underline underline-offset-4">Mail ons</a></div>
+    </section>;
+  }
+  return <MentorChatPanel thread={conversation.thread} messages={conversation.messages} currentStudentId={conversation.currentStudentId} mentorId={mentor?.studentId ?? ""} mentorName={mentor?.displayName ?? "Rousso"} hasOlder={conversation.hasOlder} lastReadSeq={conversation.lastReadSeq} chatEmailEnabled={process.env.CHAT_EMAIL_MODE === "live"}/>;
 }

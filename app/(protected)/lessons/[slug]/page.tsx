@@ -387,6 +387,9 @@ export default async function LessonPage({ params }: Props) {
             <span className="cb-caption">Je voortgang wordt automatisch bijgewerkt.</span>
           )}
         </div>
+        <Link href="/mentor" className="inline-flex min-h-[42px] items-center text-sm font-medium text-[var(--muted)] underline-offset-4 hover:text-[var(--foreground)] hover:underline">
+          Een vraag? Stuur Rousso een bericht
+        </Link>
       </div>
 
       <nav

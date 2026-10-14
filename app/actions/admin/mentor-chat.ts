@@ -1,12 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/admin/access";
 import { logAdminAction } from "@/lib/admin/audit";
 import {
   createAdminMentorMessage,
+  getChatMessagePage,
   markAdminMentorThreadRead,
+  requireChatMentor,
   updateAdminMentorThread,
+  type ChatSendResult,
 } from "@/lib/mentor-chat";
 import type {
   ConversationThreadPriority,
@@ -36,35 +38,36 @@ function parsePriority(value: unknown): ConversationThreadPriority | null {
 export async function adminReplyToMentorThread(
   threadId: string,
   formData: FormData
-): Promise<{ success: boolean; error?: string }> {
-  const { actorStudent } = await requireAdmin();
+): Promise<ChatSendResult> {
+  const { actorStudent } = await requireChatMentor();
   const body = String(formData.get("body") ?? "");
   const isInternal = formData.get("is_internal") === "on";
-  const { error } = await createAdminMentorMessage({
+  const result = await createAdminMentorMessage({
     threadId,
-    actorStudentId: actorStudent.id,
+    clientMessageId: String(formData.get("client_message_id") ?? ""),
     body,
     isInternal,
+    attachmentIds: formData.getAll("attachment_ids").map(String),
+    uploadIntent: String(formData.get("upload_intent") ?? ""),
   });
 
-  if (error) return { success: false, error };
+  if (!result.success) return result;
 
-  await markAdminMentorThreadRead(threadId);
   await logAdminAction(isInternal ? "mentor_chat.internal_note_created" : "mentor_chat.replied", {
     actorStudentId: actorStudent.id,
     metadata: { threadId },
   });
-  revalidatePath("/admin/mentor-inbox");
+  revalidatePath("/mentor-inbox");
   revalidatePath("/mentor");
   revalidatePath("/notifications");
-  return { success: true };
+  return result;
 }
 
 export async function adminUpdateMentorThread(
   threadId: string,
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
-  const { actorStudent } = await requireAdmin();
+  const { actorStudent } = await requireChatMentor();
   const status = parseStatus(formData.get("status"));
   const priority = parsePriority(formData.get("priority"));
   const categoryRaw = String(formData.get("category") ?? "").trim();
@@ -82,11 +85,19 @@ export async function adminUpdateMentorThread(
     actorStudentId: actorStudent.id,
     metadata: { threadId, status, priority, category: categoryRaw || null },
   });
-  revalidatePath("/admin/mentor-inbox");
+  revalidatePath("/mentor-inbox");
   return { success: true };
 }
 
-export async function adminMarkMentorThreadRead(threadId: string) {
-  await markAdminMentorThreadRead(threadId);
-  revalidatePath("/admin/mentor-inbox");
+export async function adminMarkMentorThreadRead(threadId: string, seenSeq: number) {
+  return markAdminMentorThreadRead(threadId, seenSeq);
+}
+
+export async function loadAdminMentorMessages(threadId: string, beforeSeq: number) {
+  await requireChatMentor();
+  try {
+    return { success: true as const, ...await getChatMessagePage(threadId, beforeSeq) };
+  } catch {
+    return { success: false as const, error: "Eerdere berichten laden is niet gelukt. Probeer opnieuw." };
+  }
 }

@@ -8,6 +8,7 @@ import { PageLoadOverlay } from "@/components/PageLoadOverlay";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/ui/Brand";
 import { useMobileDrawer } from "@/components/useMobileDrawer";
+import { clearChatDrafts } from "@/lib/chat-message-state";
 
 const adminNav = [
   {
@@ -21,7 +22,7 @@ const adminNav = [
     icon: <NavigationIcon name="students" />,
   },
   {
-    href: "/admin/mentor-inbox",
+    href: "/mentor-inbox",
     label: "Mentor-inbox",
     icon: <NavigationIcon name="mentor" />,
   },
@@ -49,9 +50,11 @@ const adminNav = [
 
 function SidebarContent({
   studentName,
+  isChatMentor,
   onNavigate,
 }: {
   studentName: string | null;
+  isChatMentor: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -89,7 +92,7 @@ function SidebarContent({
         className="mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain"
         aria-label="Beheermenu"
       >
-        {adminNav.map((item) => {
+        {adminNav.filter((item) => item.href !== "/mentor-inbox" || isChatMentor).map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -117,7 +120,7 @@ function SidebarContent({
           </span>
           <span>Naar Academy</span>
         </Link>
-        <form action="/auth/signout" method="post">
+        <form action="/auth/signout" method="post" onSubmit={() => clearChatDrafts()}>
           <button
             type="submit"
             className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
@@ -136,9 +139,11 @@ function SidebarContent({
 export function AdminShell({
   children,
   studentName,
+  isChatMentor = false,
 }: {
   children: React.ReactNode;
   studentName: string | null;
+  isChatMentor?: boolean;
 }) {
   const { mobileOpen, menuTriggerRef, menuCloseRef, menuPanelRef, openMobileMenu, closeMobileMenu } = useMobileDrawer();
   const pathname = usePathname();
@@ -150,6 +155,7 @@ export function AdminShell({
         <div className="flex h-full min-h-0 flex-col px-5 py-7">
           <SidebarContent
             studentName={studentName}
+            isChatMentor={isChatMentor}
             onNavigate={() => closeMobileMenu(false)}
           />
         </div>
@@ -180,6 +186,7 @@ export function AdminShell({
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-6">
               <SidebarContent
                 studentName={studentName}
+                isChatMentor={isChatMentor}
                 onNavigate={() => closeMobileMenu(false)}
               />
             </div>

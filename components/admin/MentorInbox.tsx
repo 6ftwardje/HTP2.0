@@ -1,373 +1,233 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  adminMarkMentorThreadRead,
-  adminReplyToMentorThread,
-  adminUpdateMentorThread,
-} from "@/app/actions/admin/mentor-chat";
-import type {
-  AdminMentorThreadDetail,
-  AdminMentorThreadRow,
-} from "@/lib/mentor-chat";
+import { adminMarkMentorThreadRead, adminReplyToMentorThread, adminUpdateMentorThread, loadAdminMentorMessages } from "@/app/actions/admin/mentor-chat";
+import type { AdminMentorThreadDetail, AdminMentorThreadRow } from "@/lib/mentor-chat";
 import { useMentorInboxRealtime } from "@/lib/realtime-hooks";
 import type { ConversationMessage } from "@/lib/types";
+import { acknowledgedChatDraft, removeChatDraft, restoreChatDraft, saveChatDraft } from "@/lib/chat-message-state";
+import { ChatIcon, ChatTranscript, ConnectionNotice, mergeMessages, MessageComposer, newChatDraft } from "@/components/mentor/ChatWorkspace";
+import type { ChatDraft } from "@/components/mentor/ChatWorkspace";
+import styles from "@/components/mentor/ChatWorkspace.module.css";
+import { ChatEmailPreference } from "@/components/mentor/ChatEmailPreference";
 
-function formatShortDate(value: string | null) {
-  if (!value) return "Nog geen bericht";
-  return new Intl.DateTimeFormat("nl-NL", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+function shortDate(value: string | null) {
+  return value ? new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", timeZone: "Europe/Brussels" }).format(new Date(value)) : "";
 }
-
 function statusLabel(status: string) {
   if (status === "pending_mentor") return "Te beantwoorden";
-  if (status === "pending_student") return "Wacht op student";
+  if (status === "pending_student") return "Beantwoord";
   if (status === "snoozed") return "Later opvolgen";
   if (status === "closed") return "Gesloten";
   return "Open";
 }
-
-function priorityClass(priority: string) {
-  if (priority === "urgent") return "border-red-500/30 text-red-500";
-  if (priority === "high") return "border-amber-500/30 text-amber-500";
-  return "border-[var(--border)] text-[var(--muted)]";
+function initials(name: string) { return name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase(); }
+function inboxUrl(basePath: string, status: string, q: string, threadId?: string | null, cursor?: string | null) {
+  const params = new URLSearchParams({ status });
+  if (q) params.set("q", q);
+  if (threadId) params.set("thread", threadId);
+  else params.set("view", "list");
+  if (cursor) params.set("cursor", cursor);
+  return `${basePath}?${params}`;
 }
 
-function senderLabel(message: ConversationMessage) {
-  if (message.is_internal) return "Interne notitie";
-  if (message.sender_role === "student") return "Student";
-  if (message.sender_role === "ai") return "AI";
-  return "Mentor";
-}
-
-export function MentorInbox({
-  rows,
-  detail,
-  status,
-  q,
-}: {
+export function MentorInbox({ rows, detail, currentStudentId, mentorId, status, q, hasMore = false, nextCursor = null, basePath = "/mentor-inbox", totalUnreadCount, chatEmailEnabled = false }: {
   rows: AdminMentorThreadRow[];
   detail: AdminMentorThreadDetail | null;
+  currentStudentId: string;
+  mentorId: string;
   status: string;
   q: string;
+  hasMore?: boolean;
+  nextCursor?: string | null;
+  basePath?: string;
+  totalUnreadCount?: number;
+  chatEmailEnabled?: boolean;
 }) {
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
-  const [replyError, setReplyError] = useState<string | null>(null);
-  const [metaError, setMetaError] = useState<string | null>(null);
-  const [replyPending, startReplyTransition] = useTransition();
-  const [metaPending, startMetaTransition] = useTransition();
-
-  useMentorInboxRealtime(detail?.thread.id ?? null);
+  const draftsRef = useRef(new Map<string, ChatDraft>());
+  const connection = useMentorInboxRealtime(detail?.thread.id ?? null);
+  const selectedId = detail?.thread.id ?? null;
+  const unreadCount = totalUnreadCount ?? rows.reduce((sum, row) => sum + row.unread_for_mentor_count, 0);
 
   useEffect(() => {
-    if (!detail || detail.thread.unread_for_mentor_count <= 0) return;
-    adminMarkMentorThreadRead(detail.thread.id);
-  }, [detail]);
+    if (!selectedId) return;
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("thread") && params.get("view") !== "list") {
+      params.set("thread", selectedId);
+      router.replace(`${basePath}?${params}`, { scroll: false });
+    }
+  }, [basePath, router, selectedId]);
 
-  function submitReply(formData: FormData) {
-    if (!detail) return;
-    setReplyError(null);
-    startReplyTransition(async () => {
-      const result = await adminReplyToMentorThread(detail.thread.id, formData);
-      if (!result.success) {
-        setReplyError(result.error ?? "Antwoord verzenden mislukt.");
-        return;
-      }
-      formRef.current?.reset();
-      router.refresh();
-    });
-  }
-
-  function submitMeta(formData: FormData) {
-    if (!detail) return;
-    setMetaError(null);
-    startMetaTransition(async () => {
-      const result = await adminUpdateMentorThread(detail.thread.id, formData);
-      if (!result.success) {
-        setMetaError(result.error ?? "Thread bijwerken mislukt.");
-        return;
-      }
-      router.refresh();
-    });
-  }
-
-  const selectedId = detail?.thread.id ?? null;
-
-  return (
-    <div className="grid min-h-[680px] gap-6 xl:grid-cols-[390px_minmax(0,1fr)]">
-      <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
-        <div className="border-b border-[var(--border)] p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-              Gesprekken
-            </span>
-            <span className="rounded-full border border-emerald-500/25 px-2 py-1 text-[0.65rem] font-bold uppercase tracking-[0.13em] text-emerald-500">
-              Live
-            </span>
+  return <div className={styles.inbox} data-selected={Boolean(detail)}>
+    <aside className={styles.sidebar} aria-label="Studentgesprekken">
+      <div className={styles.inboxHeader}>
+        <div className={styles.inboxTitle}><h1 className={styles.heading}>Studentvragen</h1>{unreadCount > 0 && <span className={styles.count}>{unreadCount} ongelezen</span>}</div>
+        <form action={basePath}>
+          {selectedId ? <input type="hidden" name="thread" value={selectedId}/> : <input type="hidden" name="view" value="list"/>}
+          <label className={styles.search}><ChatIcon name="search" size={15}/><span className="sr-only">Zoek student of bericht</span><input name="q" defaultValue={q} placeholder="Zoek student of bericht"/></label>
+          <div className={styles.filters}>
+            <label className="sr-only" htmlFor="inbox-filter">Filter gesprekken</label>
+            <select id="inbox-filter" name="status" defaultValue={status} className={styles.select}>
+              <option value="active">Alle actieve gesprekken</option><option value="unread">Ongelezen</option><option value="pending_mentor">Te beantwoorden</option><option value="pending_student">Beantwoord</option><option value="open">Open</option><option value="snoozed">Later opvolgen</option><option value="closed">Gesloten</option>
+            </select>
+            <button type="submit" className={styles.textButton}>Toepassen</button>
           </div>
-          <form className="space-y-3">
-            <div className="grid grid-cols-[minmax(0,1fr)_130px] gap-2">
-              <input
-                name="q"
-                defaultValue={q}
-                placeholder="Zoek student of bericht"
-                className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[color-mix(in_oklab,var(--accent)_55%,var(--border))]"
-              />
-              <select
-                name="status"
-                defaultValue={status}
-                className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[color-mix(in_oklab,var(--accent)_55%,var(--border))]"
-              >
-                <option value="active">Actief</option>
-                <option value="unread">Ongelezen</option>
-                <option value="pending_mentor">Te beantwoorden</option>
-                <option value="pending_student">Wacht op student</option>
-                <option value="open">Open</option>
-                <option value="snoozed">Snoozed</option>
-                <option value="closed">Gesloten</option>
-              </select>
-            </div>
-            <button type="submit" className="cb-btn cb-btn-secondary w-full justify-center px-4 py-2 text-sm">
-              Filter
-            </button>
-          </form>
-        </div>
-
-        <div className="max-h-[70vh] overflow-y-auto">
-          {rows.length === 0 ? (
-            <div className="p-5 text-sm leading-7 text-[var(--muted)]">
-              Geen gesprekken gevonden.
-            </div>
-          ) : (
-            rows.map((row) => {
-              const selected = row.id === selectedId;
-              const studentName = row.student?.name ?? row.student?.email ?? "Student";
-              return (
-                <Link
-                  key={row.id}
-                  href={`/admin/mentor-inbox?thread=${row.id}&status=${encodeURIComponent(status)}&q=${encodeURIComponent(q)}`}
-                  className={`block border-b border-[var(--border)] p-4 transition hover:bg-[color-mix(in_oklab,var(--foreground)_4%,transparent)] ${
-                    selected ? "bg-[color-mix(in_oklab,var(--accent)_9%,transparent)]" : ""
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        {row.unread_for_mentor_count > 0 && (
-                          <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
-                        )}
-                        <p className="truncate font-bold text-[var(--foreground)]">
-                          {studentName}
-                        </p>
-                      </div>
-                      <p className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.13em] text-[var(--muted)]">
-                        {statusLabel(row.status)} · {formatShortDate(row.last_message_at)}
-                      </p>
-                    </div>
-                    <span className={`rounded-full border px-2 py-1 text-[0.65rem] font-bold uppercase ${priorityClass(row.priority)}`}>
-                      {row.priority}
-                    </span>
-                  </div>
-                  {row.lastMessage && (
-                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]">
-                      {row.lastMessage.body}
-                    </p>
-                  )}
-                </Link>
-              );
-            })
-          )}
-        </div>
-      </section>
-
-      {detail ? (
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
-            <div className="border-b border-[var(--border)] p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-                {detail.thread.student?.email ?? "Onbekende student"}
-              </p>
-              <h2 className="mt-2 text-2xl font-extrabold text-[var(--foreground)]">
-                {detail.thread.student?.name ?? "Studentgesprek"}
-              </h2>
-            </div>
-
-            <div className="max-h-[52vh] min-h-[380px] space-y-4 overflow-y-auto p-5">
-              {detail.messages.length === 0 ? (
-                <p className="text-sm leading-7 text-[var(--muted)]">
-                  Nog geen berichten in deze thread.
-                </p>
-              ) : (
-                detail.messages.map((message) => {
-                  const mentor = message.sender_role !== "student";
-                  return (
-                    <article
-                      key={message.id}
-                      className={`rounded-xl border px-4 py-3 ${
-                        message.is_internal
-                          ? "border-amber-500/30 bg-amber-500/10"
-                          : mentor
-                            ? "border-[var(--border)] bg-[var(--background)]"
-                            : "border-[color-mix(in_oklab,var(--accent)_35%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_9%,var(--background)_91%)]"
-                      }`}
-                    >
-                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--muted)]">
-                          {senderLabel(message)}
-                        </span>
-                        <time className="text-xs text-[var(--muted)]">
-                          {formatShortDate(message.created_at)}
-                        </time>
-                      </div>
-                      <p className="whitespace-pre-wrap text-sm leading-7 text-[var(--foreground)]">
-                        {message.body}
-                      </p>
-                    </article>
-                  );
-                })
-              )}
-            </div>
-
-            <form ref={formRef} action={submitReply} className="border-t border-[var(--border)] p-4">
-              <textarea
-                name="body"
-                rows={4}
-                maxLength={5000}
-                placeholder="Typ je antwoord..."
-                className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-7 outline-none focus:border-[color-mix(in_oklab,var(--accent)_55%,var(--border))]"
-                required
-              />
-              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <label className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--muted)]">
-                  <input type="checkbox" name="is_internal" className="h-4 w-4" />
-                  Interne notitie
-                </label>
-                <button
-                  type="submit"
-                  disabled={replyPending}
-                  className="cb-btn cb-btn-primary justify-center px-5 py-3"
-                >
-                  {replyPending ? "Verzenden..." : "Verstuur"}
-                </button>
-              </div>
-              {replyError && (
-                <p className="mt-3 text-sm font-semibold text-red-600 dark:text-red-400">
-                  {replyError}
-                </p>
-              )}
-            </form>
-          </div>
-
-          <aside className="space-y-4">
-            <form action={submitMeta} className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
-              <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-                Thread triage
-              </h2>
-              <div className="mt-4 space-y-3">
-                <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--muted)]">
-                    Status
-                  </span>
-                  <select
-                    name="status"
-                    defaultValue={detail.thread.status}
-                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
-                  >
-                    <option value="open">Open</option>
-                    <option value="pending_mentor">Te beantwoorden</option>
-                    <option value="pending_student">Wacht op student</option>
-                    <option value="snoozed">Later opvolgen</option>
-                    <option value="closed">Gesloten</option>
-                  </select>
-                </label>
-                <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--muted)]">
-                    Prioriteit
-                  </span>
-                  <select
-                    name="priority"
-                    defaultValue={detail.thread.priority}
-                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
-                  >
-                    <option value="normal">Normaal</option>
-                    <option value="high">Hoog</option>
-                    <option value="urgent">Dringend</option>
-                  </select>
-                </label>
-                <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--muted)]">
-                    Categorie
-                  </span>
-                  <input
-                    name="category"
-                    defaultValue={detail.thread.category ?? ""}
-                    placeholder="Bijv. strategie, mindset, planning"
-                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  disabled={metaPending}
-                  className="cb-btn cb-btn-secondary w-full justify-center px-4 py-2 text-sm"
-                >
-                  {metaPending ? "Opslaan..." : "Opslaan"}
-                </button>
-                {metaError && (
-                  <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-                    {metaError}
-                  </p>
-                )}
-              </div>
-            </form>
-
-            <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
-              <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-                Student context
-              </h2>
-              <dl className="mt-4 space-y-3 text-sm">
-                <div>
-                  <dt className="text-[var(--muted)]">Mentorstatus</dt>
-                  <dd className="font-semibold text-[var(--foreground)]">
-                    {detail.thread.student?.mentor_status ?? "Onbekend"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[var(--muted)]">Tags</dt>
-                  <dd className="font-semibold text-[var(--foreground)]">
-                    {detail.thread.student?.tags.length
-                      ? detail.thread.student.tags.join(", ")
-                      : "Geen tags"}
-                  </dd>
-                </div>
-              </dl>
-              {detail.thread.student && (
-                <Link
-                  href={`/admin/students/${detail.thread.student.id}`}
-                  className="mt-5 inline-flex w-full cb-btn cb-btn-secondary justify-center px-4 py-2 text-sm"
-                >
-                  Open studentprofiel
-                </Link>
-              )}
-            </section>
-          </aside>
-        </section>
-      ) : (
-        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8">
-          <h2 className="text-xl font-extrabold text-[var(--foreground)]">
-            Selecteer een gesprek
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            Nieuwe mentorvragen verschijnen automatisch links in de inbox.
-          </p>
-        </section>
-      )}
+        </form>
+      </div>
+      <div className={styles.list}>
+        {rows.length === 0 ? <p className={styles.listEmpty}>{q ? "Geen gesprekken gevonden. Probeer een andere zoekterm." : "Geen gesprekken in deze weergave. Nieuwe studentvragen verschijnen hier."}</p> : rows.map((row) => {
+          const name = row.student?.name || "Student";
+          return <Link key={row.id} href={inboxUrl(basePath, status, q, row.id)} scroll={false} aria-current={row.id === selectedId ? "page" : undefined} className={`${styles.thread} ${row.id === selectedId ? styles.selected : ""}`}>
+            <div className={styles.row}><p className={`${styles.threadName} ${row.unread_for_mentor_count > 0 ? styles.unreadName : ""}`}>{name}</p><time className={styles.threadTime} dateTime={row.last_message_at ?? undefined}>{shortDate(row.last_message_at)}</time></div>
+            <p className={styles.preview}>{row.lastMessage?.sender_role === "mentor" ? "Jij: " : ""}{row.lastMessage?.body || "Nog geen bericht"}</p>
+            <div className={styles.row}><span className={styles.threadState}>{row.priority !== "normal" ? `${row.priority === "urgent" ? "Dringend" : "Hoge prioriteit"} · ` : ""}{statusLabel(row.status)}</span>{row.unread_for_mentor_count > 0 && <span className={styles.unreadCount} aria-label={`${row.unread_for_mentor_count} ongelezen berichten`}>{row.unread_for_mentor_count > 99 ? "99+" : row.unread_for_mentor_count}</span>}</div>
+          </Link>;
+        })}
+        {hasMore && nextCursor && <div className={styles.history}><Link className={styles.textButton} href={inboxUrl(basePath, status, q, selectedId, nextCursor)} scroll={false}>Volgende gesprekken</Link></div>}
+      </div>
+    </aside>
+    <div className={styles.detail}>
+      {detail ? <Conversation key={detail.thread.id} detail={detail} currentStudentId={currentStudentId} mentorId={mentorId} connection={connection} chatEmailEnabled={chatEmailEnabled} backUrl={inboxUrl(basePath, status, q)} getDraft={() => {
+        const existing = draftsRef.current.get(detail.thread.id);
+        if (existing) return existing;
+        const draft = newChatDraft();
+        draftsRef.current.set(detail.thread.id, draft);
+        return draft;
+      }} saveDraft={(draft) => { draftsRef.current.set(detail.thread.id, draft); saveChatDraft(currentStudentId, detail.thread.id, draft); }} clearDraft={(sentId) => {
+        removeChatDraft(currentStudentId, detail.thread.id, sentId);
+        if (draftsRef.current.get(detail.thread.id)?.clientMessageId === sentId) draftsRef.current.delete(detail.thread.id);
+      }}/> : <div className={styles.empty}><h2>Selecteer een gesprek</h2><p>Open links een studentvraag om de berichten te lezen en te beantwoorden.</p></div>}
     </div>
-  );
+  </div>;
+}
+
+function Conversation({ detail, currentStudentId, mentorId, connection, chatEmailEnabled, backUrl, getDraft, saveDraft, clearDraft }: {
+  detail: AdminMentorThreadDetail;
+  currentStudentId: string;
+  mentorId: string;
+  connection: ReturnType<typeof useMentorInboxRealtime>;
+  chatEmailEnabled: boolean;
+  backUrl: string;
+  getDraft: () => ChatDraft;
+  saveDraft: (draft: ChatDraft) => void;
+  clearDraft: (sentId: string) => void;
+}) {
+  const router = useRouter();
+  const threadId = detail.thread.id;
+  const studentName = detail.thread.student?.name || "Student";
+  const [draft, setDraft] = useState(getDraft);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [metaPending, setMetaPending] = useState(false);
+  const [metaError, setMetaError] = useState<string | null>(null);
+  const [older, setOlder] = useState<ConversationMessage[]>([]);
+  const [confirmed, setConfirmed] = useState<ConversationMessage[]>([]);
+  const [olderAvailable, setOlderAvailable] = useState<boolean | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const sendLock = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => {
+    const saved = restoreChatDraft(currentStudentId, threadId);
+    if (saved) { setDraft(saved); saveDraft(saved); }
+  // Each keyed conversation restores once; live updates must not replace active input.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStudentId, threadId]);
+  const messages = mergeMessages(older, confirmed, detail.messages);
+  const acknowledged = acknowledgedChatDraft(draft, currentStudentId, messages);
+  useEffect(() => {
+    if (!acknowledged) return;
+    clearDraft(draft.clientMessageId);
+    const next = newChatDraft();
+    setDraft(next);
+    saveDraft(next);
+    setError(null);
+  }, [acknowledged, clearDraft, currentStudentId, draft.clientMessageId, saveDraft]);
+
+  function changeDraft(next: ChatDraft) {
+    setDraft(next);
+    saveDraft(next);
+    setError(null);
+  }
+  async function reply() {
+    if (sendLock.current || !draft.body.trim()) return;
+    sendLock.current = true;
+    setPending(true);
+    setError(null);
+    const sentDraft = { ...draft };
+    const formData = new FormData();
+    formData.set("body", sentDraft.body);
+    formData.set("client_message_id", sentDraft.clientMessageId);
+    formData.set("upload_intent", sentDraft.uploadIntent ?? sentDraft.clientMessageId);
+    for (const file of sentDraft.attachments ?? []) formData.append("attachment_ids", file.id);
+    if (sentDraft.internal) formData.set("is_internal", "on");
+    try {
+      const result = await adminReplyToMentorThread(threadId, formData);
+      if (!result.success) { if (mounted.current) setError(result.error ?? "Je antwoord kon niet worden verzonden."); return; }
+      clearDraft(sentDraft.clientMessageId);
+      if (mounted.current) {
+        setConfirmed((current) => mergeMessages(current, [result.message]));
+        const nextDraft = newChatDraft();
+        setDraft(nextDraft);
+        saveDraft(nextDraft);
+      }
+      router.refresh();
+    } catch { if (mounted.current) setError("We konden de verzending niet bevestigen."); }
+    finally { sendLock.current = false; if (mounted.current) setPending(false); }
+  }
+  async function loadOlder() {
+    const firstSeq = messages.find((message) => message.public_seq !== null)?.public_seq;
+    if (!firstSeq || loadingOlder) return;
+    setLoadingOlder(true);
+    setHistoryError(null);
+    try {
+      const result = await loadAdminMentorMessages(threadId, firstSeq);
+      if (!mounted.current) return;
+      if (!result.success) { setHistoryError(result.error); return; }
+      setOlder((current) => mergeMessages(current, result.messages));
+      setOlderAvailable(result.hasOlder);
+    } catch { if (mounted.current) setHistoryError("Eerdere berichten ophalen mislukt. Probeer opnieuw."); }
+    finally { if (mounted.current) setLoadingOlder(false); }
+  }
+  async function updateMeta(formData: FormData) {
+    setMetaPending(true);
+    setMetaError(null);
+    try {
+      const result = await adminUpdateMentorThread(threadId, formData);
+      if (!mounted.current) return;
+      if (!result.success) { setMetaError(result.error ?? "Opslaan mislukt."); return; }
+      router.refresh();
+    } catch { if (mounted.current) setMetaError("Opslaan mislukt. Probeer opnieuw."); }
+    finally { if (mounted.current) setMetaPending(false); }
+  }
+
+  return <>
+    <header className={styles.header}>
+      <Link href={backUrl} className={styles.mobileBack} aria-label="Terug naar gesprekken" scroll={false}><ChatIcon name="back" size={20}/></Link>
+      <div className={styles.avatar} aria-hidden="true">{initials(studentName)}</div>
+      <div><h2 className={styles.heading}>{studentName}</h2><p className={styles.subheading}><ChatIcon name="lock" size={11}/>Privégesprek met Rousso</p></div>
+      <div className={styles.headerEnd}><span>{statusLabel(detail.thread.status)}</span>{chatEmailEnabled && <ChatEmailPreference/>}</div>
+    </header>
+    <ConnectionNotice status={connection}/>
+    <details className={styles.details}>
+      <summary>Gesprek beheren<ChatIcon name="down" size={12}/></summary>
+      <form action={updateMeta} className={styles.metaForm}>
+        <label className={styles.metaLabel}>Status<select name="status" defaultValue={detail.thread.status} className={styles.select}><option value="open">Open</option><option value="pending_mentor">Te beantwoorden</option><option value="pending_student">Beantwoord</option><option value="snoozed">Later opvolgen</option><option value="closed">Gesloten</option></select></label>
+        <label className={styles.metaLabel}>Prioriteit<select name="priority" defaultValue={detail.thread.priority} className={styles.select}><option value="normal">Normaal</option><option value="high">Hoog</option><option value="urgent">Dringend</option></select></label>
+        <label className={styles.metaLabel}>Categorie<input name="category" defaultValue={detail.thread.category ?? ""} maxLength={80} placeholder="Bijv. strategie"/></label>
+        <button type="submit" className={styles.textButton} disabled={metaPending}>{metaPending ? "Opslaan…" : "Opslaan"}</button>
+        {metaError && <p className={`${styles.error} ${styles.metaError}`} role="alert">{metaError}</p>}
+      </form>
+    </details>
+    {historyError && <div className={styles.status} role="alert">{historyError}</div>}
+    <ChatTranscript messages={messages} currentStudentId={currentStudentId} mentorId={mentorId} hasOlder={olderAvailable ?? detail.hasOlder} loadingOlder={loadingOlder} onOlder={loadOlder} lastReadSeq={detail.lastReadSeq} studentName={studentName} onRead={async (seq) => {
+      const result = await adminMarkMentorThreadRead(threadId, seq);
+      if (!result.success) throw new Error(result.error);
+    }} empty={<div className={styles.empty}><h2>Nog geen berichten</h2><p>Het eerste bericht van deze student verschijnt hier.</p></div>}/>
+    <MessageComposer draft={draft} threadId={threadId} onDraftChange={changeDraft} onSubmit={reply} pending={pending} error={error} mentorView studentName={studentName}/>
+  </>;
 }

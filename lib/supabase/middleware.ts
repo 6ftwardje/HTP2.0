@@ -12,6 +12,8 @@ const PROTECTED_PREFIXES = [
   "/market-analysis",
   "/updates",
   "/weekly-updates",
+  "/mentor",
+  "/mentor-inbox",
 ];
 
 function clearSupabaseCookies(response: NextResponse, request: NextRequest) {

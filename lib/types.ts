@@ -530,6 +530,7 @@ export type ConversationThread = {
   last_mentor_message_at: string | null;
   unread_for_student_count: number;
   unread_for_mentor_count: number;
+  last_public_message_seq: number;
   first_response_at: string | null;
   closed_at: string | null;
   metadata: Record<string, unknown>;
@@ -544,11 +545,21 @@ export type ConversationMessageSenderRole =
   | "ai"
   | "system";
 
+export type ChatAttachment = {
+  id: string;
+  fileName: string;
+  width: number;
+  height: number;
+  mediaType: string;
+  sizeBytes: number;
+};
+
 export type ConversationMessage = {
   id: string;
   thread_id: string;
   sender_student_id: string | null;
   sender_role: ConversationMessageSenderRole;
+  attachments?: ChatAttachment[];
   body: string;
   body_format: "plain" | "markdown";
   client_message_id: string | null;
@@ -559,6 +570,9 @@ export type ConversationMessage = {
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;
+  public_seq: number | null;
+  sender_principal_id: string | null;
+  sender_participant_id: string | null;
 };
 
 export type NotificationEvent = {

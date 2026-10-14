@@ -66,6 +66,12 @@ export const ensureCurrentStudent = cache(async function ensureCurrentStudent():
     .select(STUDENT_COLUMNS)
     .single();
 
+  if (insertError?.code === "23505") {
+    // Layout and page can bootstrap the same new account concurrently.
+    const existing = await supabase.from("students").select(STUDENT_COLUMNS)
+      .eq("auth_user_id", user.id).maybeSingle();
+    if (!existing.error && existing.data) return { student: existing.data as Student, error: null };
+  }
   if (insertError) return { student: null, error: insertError };
   return { student: inserted as Student, error: null };
 });

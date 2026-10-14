@@ -1,0 +1,68 @@
+name: Mentor chat integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mentor-chat-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  local-chat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CHAT_ATTACHMENT_TEST_BASE_URL: http://127.0.0.1:3114
+      CHAT_ATTACHMENT_TEST_ORIGIN: http://127.0.0.1:3114
+      CHAT_CI_APP_URL: http://127.0.0.1:3114
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Isolated private runtime paths
+        run: |
+          printf '%s\n' \
+            "CHAT_CI_WORKDIR=$RUNNER_TEMP/mentor-chat-supabase" \
+            "LOCAL_SUPABASE_ENV_FILE=$RUNNER_TEMP/mentor-chat.env" \
+            "LOCAL_CHAT_FIXTURE_FILE=$RUNNER_TEMP/mentor-chat-fixtures.json" \
+            "CHAT_ATTACHMENT_TEST_FIXTURES=$RUNNER_TEMP/mentor-chat-fixtures.json" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
+      - name: PostgreSQL client for rollback SQL suites
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
+      - run: npm ci
+      # An isolated, unlinked project copies every committed migration unchanged.
+      # Only CI config disables the missing optional seed.sql. No baseline schema
+      # is fabricated and no migration or failing health check is skipped.
+      - name: Start fresh local Supabase and apply all migrations
+        run: node scripts/mentor-chat-ci.mjs start
+      - name: Authenticated RPC, routing, privacy and Realtime
+        run: node --import tsx scripts/verify-mentor-chat-local.ts --keep
+      - name: Exact authorized notification shell and performance
+        run: node --import tsx tests/chat/notification-shell.integration.ts
+      - name: Rollback SQL authorization, unread races and e-mail outbox
+        run: |
+          node scripts/mentor-chat-ci.mjs sql tests/sql/mentor-chat-privacy-routing.sql
+          node scripts/mentor-chat-ci.mjs sql tests/sql/mentor-chat-email.sql
+      - name: Start local Next API with local-only credentials
+        run: node scripts/mentor-chat-ci.mjs app
+      - name: Private screenshots through authenticated HTTP, RPC and Storage
+        run: node --import tsx tests/chat/attachments.integration.ts
+      - name: Remove fixtures, stop local processes and delete private credentials
+        if: always()
+        run: node scripts/mentor-chat-ci.mjs cleanup
+
+# Unit tests/build remain in ci.yml. This workflow needs no repository secrets,
+# remote project link, Supabase account token, deployment or e-mail provider.
+# The fresh-stack path must be confirmed on its first hosted run; local Docker
+# capacity prevented a second fresh full-stack rehearsal during implementation.

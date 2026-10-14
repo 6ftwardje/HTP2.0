@@ -1,171 +1,105 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  markMentorThreadRead,
-  sendMentorMessage,
-} from "@/app/actions/mentor-chat";
+import { loadMentorMessages, markMentorThreadRead, sendMentorMessage } from "@/app/actions/mentor-chat";
 import { useConversationRealtime } from "@/lib/realtime-hooks";
 import type { ConversationMessage, ConversationThread } from "@/lib/types";
+import { acknowledgedChatDraft, removeChatDraft, restoreChatDraft, saveChatDraft } from "@/lib/chat-message-state";
+import { ChatIcon, ChatTranscript, ConnectionNotice, mergeMessages, MessageComposer, newChatDraft } from "./ChatWorkspace";
+import styles from "./ChatWorkspace.module.css";
+import { ChatEmailPreference } from "./ChatEmailPreference";
 
-function formatMessageTime(value: string) {
-  return new Intl.DateTimeFormat("nl-NL", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function senderLabel(message: ConversationMessage) {
-  if (message.sender_role === "student") return "Jij";
-  if (message.sender_role === "ai") return "AI assistent";
-  return "Mentor";
-}
-
-function threadStatusLabel(thread: ConversationThread) {
-  if (thread.status === "pending_mentor") return "Wacht op mentor";
-  if (thread.status === "pending_student") return "Je mentor heeft geantwoord";
-  if (thread.status === "closed") return "Afgesloten";
-  if (thread.status === "snoozed") return "Later opvolgen";
-  return "Open";
-}
-
-export function MentorChatPanel({
-  thread,
-  messages,
-}: {
-  thread: ConversationThread;
+export function MentorChatPanel({ thread, messages, currentStudentId, mentorId, hasOlder = false, lastReadSeq = 0, mentorName = "Rousso", chatEmailEnabled = false }: {
+  thread: ConversationThread | null;
   messages: ConversationMessage[];
+  currentStudentId: string;
+  mentorId: string;
+  hasOlder?: boolean;
+  lastReadSeq?: number;
+  mentorName?: string;
+  chatEmailEnabled?: boolean;
 }) {
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [draft, setDraft] = useState(newChatDraft);
   const [error, setError] = useState<string | null>(null);
-  const [clientMessageId, setClientMessageId] = useState(() => crypto.randomUUID());
-  const [pending, startTransition] = useTransition();
-
-  useConversationRealtime(thread.id);
-
+  const [pending, setPending] = useState(false);
+  const [confirmed, setConfirmed] = useState<ConversationMessage[]>([]);
+  const [older, setOlder] = useState<ConversationMessage[]>([]);
+  const [olderAvailable, setOlderAvailable] = useState<boolean | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [createdThreadId, setCreatedThreadId] = useState<string | null>(null);
+  const sendLock = useRef(false);
+  const activeThreadId = thread?.id ?? createdThreadId;
+  const connection = useConversationRealtime(activeThreadId);
+  const visibleMessages = mergeMessages(older, confirmed, messages);
+  const acknowledged = acknowledgedChatDraft(draft, currentStudentId, visibleMessages);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
-
-  useEffect(() => {
-    if (thread.unread_for_student_count <= 0) return;
-    markMentorThreadRead(thread.id);
-  }, [thread.id, thread.unread_for_student_count]);
-
-  function onSubmit(formData: FormData) {
+    if (!acknowledged) return;
+    removeChatDraft(currentStudentId, activeThreadId, draft.clientMessageId);
+    setDraft(newChatDraft());
     setError(null);
-    startTransition(async () => {
+  }, [acknowledged, activeThreadId, currentStudentId, draft.clientMessageId]);
+  useEffect(() => {
+    const saved = restoreChatDraft(currentStudentId, activeThreadId);
+    setDraft(saved ?? newChatDraft());
+  }, [currentStudentId, activeThreadId]);
+
+  async function submit() {
+    if (sendLock.current || !draft.body.trim()) return;
+    sendLock.current = true;
+    setPending(true);
+    setError(null);
+    const formData = new FormData();
+    formData.set("body", draft.body);
+    formData.set("client_message_id", draft.clientMessageId);
+    formData.set("upload_intent", draft.uploadIntent ?? draft.clientMessageId);
+    for (const file of draft.attachments ?? []) formData.append("attachment_ids", file.id);
+    try {
       const result = await sendMentorMessage(formData);
-      if (!result.success) {
-        setError(result.error ?? "Bericht verzenden mislukt.");
-        return;
-      }
-      formRef.current?.reset();
-      setClientMessageId(crypto.randomUUID());
+      if (!result.success) { setError(result.error ?? "Je bericht kon niet worden verzonden."); return; }
+      setConfirmed((current) => mergeMessages(current, [result.message]));
+      removeChatDraft(currentStudentId, activeThreadId, draft.clientMessageId);
+      setCreatedThreadId(result.threadId);
+      setDraft(newChatDraft());
       router.refresh();
-    });
+    } catch {
+      setError("We konden de verzending niet bevestigen.");
+    } finally {
+      sendLock.current = false;
+      setPending(false);
+    }
   }
 
-  return (
-    <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,var(--background)_12%)]">
-      <div className="flex flex-col gap-4 border-b border-[var(--border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-extrabold text-[var(--foreground)]">Je mentorgesprek</h2>
-        </div>
-        {thread.status !== "open" ? (
-          <span className="inline-flex w-fit items-center rounded-full border border-[var(--border)] px-3 py-1 text-xs font-bold uppercase tracking-[0.13em] text-[var(--muted)]">
-            {threadStatusLabel(thread)}
-          </span>
-        ) : null}
-      </div>
+  async function loadOlder() {
+    if (!activeThreadId || loadingOlder) return;
+    const firstSeq = visibleMessages.find((message) => message.public_seq !== null)?.public_seq;
+    if (!firstSeq) return;
+    setLoadingOlder(true);
+    setHistoryError(null);
+    try {
+      const result = await loadMentorMessages(activeThreadId, firstSeq);
+      if (!result.success) { setHistoryError(result.error); return; }
+      setOlder((current) => mergeMessages(current, result.messages));
+      setOlderAvailable(result.hasOlder);
+    } catch { setHistoryError("Eerdere berichten ophalen mislukt. Probeer opnieuw."); }
+    finally { setLoadingOlder(false); }
+  }
 
-      <div className="max-h-[58vh] min-h-[360px] space-y-4 overflow-y-auto px-4 py-5 sm:px-5">
-        {messages.length === 0 ? (
-          <div className="flex min-h-[280px] items-center justify-center">
-            <div className="max-w-md text-center">
-              <p className="text-xl font-extrabold text-[var(--foreground)]">
-                Nog geen berichten
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                Stel hieronder je vraag. Je mentor antwoordt in dit gesprek.
-              </p>
-            </div>
-          </div>
-        ) : (
-          messages.map((message) => {
-            const own = message.sender_role === "student";
-            return (
-              <article
-                key={message.id}
-                className={`flex ${own ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[min(680px,88%)] rounded-xl border px-4 py-3 ${
-                    own
-                      ? "border-[color-mix(in_oklab,var(--accent)_38%,var(--border))] bg-[color-mix(in_oklab,var(--accent)_12%,var(--card)_88%)]"
-                      : "border-[var(--border)] bg-[var(--background)]"
-                  }`}
-                >
-                  <div className="mb-1 flex items-center justify-between gap-4">
-                    <span className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--muted)]">
-                      {senderLabel(message)}
-                    </span>
-                    <time className="text-xs text-[var(--muted)]">
-                      {formatMessageTime(message.created_at)}
-                    </time>
-                  </div>
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-[var(--foreground)]">
-                    {message.body}
-                  </p>
-                </div>
-              </article>
-            );
-          })
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      <form
-        ref={formRef}
-        action={onSubmit}
-        className="border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_88%,var(--card)_12%)] p-4"
-      >
-        <input type="hidden" name="client_message_id" value={clientMessageId} />
-        <label htmlFor="mentor-message" className="sr-only">
-          Je bericht aan je mentor
-        </label>
-        <textarea
-          id="mentor-message"
-          name="body"
-          rows={4}
-          maxLength={5000}
-          placeholder="Typ je vraag aan je mentor..."
-          className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-7 text-[var(--foreground)] outline-none transition focus:border-[color-mix(in_oklab,var(--accent)_55%,var(--border))] focus:ring-2 focus:ring-[color-mix(in_oklab,var(--accent)_18%,transparent)]"
-          required
-        />
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs leading-5 text-[var(--muted)]">
-            Noem de les of markt en wat je al geprobeerd hebt.
-          </p>
-          <button
-            type="submit"
-            disabled={pending}
-            className="cb-btn cb-btn-primary justify-center px-5 py-3"
-          >
-            {pending ? "Verzenden..." : "Stuur naar je mentor"}
-          </button>
-        </div>
-        {error && (
-          <p className="mt-3 text-sm font-semibold text-red-600 dark:text-red-400" role="alert">
-            {error}
-          </p>
-        )}
-      </form>
-    </section>
-  );
+  return <section className={styles.workspace} aria-label={`Privégesprek met ${mentorName}`}>
+    <header className={styles.header}>
+      <div className={styles.avatar} aria-hidden="true">R</div>
+      <div><h1 className={styles.heading}>{mentorName}</h1><p className={styles.subheading}><ChatIcon name="lock" size={11}/>Privégesprek</p></div>
+      {chatEmailEnabled && <div className={styles.headerEnd}><ChatEmailPreference/></div>}
+    </header>
+    <ConnectionNotice status={connection}/>
+    {historyError && <div className={styles.status} role="alert">{historyError}</div>}
+    <ChatTranscript messages={visibleMessages} currentStudentId={currentStudentId} mentorId={mentorId} hasOlder={olderAvailable ?? hasOlder} loadingOlder={loadingOlder} onOlder={loadOlder} lastReadSeq={lastReadSeq} onRead={async (seq) => {
+      if (!activeThreadId) return;
+      const result = await markMentorThreadRead(activeThreadId, seq);
+      if (!result.success) throw new Error(result.error);
+    }} empty={<div className={styles.empty}><h2>Waar kan ik je mee helpen?</h2><p>Stel je vraag over een les, je analyse of je volgende stap. Je bericht komt rechtstreeks bij Rousso terecht.</p></div>}/>
+    <MessageComposer draft={draft} threadId={activeThreadId} onDraftChange={(next) => { setDraft(next); saveChatDraft(currentStudentId, activeThreadId, next); setError(null); }} onSubmit={submit} pending={pending} error={error}/>
+  </section>;
 }

@@ -7,6 +7,7 @@ import {
   listMyNotifications,
 } from "@/lib/notifications";
 import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
+import { getChatAccess } from "@/lib/mentor-chat";
 
 export default async function ProtectedLayout({
   children,
@@ -32,9 +33,13 @@ export default async function ProtectedLayout({
     redirect("/?redirectedFrom=" + encodeURIComponent("/dashboard"));
   }
 
+  const chatAccess = await getChatAccess();
+
   const notificationShell =
-    process.env.PROJECT_SPEED_NOTIFICATION_SHELL === "1" &&
-    student.access_level === ADMIN_ACCESS_LEVEL
+    chatAccess.available || (
+      process.env.PROJECT_SPEED_NOTIFICATION_SHELL === "1" &&
+      student.access_level === ADMIN_ACCESS_LEVEL
+    )
       ? await getNotificationShellReadModel(student.id)
       : null;
   const [unreadNotificationCount, notificationResult] = notificationShell
@@ -63,6 +68,8 @@ export default async function ProtectedLayout({
       studentName={student.name ?? null}
       accessLevel={student.access_level}
       currentStudentId={student.id}
+      isChatMentor={chatAccess.isMentor}
+      unreadChatCount={chatAccess.unreadCount}
       unreadNotificationCount={unreadNotificationCount}
       floatingNotifications={floatingNotifications}
     >

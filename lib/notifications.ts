@@ -1,8 +1,10 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStudent } from "@/lib/students";
 import type { NotificationEvent, NotificationWithEvent } from "@/lib/types";
 import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 import { STUDENT_NOTIFICATION_EVENT_TYPES } from "@/lib/notification-visibility";
+import { getChatAccess } from "@/lib/mentor-chat";
 
 export type NotificationActionResult =
   | { success: true }
@@ -30,17 +32,19 @@ function isMissingTable(error: { code?: string; message?: string } | null) {
 export async function getUnreadNotificationCount(): Promise<number> {
   const { student } = await getCurrentStudent();
   if (!student) return 0;
+  const shell = await getNotificationShellReadModel(student.id);
+  if (shell) return shell.unreadCount;
 
   const db = await createClient();
   const baseQuery = db
     .from("notification_recipients")
-    .select("id, event:notification_events!inner(type)", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("student_id", student.id)
     .is("read_at", null)
     .is("archived_at", null);
-  const { count, error } = await (student.access_level === ADMIN_ACCESS_LEVEL
-    ? baseQuery
-    : baseQuery.in("event.type", [...STUDENT_NOTIFICATION_EVENT_TYPES]));
+  // Recipient RLS already validates the linked event and current chat membership.
+  // Joining events again multiplies those checks across every unread delivery.
+  const { count, error } = await baseQuery;
 
   if (error) {
     if (!isMissingTable(error)) console.error("getUnreadNotificationCount", error.message);
@@ -64,7 +68,7 @@ export async function listMyNotifications(): Promise<{
     )
     .eq("student_id", student.id)
     .is("archived_at", null);
-  const visibleQuery = student.access_level === ADMIN_ACCESS_LEVEL
+  const visibleQuery = student.access_level === ADMIN_ACCESS_LEVEL || (await getChatAccess()).isMentor
     ? baseQuery
     : baseQuery.in("event.type", [...STUDENT_NOTIFICATION_EVENT_TYPES]);
   const { data, error } = await visibleQuery
@@ -88,7 +92,7 @@ export async function listMyNotifications(): Promise<{
   };
 }
 
-export async function getNotificationShellReadModel(
+export const getNotificationShellReadModel = cache(async function getNotificationShellReadModel(
   expectedStudentId: string
 ): Promise<NotificationShellReadModel | null> {
   const db = await createClient();
@@ -107,7 +111,7 @@ export async function getNotificationShellReadModel(
   }
 
   return payload;
-}
+});
 
 export async function markNotificationRead(
   notificationId: string

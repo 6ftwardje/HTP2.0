@@ -1,5 +1,6 @@
 import { AdminShell } from "@/components/admin/AdminShell";
 import { requireAdmin } from "@/lib/admin/access";
+import { getChatAccess } from "@/lib/mentor-chat";
 
 export default async function AdminLayout({
   children,
@@ -11,9 +12,10 @@ export default async function AdminLayout({
   }
 
   const { actorStudent } = await requireAdmin();
+  const chatAccess = await getChatAccess();
 
   return (
-    <AdminShell studentName={actorStudent.name ?? actorStudent.email}>
+    <AdminShell studentName={actorStudent.name ?? actorStudent.email} isChatMentor={chatAccess.isMentor}>
       {children}
     </AdminShell>
   );

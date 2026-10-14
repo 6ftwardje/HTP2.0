@@ -14,6 +14,7 @@ import {
 import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 import { useNotificationsRealtime } from "@/lib/realtime-hooks";
 import { useMobileDrawer } from "@/components/useMobileDrawer";
+import { clearChatDrafts } from "@/lib/chat-message-state";
 
 const coreNav = [
   {
@@ -66,11 +67,15 @@ function SidebarContent({
   studentName,
   accessLevel,
   unreadNotificationCount,
+  isChatMentor,
+  unreadChatCount,
   onNavigate,
 }: {
   studentName: string | null;
   accessLevel: number | null;
   unreadNotificationCount: number;
+  isChatMentor: boolean;
+  unreadChatCount: number;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -95,13 +100,15 @@ function SidebarContent({
     return (
       <SidebarNavItem
         key={item.href}
-        href={item.href}
+        href={item.href === "/mentor" && isChatMentor ? "/mentor-inbox" : item.href}
         label={
-          item.href === "/notifications" && unreadNotificationCount > 0
+          item.href === "/mentor"
+            ? `${isChatMentor ? "Studentvragen" : "Chat met Rousso"}${unreadChatCount > 0 ? ` (${Math.min(unreadChatCount, 99)})` : ""}`
+            : item.href === "/notifications" && unreadNotificationCount > 0
             ? `${item.label} (${Math.min(unreadNotificationCount, 99)})`
             : item.label
         }
-        active={isNavItemActive(item.href)}
+        active={isNavItemActive(item.href === "/mentor" && isChatMentor ? "/mentor-inbox" : item.href)}
         icon={item.icon}
         onNavigate={onNavigate}
       />
@@ -153,7 +160,7 @@ function SidebarContent({
             </span>
             <span>Hulp nodig?</span>
           </a>
-          <form action="/auth/signout" method="post">
+          <form action="/auth/signout" method="post" onSubmit={() => clearChatDrafts()}>
             <button
               type="submit"
               className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
@@ -177,6 +184,8 @@ export function AppShell({
   currentStudentId = null,
   unreadNotificationCount = 0,
   floatingNotifications = [],
+  isChatMentor = false,
+  unreadChatCount = 0,
 }: {
   children: React.ReactNode;
   studentName: string | null;
@@ -184,10 +193,13 @@ export function AppShell({
   currentStudentId?: string | null;
   unreadNotificationCount?: number;
   floatingNotifications?: FloatingNotification[];
+  isChatMentor?: boolean;
+  unreadChatCount?: number;
 }) {
   const { mobileOpen, menuTriggerRef, menuCloseRef, menuPanelRef, openMobileMenu, closeMobileMenu } = useMobileDrawer();
   const pathname = usePathname();
-  const showFloatingNotifications = pathname !== "/notifications";
+  const isChatWorkspace = pathname === "/mentor" || pathname === "/mentor-inbox";
+  const showFloatingNotifications = pathname !== "/notifications" && !isChatWorkspace;
 
   useNotificationsRealtime(currentStudentId);
 
@@ -200,6 +212,8 @@ export function AppShell({
             studentName={studentName}
             accessLevel={accessLevel}
             unreadNotificationCount={unreadNotificationCount}
+            isChatMentor={isChatMentor}
+            unreadChatCount={unreadChatCount}
             onNavigate={() => closeMobileMenu(false)}
           />
         </div>
@@ -233,6 +247,8 @@ export function AppShell({
                 studentName={studentName}
                 accessLevel={accessLevel}
                 unreadNotificationCount={unreadNotificationCount}
+                isChatMentor={isChatMentor}
+                unreadChatCount={unreadChatCount}
                 onNavigate={() => closeMobileMenu(false)}
               />
             </div>
@@ -265,8 +281,8 @@ export function AppShell({
           <ThemeToggle />
         </div>
 
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+        <main className={isChatWorkspace ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-y-auto overscroll-contain"}>
+          <div className={isChatWorkspace ? "h-full min-h-0 w-full" : "mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"}>
             <PageLoadOverlay>{children}</PageLoadOverlay>
           </div>
         </main>

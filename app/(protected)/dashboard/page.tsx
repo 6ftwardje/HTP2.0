@@ -16,7 +16,7 @@ import {
   getDashboardOverviewReadModel,
 } from "@/lib/dashboard";
 import { listUpcomingLiveSessions } from "@/lib/live-sessions";
-import { listAdminMentorThreads } from "@/lib/mentor-chat";
+import { getChatAccess, listAdminMentorThreads } from "@/lib/mentor-chat";
 import { stripModulePrefix } from "@/lib/module-title";
 import { FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
 import { getLegacyAcademyModuleIds } from "@/lib/module-gate";
@@ -70,11 +70,13 @@ async function AdminDashboard() {
     drafts,
     upcomingSessions,
     recentUpdates,
+    chatAccess,
   ] = await Promise.all([
     listAdminMentorThreads({ status: "unread", limit: 3 }),
     listDashboardDraftsAdmin(),
     listUpcomingLiveSessions(1),
     listPublishedWeeklyUpdates(6),
+    getChatAccess(),
   ]);
   const nextLiveSession = upcomingSessions[0] ?? null;
 
@@ -98,16 +100,16 @@ async function AdminDashboard() {
                 Vragen van studenten en updates die nog niet gepubliceerd zijn.
               </p>
             </div>
-            <Link href="/admin/mentor-inbox" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+            {chatAccess.isMentor && <Link href="/mentor-inbox" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
               Open mentor inbox →
-            </Link>
+            </Link>}
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
+          <div className={`grid gap-4 ${chatAccess.isMentor ? "lg:grid-cols-2" : ""}`}>
+            {chatAccess.isMentor && <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-base font-bold text-[var(--foreground)]">Ongelezen studentvragen</h3>
-                <Link href="/admin/mentor-inbox?status=unread" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+                <Link href="/mentor-inbox?status=unread" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
                   Bekijk alles
                 </Link>
               </div>
@@ -120,11 +122,11 @@ async function AdminDashboard() {
                   {unreadThreads.map((thread) => (
                     <li key={thread.id}>
                       <Link
-                        href={`/admin/mentor-inbox?status=unread&thread=${thread.id}`}
+                        href={`/mentor-inbox?status=unread&thread=${thread.id}`}
                         className="group block rounded-md py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                       >
                         <span className="block text-sm font-semibold text-[var(--foreground)] group-hover:underline">
-                          {thread.student?.name || thread.student?.email || "Student"}
+                          {thread.student?.name || "Student"}
                         </span>
                         <span className="mt-1 block line-clamp-1 text-sm text-[var(--muted)]">
                           {thread.lastMessage?.body || thread.subject || "Open het gesprek"}
@@ -138,7 +140,7 @@ async function AdminDashboard() {
                   Geen ongelezen vragen. Nieuwe berichten verschijnen hier.
                 </p>
               )}
-            </div>
+            </div>}
 
             <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
