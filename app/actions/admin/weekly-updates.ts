@@ -244,7 +244,7 @@ function readWeeklyUpdateInput(
   if (!slug) return { error: "Vul een geldige URL-naam in." as const };
   if (!type) return { error: "Kies verplicht een videotype." as const };
   if (type === "market_update" && markets.length === 0 && !market) {
-    return { error: "Kies minimaal één markt voor deze marktbreakdown." as const };
+    return { error: "Kies minimaal één markt voor deze marktinzichten." as const };
   }
   if (!weekStartDate || Number.isNaN(Date.parse(weekStartDate))) {
     return { error: "Kies een geldige weekdatum." as const };

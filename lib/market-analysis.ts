@@ -12,7 +12,7 @@ export const MARKET_ANALYSIS_TYPE_OPTIONS: Array<{
   label: string;
 }> = [
   { value: "weekly_outlook", label: "Weekvooruitblik" },
-  { value: "market_update", label: "Marktbreakdown" },
+  { value: "market_update", label: "Marktinzichten" },
 ];
 
 export function getMarketLabel(market: Market | null): string {
@@ -23,7 +23,7 @@ export function getMarketAnalysisTypeLabel(
   type: MarketAnalysisType | null
 ): string {
   if (type === "weekly_outlook") return "Weekvooruitblik";
-  if (type === "market_update") return "Marktbreakdown";
+  if (type === "market_update") return "Marktinzichten";
   if (type === "live_session") return "Live marktsessie";
   return "Controle nodig";
 }

@@ -182,7 +182,7 @@ export function WeeklyUpdateFields({
           ))}
         </select>
         <span className="block text-xs leading-5 text-[var(--muted)]">
-          Kies Weekvooruitblik of Marktbreakdown. Live marktsessies plan je in het livebeheer.
+          Kies Weekvooruitblik of Marktinzichten. Live marktsessies plan je in het livebeheer.
         </span>
       </label>
       <fieldset className="space-y-2">

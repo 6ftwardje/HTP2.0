@@ -16,7 +16,7 @@ type StatusFilter = "all" | "current" | "archive";
 const formats: Array<{ value: FormatFilter; label: string }> = [
   { value: "all", label: "Alles" },
   { value: "weekly_outlook", label: "Weekvooruitblikken" },
-  { value: "market_breakdown", label: "Marktbreakdowns" },
+  { value: "market_breakdown", label: "Marktinzichten" },
 ];
 const markets: Array<{ value: MarketFilter; label: string }> = [
   { value: "all", label: "Alle markten" },
@@ -46,8 +46,8 @@ type Item = {
 
 function formatLabel(value: Item["format"]) {
   if (value === "weekly_outlook") return "Weekvooruitblik";
-  if (value === "market_breakdown") return "Marktbreakdown";
-  return "Marktbreakdown";
+  if (value === "market_breakdown") return "Marktinzichten";
+  return "Marktinzichten";
 }
 
 function statusLabel(value: Item["status"]) {
@@ -161,7 +161,7 @@ export function MarketInsightLibrary({ updates, initialMarket = "all" }: { updat
         host: marketUpdateAuthorName(update),
         status: actuality === "archive" ? "archive" : "current",
         href: `/market-analysis/${update.slug}`,
-        action: update.content_format === "video" && update.content_kind !== "article" ? (itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk breakdown") : "Lees update",
+        action: update.content_format === "video" && update.content_kind !== "article" ? (itemFormat === "weekly_outlook" ? "Bekijk vooruitblik" : "Bekijk marktinzichten") : "Lees update",
       };
     });
     return allItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

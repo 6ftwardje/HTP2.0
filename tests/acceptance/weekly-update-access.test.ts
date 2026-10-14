@@ -151,7 +151,7 @@ function detailPage(path: string, {
     "@/components/layout/PageHeader": { PageHeader: () => null },
     "@/lib/market-analysis": {
       getIsoWeekNumber: () => 41,
-      getMarketAnalysisTypeLabel: () => "Marktbreakdown",
+      getMarketAnalysisTypeLabel: () => "Marktinzichten",
       getMarketLabel: () => "Crypto",
     },
     "@/lib/weekly-updates": {
