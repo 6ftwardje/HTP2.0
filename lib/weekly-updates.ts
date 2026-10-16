@@ -15,6 +15,31 @@ async function contentClient() {
   return paidProductsEnabled() ? await createClient() : createServiceClient();
 }
 
+/** Full rubric read: filters apply before pagination so the archive is complete. */
+export async function listMarketUpdateRubricUpdates(
+  { freeOnly = false }: { freeOnly?: boolean } = {}
+): Promise<WeeklyUpdateWithMentor[]> {
+  const db = await contentClient();
+  const rows: WeeklyUpdateWithMentor[] = [];
+  const pageSize = 250;
+  for (let offset = 0; ; offset += pageSize) {
+    let query = db.from("weekly_updates")
+      .select("*, mentor:students!weekly_updates_mentor_student_id_fkey (id, name, email)")
+      .eq("is_published", true)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (freeOnly) query = query.eq("access_tier", "free");
+    const { data, error } = await query;
+    if (error) {
+      // Partial archives would make search results misleading.
+      throw new Error("Marktupdates konden niet volledig worden geladen.");
+    }
+    rows.push(...(data ?? []) as WeeklyUpdateWithMentor[]);
+    if (!data || data.length < pageSize) return rows;
+  }
+}
+
 export async function listPublishedWeeklyUpdates(
   limit = 48,
   { freeOnly = false }: { freeOnly?: boolean } = {}

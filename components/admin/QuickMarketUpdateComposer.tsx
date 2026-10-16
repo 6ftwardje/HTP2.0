@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminAttachChartImage, adminCreateChartUpload, adminCreateQuickMarketUpdate, adminPublishQuickMarketUpdate } from "@/app/actions/admin/weekly-updates";
 import { createClient } from "@/lib/supabase/client";
-import { MARKET_OPTIONS } from "@/lib/market-analysis";
+import { MarketUpdateStructureFields } from "@/components/admin/MarketUpdateStructureFields";
 
 export function QuickMarketUpdateComposer() {
   const router = useRouter();
@@ -19,11 +19,14 @@ export function QuickMarketUpdateComposer() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [step, setStep] = useState<string | null>(null);
+  const [formVersion, setFormVersion] = useState(0);
+  const [savedDraftId, setSavedDraftId] = useState<number | null>(null);
+  const [body, setBody] = useState("");
 
   useEffect(() => {
     if (expanded) {
       openedRef.current = true;
-      textareaRef.current?.focus();
+      formRef.current?.querySelector<HTMLInputElement>('input[name="title"]')?.focus();
     } else if (openedRef.current) {
       triggerRef.current?.focus();
     }
@@ -40,6 +43,7 @@ export function QuickMarketUpdateComposer() {
         const created = await adminCreateQuickMarketUpdate(formData);
         if (!created.success || !created.weeklyUpdateId) { setError(created.error ?? "Opslaan mislukt."); return; }
         const id = created.weeklyUpdateId;
+        setSavedDraftId(id);
         for (const file of files) {
           setStep(`Chart uploaden: ${file.name}`);
           const signed = await adminCreateChartUpload(id, { type: file.type, size: file.size });
@@ -55,7 +59,10 @@ export function QuickMarketUpdateComposer() {
           if (!result.success) { setError(`${result.error ?? "Publiceren mislukt."} Het concept staat veilig in Marktinzicht.`); return; }
         }
         formRef.current?.reset();
+        setFormVersion((value) => value + 1);
         setFiles([]);
+        setBody("");
+        setSavedDraftId(null);
         setExpanded(false);
         setNotice(publish ? "Update gepubliceerd voor studenten." : "Concept opgeslagen in Marktinzicht.");
         router.refresh();
@@ -71,7 +78,7 @@ export function QuickMarketUpdateComposer() {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h2 id="quick-update-title" className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Deel een marktupdate</h2>
-        <p className="mt-1 text-sm text-[var(--muted)]">Een kort bericht of chart voor je studenten.</p>
+        <p className="mt-1 text-sm text-[var(--muted)]">Kies een categorie en type. Het juiste sjabloon staat meteen klaar.</p>
       </div>
       <Link href="/admin/market-analysis" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">Alle updates beheren →</Link>
     </div>
@@ -90,36 +97,39 @@ export function QuickMarketUpdateComposer() {
       </svg>
     </button>
 
-    <form id="quick-update-form" ref={formRef} action={(data) => submit(data, false)} className={expanded ? "mt-5 space-y-4" : "hidden"}>
-      <label className="block">
-        <span className="sr-only">Je marktupdate</span>
+    <form key={formVersion} id="quick-update-form" ref={formRef} action={(data) => submit(data, false)} noValidate className={expanded ? "mt-5 space-y-4" : "hidden"}>
+      <fieldset disabled={pending || Boolean(savedDraftId)} className="min-w-0 space-y-4 disabled:opacity-60">
+      <MarketUpdateStructureFields />
+      <details className="border-t border-[var(--border)] pt-4">
+        <summary className="cursor-pointer py-1 text-sm font-semibold">Aanvullende toelichting · optioneel</summary>
+      <label className="mt-3 block space-y-1.5">
+        <span className="text-sm font-semibold">Extra bericht</span>
         <textarea
           ref={textareaRef}
           name="body"
-          required
-          minLength={20}
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
           maxLength={12000}
           rows={5}
           placeholder="Wat speelt er op de markt? Deel je observatie met studenten…"
           className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm leading-6 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
         />
       </label>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Kies markten">
-        {[...MARKET_OPTIONS, { value: "macro", label: "Macro" }].map((market) => <label key={market.value} className="flex min-h-10 cursor-pointer items-center rounded-full border border-[var(--border)] px-3 text-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--accent)] has-[:checked]:border-[var(--foreground)] has-[:checked]:bg-[var(--foreground)] has-[:checked]:text-[var(--background)]"><input type="checkbox" name="markets" value={market.value} className="sr-only" />{market.label}</label>)}
-      </div>
+      </details>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
         <label className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-[var(--border)] px-3 text-sm font-semibold hover:bg-[var(--surface-hover)] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--accent)]">
           Chart toevoegen
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(event) => { const next = Array.from(event.target.files ?? []); setFiles(next); setError(next.length > 4 ? "Voeg maximaal vier charts toe." : null); }} />
         </label>
         <div className="flex flex-wrap gap-2">
-          <button type="button" disabled={pending} onClick={() => setExpanded(false)} className="cb-btn cb-btn-secondary min-h-11 text-sm">Sluiten</button>
           <button type="submit" disabled={pending} className="cb-btn cb-btn-secondary min-h-11 text-sm">Concept bewaren</button>
           <button type="button" disabled={pending} className="cb-btn cb-btn-primary min-h-11 text-sm" onClick={() => { if (formRef.current?.reportValidity()) submit(new FormData(formRef.current), true); }}>Publiceren</button>
         </div>
       </div>
       {files.length ? <p className="text-xs text-[var(--muted)]">{files.length} chart{files.length === 1 ? "" : "s"} geselecteerd · JPG, PNG of WebP · max. 10 MB per bestand</p> : null}
       <p className="text-xs text-[var(--muted)]">Publiceren maakt de update zichtbaar voor studenten met toegang en kan meldingen versturen. Bewaar als concept om eerst te controleren.</p>
+      </fieldset>
+      <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={pending} onClick={() => setExpanded(false)} className="cb-btn cb-btn-secondary min-h-11 text-sm">Sluiten</button>{savedDraftId ? <Link href={`/admin/market-analysis?update=${savedDraftId}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline underline-offset-4">Opgeslagen concept openen →</Link> : null}</div>
     </form>
     {step ? <p role="status" className="mt-3 text-sm">{step}</p> : null}
     {notice ? <p role="status" className="mt-3 text-sm text-green-700 dark:text-green-300">{notice}</p> : null}

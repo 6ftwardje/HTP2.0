@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin/access";
 import { createClient } from "@/lib/supabase/server";
+import type { MarketUpdateStructure } from "@/lib/market-update-structure";
 import type {
   Market,
   MarketAnalysisType,
@@ -21,6 +22,7 @@ export type AdminDashboardDraft = Pick<
 >;
 
 export type WeeklyUpdateInput = {
+  update_structure?: MarketUpdateStructure | null;
   content_format: WeeklyUpdateContentFormat;
   body: string | null;
   content_kind?: "video" | "article";
@@ -229,7 +231,8 @@ export async function createWeeklyUpdateAdmin(
 export async function updateWeeklyUpdateAdmin(
   weeklyUpdateId: number,
   input: WeeklyUpdateInput,
-  publishTransition = false
+  publishTransition = false,
+  expectedUpdatedAt?: string
 ): Promise<{ error: string | null; transitioned: boolean }> {
   await requireAdmin();
 
@@ -241,12 +244,13 @@ export async function updateWeeklyUpdateAdmin(
     .update(input)
     .eq("id", weeklyUpdateId);
   if (publishTransition) query = query.eq("is_published", false);
+  if (expectedUpdatedAt) query = query.eq("updated_at", expectedUpdatedAt);
   const { data, error } = await query.select("id")
     .maybeSingle();
 
   if (error) return { error: error.message, transitioned: false };
-  if (!data && publishTransition) return { error: null, transitioned: false };
-  if (!data) return { error: "Weekly update not found.", transitioned: false };
+  if (!data && publishTransition && !expectedUpdatedAt) return { error: null, transitioned: false };
+  if (!data) return { error: expectedUpdatedAt ? "De update is intussen gewijzigd. Vernieuw de pagina voordat je verdergaat." : "Weekly update not found.", transitioned: false };
   return { error: null, transitioned: publishTransition };
 }
 

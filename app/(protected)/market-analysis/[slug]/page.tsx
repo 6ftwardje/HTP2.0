@@ -11,6 +11,7 @@ import { articleReadingMinutes, isMarketArticle, marketArticleHtml } from "@/lib
 import { marketUpdateAuthorName } from "@/lib/market-update-author";
 import { MarketPostLayout } from "@/components/market-insight/MarketPostLayout";
 import { MarketPostContents } from "@/components/market-insight/MarketPostContents";
+import { categoryLabel, getUpdateStructure, PERSPECTIVE_OPTIONS, updateTypeLabel } from "@/lib/market-update-structure";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -42,7 +43,9 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
   const minutes = article ? articleReadingMinutes(marketArticleHtml(update), update.intro) : null;
   const duration = article ? minutes ? `${minutes} min leestijd` : null : update.video_duration_seconds ? `${Math.max(1, Math.round(update.video_duration_seconds / 60))} min video` : null;
   const markets = update.markets?.length ? update.markets : update.market ? [update.market] : [];
-  const tags = markets.map((market) => market === "macro" ? "Macro" : getMarketLabel(market));
+  const structure = getUpdateStructure(update);
+  const tags = structure ? [categoryLabel(structure.category), updateTypeLabel(structure.type), PERSPECTIVE_OPTIONS.find((option) => option.value === structure.perspective)?.label].filter((label): label is string => Boolean(label))
+    : markets.map((market) => market === "macro" ? "Macro" : getMarketLabel(market));
   const publisherId = article ? update.published_by_student_id : null;
   const author = publisherId && publisherId !== meta.author?.student_id
     ? { name: marketUpdateAuthorName(update), object_path: null, student_id: publisherId }
@@ -51,7 +54,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
   return <MarketPostLayout title={update.title}
     author={author}
     publishedAt={update.published_at ?? update.created_at} tags={tags} duration={duration}
-    intro={update.intro} postId={update.id} reaction={meta.reaction}>
+    intro={structure ? null : update.intro} postId={update.id} reaction={meta.reaction}>
     <MarketPostContents update={update} summary={enrichment?.summary ?? update.summary}
       takeaways={enrichment?.keyTakeaways ?? update.key_takeaways} chapters={enrichment?.chapters ?? update.chapters ?? []} muxTokens={muxTokens} />
   </MarketPostLayout>;

@@ -1,0 +1,56 @@
+.content { min-width: 0; max-width: 78ch; }
+.content :is(a, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.content ::selection { background: var(--accent); color: var(--background); }
+.metadata { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-bottom: 18px; color: var(--muted); font-size: .82rem; line-height: 1.7; }
+.metadata > span:not(:last-child) { color: var(--foreground); font-weight: 600; }
+.summary { max-width: 70ch; font-size: clamp(1.08rem, 1.8vw, 1.25rem); line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.setupState { margin-top: 26px; padding: 17px 0; border-block: 1px solid var(--border); }
+.status { font-size: 1rem; font-weight: 700; line-height: 1.6; }
+.status > span { font-weight: 500; }
+.closedAt { margin-top: 4px; color: var(--muted); font-size: .82rem; line-height: 1.7; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 36px; row-gap: 26px; margin-top: 30px; }
+.fields > div { min-width: 0; }
+.fullField { grid-column: 1 / -1; }
+.fields dt { color: var(--muted); font-size: .83rem; font-weight: 600; line-height: 1.5; }
+.fields dd { margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--foreground); font-size: 1rem; line-height: 1.8; }
+.fields dd a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.fields dd a:hover { color: var(--accent); }
+.help { margin-top: 6px; color: var(--muted); font-size: .8rem; line-height: 1.65; }
+.targetSection { margin-top: 34px; }
+.targetSection > h2, .history > h2 { font-size: 1.25rem; font-weight: 700; line-height: 1.4; letter-spacing: -.015em; }
+.targets, .compactTargets { list-style: none; padding: 0; margin: 14px 0 0; }
+.targets li, .compactTargets li { display: grid; grid-template-columns: 65px minmax(0, 1fr) auto; align-items: baseline; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); font-size: .94rem; line-height: 1.7; }
+.targetName { font-size: .82rem; color: var(--muted); }
+.targetValue { overflow-wrap: anywhere; }
+.targetStatus { text-align: right; font-size: .82rem; font-weight: 600; }
+.targetStatus time { display: block; font-weight: 400; color: var(--muted); font-size: .74rem; }
+.content > :global(.market-article-body), .content > :global(.market-post-text-section), .content > :global(.market-media-state), .content > :global(.market-post-archive) { margin-top: 34px; }
+.content > :global(.weekly-update-video), .content > :global(.market-video-shell) { margin-top: 34px; }
+.history { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--border); }
+.timeline { list-style: none; padding: 0; margin-top: 20px; }
+.timeline > li { padding: 0 0 24px; }
+.timeline > li + li { padding-top: 21px; border-top: 1px solid var(--border); }
+.historyHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 20px; }
+.historyHeading h3 { font-size: .95rem; font-weight: 650; }
+.historyHeading time { font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.7; }
+.historyAuthor { margin-top: 3px; color: var(--muted); font-size: .78rem; }
+.historyNote { margin-top: 9px; font-size: .94rem; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.snapshot { margin-top: 12px; }
+.snapshot summary { width: fit-content; min-height: 32px; cursor: pointer; color: var(--foreground); font-size: .8rem; text-underline-offset: 4px; }
+.snapshot summary:hover { text-decoration: underline; }
+.snapshot[open] { padding-bottom: 12px; }
+.snapshotStatus { margin-top: 12px; font-size: .85rem; font-weight: 600; }
+.snapshot .fields { margin-top: 16px; row-gap: 16px; }
+.snapshot .fields dd { font-size: .9rem; }
+.compactTargets li { font-size: .85rem; }
+.snapshotBody { margin-top: 18px; }
+.snapshotBody h4 { color: var(--muted); font-size: .83rem; font-weight: 600; }
+.snapshotBody p { margin-top: 6px; font-size: .9rem; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .fields { column-gap: 20px; row-gap: 23px; }
+  .targets li, .compactTargets li { grid-template-columns: 54px minmax(0, 1fr); gap: 4px 10px; }
+  .targetStatus { grid-column: 2; text-align: left; }
+  .targetStatus time { display: inline; margin-left: 8px; }
+  .summary { font-size: 1.08rem; }
+}
+@media (max-width: 380px) { .fields { grid-template-columns: minmax(0, 1fr); } }

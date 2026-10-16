@@ -3,23 +3,22 @@ import { MarketInsightLibrary } from "@/components/market-insight/MarketInsightL
 import { SubscriptionPaywall } from "@/components/billing/SubscriptionPaywall";
 import { canAccessSubscriberContent, getBillingOverview, paidProductsEnabled } from "@/lib/billing";
 import { ensureCurrentStudent } from "@/lib/students";
-import { listPublishedWeeklyUpdates } from "@/lib/weekly-updates";
-import { MARKET_OPTIONS } from "@/lib/market-analysis";
-import type { Market } from "@/lib/types";
-import { notFound } from "next/navigation";
+import { listMarketUpdateRubricUpdates } from "@/lib/weekly-updates";
+import { CATEGORY_OPTIONS, type UpdateCategory } from "@/lib/market-update-structure";
 
 type Props = { searchParams: Promise<{ market?: string }> };
 
 export default async function MarketAnalysisPage({ searchParams }: Props) {
   const { market } = await searchParams;
-  const initialMarket = MARKET_OPTIONS.some((option) => option.value === market)
-    ? (market as Market)
+  const initialMarket = CATEGORY_OPTIONS.some((option) => option.value === market)
+    ? (market as UpdateCategory)
+    : market === "macro" ? "macro"
     : "all";
   const { student } = await ensureCurrentStudent();
   if (!student) return null;
   const billing = await getBillingOverview(student.id);
   const hasSubscriberAccess = canAccessSubscriberContent(student, billing);
-  const updates = await listPublishedWeeklyUpdates(100, {
+  const updates = await listMarketUpdateRubricUpdates({
     freeOnly: !hasSubscriberAccess,
   });
   if (!hasSubscriberAccess && updates.length === 0 && paidProductsEnabled()) {
@@ -28,9 +27,8 @@ export default async function MarketAnalysisPage({ searchParams }: Props) {
   return (
     <div>
       <PageHeader
-        eyebrow="Voorbereiden · Begrijpen · Deelnemen"
         title="Marktinzicht"
-        description="Bereid je voor op de week, begrijp actuele marktbewegingen en neem deel aan live analyses."
+        description="Setups, analyses, nieuws en educatie, overzichtelijk per markt."
       />
       <MarketInsightLibrary updates={updates} initialMarket={initialMarket} />
     </div>

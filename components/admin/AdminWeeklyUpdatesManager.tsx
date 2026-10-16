@@ -26,10 +26,23 @@ import {
 } from "@/app/actions/admin/transcription-ai";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { WeeklyUpdateFields, type MentorOption } from "@/components/admin/WeeklyUpdateFields";
+import { MarketUpdateWorkflowControls } from "@/components/admin/MarketUpdateWorkflowControls";
 import { LegacyBackfillDryRunPanel } from "@/components/admin/LegacyBackfillDryRunPanel";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
 import { marketUpdateAuthorName } from "@/lib/market-update-author";
+import {
+  CATEGORY_OPTIONS,
+  SETUP_STATUS_OPTIONS,
+  UPDATE_TYPE_OPTIONS,
+  categoryLabel,
+  getUpdateCategory,
+  getUpdateStructure,
+  needsUpdateFollowUp,
+  setupStatusLabel,
+  suggestsUpdateArchive,
+  updateTypeLabel,
+} from "@/lib/market-update-structure";
 import {
   getIsoWeekNumber,
   getMarketAnalysisTypeLabel,
@@ -55,6 +68,20 @@ function fieldClass() {
 }
 
 type ConfirmState = { type: "delete"; update: AdminWeeklyUpdateRow } | null;
+type UpdateView = "all" | "drafts" | "published" | "follow_up" | "archive" | "uncategorized";
+
+function needsClassification(update: AdminWeeklyUpdateRow) {
+  return update.needs_review || !update.type || (update.type === "market_update" && !getUpdateStructure(update));
+}
+
+function matchesView(update: AdminWeeklyUpdateRow, view: UpdateView) {
+  if (view === "drafts") return !update.is_published && update.actuality_status !== "archive";
+  if (view === "published") return update.is_published && update.actuality_status !== "archive";
+  if (view === "follow_up") return needsUpdateFollowUp(update);
+  if (view === "archive") return update.actuality_status === "archive";
+  if (view === "uncategorized") return needsClassification(update);
+  return true;
+}
 
 function iconButtonClass(tone: "normal" | "danger" = "normal") {
   return `inline-flex h-9 w-9 items-center justify-center rounded-lg border transition ${
@@ -400,7 +427,7 @@ export function AdminWeeklyUpdatesManager({
   const hasUnsavedChanges = useRef(false);
   const initialUpdate = updates.find((update) => update.id === initialUpdateId);
   const [contentFormat, setContentFormat] = useState<WeeklyUpdateContentFormat>(
-    initialUpdate?.content_format ?? "video"
+    initialUpdate?.content_format ?? "text"
   );
   const [panel, setPanel] = useState<PanelState>(
     initialUpdate ? { type: "edit", update: initialUpdate } : { type: "empty" }
@@ -413,23 +440,34 @@ export function AdminWeeklyUpdatesManager({
   const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [mounted, setMounted] = useState(false);
   const [deletedIds, setDeletedIds] = useState<Set<number>>(() => new Set());
-  const [archiveFilter, setArchiveFilter] = useState<"all" | "uncategorized">("all");
+  const [archiveFilter, setArchiveFilter] = useState<UpdateView>("all");
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [authorFilter, setAuthorFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const availableUpdates = useMemo(
     () => updates.filter((update) => !deletedIds.has(update.id)),
     [updates, deletedIds]
   );
-  const uncategorizedCount = availableUpdates.filter((update) => update.needs_review || !update.type).length;
+  const authorOptions = useMemo(() => [...new Set(availableUpdates.map((update) => marketUpdateAuthorName(update)))].sort((a, b) => a.localeCompare(b, "nl")), [availableUpdates]);
   const visibleUpdates = useMemo(
-    () =>
-      archiveFilter === "uncategorized"
-        ? availableUpdates.filter((update) => update.needs_review || !update.type)
-        : availableUpdates,
-    [archiveFilter, availableUpdates]
+    () => availableUpdates.filter((update) => {
+      const structure = getUpdateStructure(update);
+      const query = search.trim().toLocaleLowerCase("nl");
+      if (!matchesView(update, archiveFilter)) return false;
+      if (categoryFilter && getUpdateCategory(update) !== categoryFilter) return false;
+      if (typeFilter && structure?.type !== typeFilter) return false;
+      if (authorFilter && marketUpdateAuthorName(update) !== authorFilter) return false;
+      if (statusFilter && structure?.setup_status !== statusFilter) return false;
+      return !query || [update.title, update.summary, structure?.fields.instrument, marketUpdateAuthorName(update)].some((value) => value?.toLocaleLowerCase("nl").includes(query));
+    }),
+    [archiveFilter, availableUpdates, search, categoryFilter, typeFilter, authorFilter, statusFilter]
   );
   const selectedUpdate =
     panel.type === "edit"
-      ? visibleUpdates.find((update) => update.id === panel.update.id) ??
+      ? availableUpdates.find((update) => update.id === panel.update.id) ??
         panel.update
       : null;
 
@@ -484,7 +522,7 @@ export function AdminWeeklyUpdatesManager({
     hasUnsavedChanges.current = false;
     resetFeedback();
     setThumbnailFile(null);
-    setContentFormat(nextPanel.type === "edit" ? nextPanel.update.content_format : "video");
+    setContentFormat(nextPanel.type === "edit" ? nextPanel.update.content_format : "text");
     setPanel(nextPanel);
   }
 
@@ -847,36 +885,30 @@ export function AdminWeeklyUpdatesManager({
           </button>
         </div>
 
-        <LegacyBackfillDryRunPanel />
+        <details className="border-b border-[var(--border)]">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-[var(--muted)]">Video-onderhoud</summary>
+          <LegacyBackfillDryRunPanel />
+        </details>
 
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--border)] px-4 py-2" role="tablist" aria-label="Filter beheer">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={archiveFilter === "all"}
-            className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-bold ${archiveFilter === "all" ? "bg-[var(--foreground)] text-[var(--background)]" : "text-[var(--muted)]"}`}
-            onClick={() => setArchiveFilter("all")}
-          >
-            Alle inzichten ({availableUpdates.length})
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={archiveFilter === "uncategorized"}
-            className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-bold ${archiveFilter === "uncategorized" ? "bg-[var(--foreground)] text-[var(--background)]" : "text-[var(--muted)]"}`}
-            onClick={() => setArchiveFilter("uncategorized")}
-          >
-            Controle nodig ({uncategorizedCount})
-          </button>
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--border)] px-4 py-2" aria-label="Weergave beheer">
+          {([{ value: "all", label: "Alles" }, { value: "drafts", label: "Concepten" }, { value: "published", label: "Gepubliceerd" }, { value: "follow_up", label: "Opvolging nodig" }, { value: "archive", label: "Archief" }, { value: "uncategorized", label: "Nog indelen" }] as const).map((view) => <button key={view.value} type="button" aria-pressed={archiveFilter === view.value} className={`min-h-10 shrink-0 rounded-md px-3 py-1.5 text-xs font-bold ${archiveFilter === view.value ? "bg-[var(--foreground)] text-[var(--background)]" : "text-[var(--muted)] hover:bg-[var(--surface-hover)]"}`} onClick={() => setArchiveFilter(view.value)}>{view.label} ({availableUpdates.filter((update) => matchesView(update, view.value)).length})</button>)}
+        </div>
+
+        <div className="space-y-3 border-b border-[var(--border)] p-4">
+          <label className="block space-y-1.5"><span className="sr-only">Updates doorzoeken</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Zoek op titel, instrument of auteur…" className={fieldClass()} /></label>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <label className="min-w-0"><span className="sr-only">Categorie filteren</span><select aria-label="Categorie filteren" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className={fieldClass()}><option value="">Alle categorieën</option>{CATEGORY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+            <label className="min-w-0"><span className="sr-only">Type filteren</span><select aria-label="Type filteren" value={typeFilter} onChange={(event) => { setTypeFilter(event.target.value); if (event.target.value && event.target.value !== "setup") setStatusFilter(""); }} className={fieldClass()}><option value="">Alle types</option>{UPDATE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+            <label className="min-w-0"><span className="sr-only">Auteur filteren</span><select aria-label="Auteur filteren" value={authorFilter} onChange={(event) => setAuthorFilter(event.target.value)} className={fieldClass()}><option value="">Alle auteurs</option>{authorOptions.map((author) => <option key={author} value={author}>{author}</option>)}</select></label>
+            <label className="min-w-0"><span className="sr-only">Setupstatus filteren</span><select aria-label="Setupstatus filteren" value={statusFilter} disabled={Boolean(typeFilter && typeFilter !== "setup")} onChange={(event) => setStatusFilter(event.target.value)} className={fieldClass()}><option value="">Alle statussen</option>{SETUP_STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 divide-y divide-[var(--border)] overflow-y-auto overscroll-contain">
           {visibleUpdates.length === 0 ? (
             <div className="p-8 text-center">
               <p className="cb-body">
-                {archiveFilter === "uncategorized"
-                  ? "Geen marktinzichten wachten op handmatige classificatie."
-                  : "Nog geen marktinzichten. Voeg het eerste inzicht toe."}
+                {availableUpdates.length ? "Geen updates in deze weergave. Kies een andere weergave of pas je filters aan." : "Nog geen marktinzichten. Voeg het eerste inzicht toe."}
               </p>
             </div>
           ) : (
@@ -907,20 +939,21 @@ export function AdminWeeklyUpdatesManager({
                         {update.title}
                       </h3>
                       {statusBadge(update)}
-                      {transcriptBadge(latestTranscript(update))}
+                      {update.content_format === "video" ? transcriptBadge(latestTranscript(update)) : null}
                       <span className={update.is_published ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                         {update.is_published ? "Gepubliceerd" : "Concept"}
                       </span>
                       <span className="cb-badge cb-badge-locked">
                         {accessLabel(update.access_tier, paidProductsActive)}
                       </span>
-                      <span className={update.type ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
+                      {!getUpdateStructure(update) ? <span className={update.type ? "cb-badge cb-badge-available" : "cb-badge cb-badge-locked"}>
                         {getMarketAnalysisTypeLabel(update.type)}
-                      </span>
-                      {update.needs_review ? <span className="cb-badge cb-badge-locked">Controle nodig</span> : null}
-                      {update.type === "market_update" ? (
+                      </span> : null}
+                      {needsClassification(update) ? <span className="cb-badge cb-badge-locked">Nog indelen</span> : null}
+                      {getUpdateStructure(update) ? <><span className="cb-badge cb-badge-available">{categoryLabel(getUpdateCategory(update))} · {updateTypeLabel(getUpdateStructure(update)!.type)}</span>{getUpdateStructure(update)?.type === "setup" ? <span className="cb-badge cb-badge-locked">{setupStatusLabel(getUpdateStructure(update)!.setup_status)}</span> : null}</> : update.type === "market_update" ? (
                         <span className="cb-badge cb-badge-available">{getMarketLabel(update.market)}</span>
                       ) : null}
+                      {update.actuality_status === "archive" ? <span className="cb-badge cb-badge-locked">Archief</span> : update.type === "market_update" && suggestsUpdateArchive(update) ? <span className="cb-badge cb-badge-locked">Archiefsuggestie · 90 dagen</span> : null}
                     </div>
                     <p className="mt-1 text-sm text-[var(--muted)]">
                       {update.type === "weekly_outlook"
@@ -1030,7 +1063,7 @@ export function AdminWeeklyUpdatesManager({
             </form>
           ) : selectedUpdate ? (
             <form action={(formData) => runSave(formData, selectedUpdate)} onInput={() => { hasUnsavedChanges.current = true; }} onChange={() => { hasUnsavedChanges.current = true; }} className="space-y-4">
-              <WeeklyUpdateFields key={selectedUpdate.id} update={selectedUpdate} mentors={mentors} paidProductsActive={paidProductsActive} onThumbnailFileChange={setThumbnailFile} onContentFormatChange={setContentFormat} chartFileRef={chartFileRef} />
+              <WeeklyUpdateFields key={`${selectedUpdate.id}-${selectedUpdate.updated_at}`} update={selectedUpdate} mentors={mentors} paidProductsActive={paidProductsActive} onThumbnailFileChange={setThumbnailFile} onContentFormatChange={setContentFormat} chartFileRef={chartFileRef} />
               {contentFormat === "video" ? <div className="rounded-xl border border-[var(--border)] p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -1142,6 +1175,8 @@ export function AdminWeeklyUpdatesManager({
               </button>
             </form>
           ) : null}
+
+          {selectedUpdate && (selectedUpdate.type === "market_update" || !selectedUpdate.type) ? <MarketUpdateWorkflowControls key={`workflow-${selectedUpdate.id}-${selectedUpdate.updated_at}`} update={selectedUpdate} hasUnsavedChanges={() => hasUnsavedChanges.current} /> : null}
 
           {selectedUpdate?.is_published && selectedUpdate.access_tier === "subscription" ? (
             <button

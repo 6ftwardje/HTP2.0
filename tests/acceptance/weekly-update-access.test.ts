@@ -13,11 +13,15 @@ import { getMondayDate } from "../../lib/market-analysis";
 import * as marketArticle from "../../lib/market-article";
 import * as marketAuthor from "../../lib/market-update-author";
 import * as marketPolicy from "../../lib/market-update-policy";
+import * as marketStructure from "../../lib/market-update-structure";
+import * as marketEditing from "../../lib/market-update-editing";
 
 const sharedDependencies: Record<string, unknown> = {
   "@/lib/market-article": marketArticle,
   "@/lib/market-update-author": marketAuthor,
   "@/lib/market-update-policy": marketPolicy,
+  "@/lib/market-update-structure": marketStructure,
+  "@/lib/market-update-editing": marketEditing,
   "@/lib/supabase/service": {},
 };
 
@@ -67,7 +71,7 @@ test("admin can save an uploaded video for everyone without changing publication
   const actions = loadModule("app/actions/admin/weekly-updates.ts", {
     "next/cache": { revalidatePath: () => {} },
     "@/lib/market-article": { sanitizeArticle: (value: string) => value },
-    "@/lib/admin/access": { requireAdmin: async () => ({ actorStudent: { id: "synthetic-admin" } }) },
+    "@/lib/admin/access": { requireAdmin: async () => ({ actorStudent: { id: "synthetic-admin", name: "Testbeheerder", email: "admin@example.invalid" } }) },
     "@/lib/admin/audit": { logAdminAction: () => {} },
     "@/lib/supabase/server": {},
     "@/lib/admin/weekly-updates": {
@@ -221,6 +225,44 @@ for (const path of [
 }
 
 for (const paid of [false, true]) {
+  test(`the rubric archive reads every page after access filtering (billing=${paid})`, async () => {
+    const rows = Array.from({ length: 650 }, (_, id) => ({ ...videoFixture(id % 2 ? "subscription" : "free"), id, is_published: id % 7 !== 0 }));
+    let failLaterPage = false;
+    const ranges: number[] = [];
+    const db = {
+      from() {
+        const filters: Array<[string, unknown]> = [];
+        let from = 0;
+        let to = 249;
+        const query = {
+          select: () => query, order: () => query,
+          eq: (key: string, value: unknown) => { filters.push([key, value]); return query; },
+          range: (start: number, end: number) => { from = start; to = end; return query; },
+          then(resolveResult: (value: unknown) => unknown) {
+            ranges.push(from);
+            const data = rows.filter((row) => filters.every(([key, value]) => row[key as keyof typeof row] === value)).slice(from, to + 1);
+            return Promise.resolve(resolveResult(failLaterPage && from > 0 ? { data: null, error: { message: "Synthetic page failure" } } : { data, error: null }));
+          },
+        };
+        return query;
+      },
+    };
+    const queries = loadModule("lib/weekly-updates.ts", {
+      "@/lib/supabase/server": { createClient: async () => db },
+      "@/lib/supabase/service": { createServiceClient: () => db },
+      "@/lib/billing": { paidProductsEnabled: () => paid },
+      "@/lib/transcription/public-enrichment": {},
+    });
+    const expected = rows.filter((row) => row.is_published && row.access_tier === "free");
+    const actual = await queries.listMarketUpdateRubricUpdates({ freeOnly: true });
+    assert.deepEqual(Array.from(actual, (row: { id: number }) => row.id), expected.map((row) => row.id));
+    assert.deepEqual(ranges, [0, 250]);
+    failLaterPage = true;
+    await assert.rejects(() => queries.listMarketUpdateRubricUpdates({ freeOnly: true }), /niet volledig/);
+  });
+}
+
+for (const paid of [false, true]) {
   test(`library queries exclude drafts and restricted videos before limiting results (billing=${paid})`, async () => {
     const rows = [
       { ...videoFixture("subscription"), id: 3, is_published: true },
@@ -285,7 +327,7 @@ for (const path of [
       "@/lib/market-analysis": { MARKET_OPTIONS: [{ value: "crypto", label: "Crypto" }] },
       "@/lib/billing": billing(false),
       "@/lib/students": { ensureCurrentStudent: async () => ({ student: freeStudent }) },
-      "@/lib/weekly-updates": { listPublishedWeeklyUpdates: list, listPublishedMarketUpdatesByMarket: list },
+      "@/lib/weekly-updates": { listPublishedWeeklyUpdates: list, listMarketUpdateRubricUpdates: list, listPublishedMarketUpdatesByMarket: list },
     }).default;
     const result = await page({ params: Promise.resolve({ market: "crypto" }), searchParams: Promise.resolve({}) });
     assert.equal(filtered, true);

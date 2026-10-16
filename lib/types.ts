@@ -1,3 +1,5 @@
+import type { MarketUpdateStructure } from "./market-update-structure";
+
 export type Student = {
   id: string;
   email: string;
@@ -164,6 +166,7 @@ export type MarketInsightChapter = {
 };
 
 export type WeeklyUpdate = {
+  update_structure?: MarketUpdateStructure | null;
   content_kind?: "video" | "article";
   intro?: string | null;
   article_html?: string | null;

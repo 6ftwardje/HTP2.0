@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   createWeeklyUpdateAdmin,
+  type WeeklyUpdateInput,
   deleteWeeklyUpdateAdmin,
   getWeeklyUpdateAdmin,
   updateWeeklyUpdateAdmin,
@@ -30,11 +31,14 @@ import { SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS } from "@/lib/weekly-update-acces
 import { getMondayDate } from "@/lib/market-analysis";
 import { publicAuthorName } from "@/lib/market-update-author";
 import { validateMarketUpdatePublication } from "@/lib/market-update-policy";
+import { getUpdateStructure, isOpenSetup, validateUpdateStructure, type MarketUpdateStructure } from "@/lib/market-update-structure";
+import { prepareMarketUpdateEdit, structureFallbackBody, originalMarketUpdatePublication } from "@/lib/market-update-editing";
 import type {
   Market,
   MarketAnalysisType,
   WeeklyUpdateAccessTier,
   WeeklyUpdateContentFormat,
+  WeeklyUpdate,
 } from "@/lib/types";
 
 type ActionResult<T extends object = object> = T & {
@@ -202,6 +206,15 @@ function readWeeklyUpdateInput(
   formData: FormData,
   existingWeekStartDate?: string | null
 ) {
+  let structure: MarketUpdateStructure | undefined;
+  if (formData.has("update_structure")) {
+    try {
+      const value: unknown = JSON.parse(asString(formData.get("update_structure")));
+      const candidate = getUpdateStructure({ update_structure: value });
+      if (!candidate) return { error: "De updatestructuur is ongeldig. Vernieuw het formulier." as const };
+      structure = candidate;
+    } catch { return { error: "De updatestructuur kon niet worden gelezen." as const }; }
+  }
   const title = asString(formData.get("title"));
   const slug = slugify(asString(formData.get("slug")) || title);
   const typeRaw = asString(formData.get("type"));
@@ -211,13 +224,17 @@ function readWeeklyUpdateInput(
     ? (typeRaw as Exclude<MarketAnalysisType, "live_session">)
     : null;
   const marketRaw = asString(formData.get("market"));
-  const market = MARKETS.includes(marketRaw as Market)
+  let market = MARKETS.includes(marketRaw as Market)
     ? (marketRaw as Market)
     : null;
-  const markets = formData
+  let markets = formData
     .getAll("markets")
     .map(asString)
     .filter((value): value is Market | "macro" => [...MARKETS, "macro"].includes(value as Market | "macro"));
+  if (structure) {
+    market = MARKETS.includes(structure.category as Market) ? structure.category as Market : null;
+    markets = market ? [market] : structure.category === "general" ? ["macro"] : [];
+  }
   const automaticDate = new Date().toISOString().slice(0, 10);
   const weekStartDate =
     type === "weekly_outlook"
@@ -234,7 +251,8 @@ function readWeeklyUpdateInput(
   const isPublished = asBoolean(formData.get("is_published"));
   const formatRaw = asString(formData.get("content_format"));
   const contentFormat: WeeklyUpdateContentFormat = formatRaw === "chart" || formatRaw === "text" ? formatRaw : formData.get("content_kind") === "article" ? "text" : "video";
-  const body = asNullableString(formData.get("body"));
+  const summary = asNullableString(formData.get("summary"));
+  const body = asNullableString(formData.get("body")) ?? (structure ? structureFallbackBody(structure, summary) || null : null);
   const articleHtml = asString(formData.get("article_html"));
   const contentKind = contentFormat !== "video" && articleHtml ? "article" : "video";
   if (articleHtml.length > 250_000) return { error: "Artikelinhoud is te groot." as const };
@@ -243,7 +261,12 @@ function readWeeklyUpdateInput(
   if (!title) return { error: "Vul een titel in." as const };
   if (!slug) return { error: "Vul een geldige URL-naam in." as const };
   if (!type) return { error: "Kies verplicht een videotype." as const };
-  if (type === "market_update" && markets.length === 0 && !market) {
+  if (structure && type !== "market_update") return { error: "Deze structuur hoort alleen bij een marktupdate." as const };
+  if (structure) {
+    const error = validateUpdateStructure(structure, { published: isPublished, title, summary });
+    if (error) return { error };
+  }
+  if (type === "market_update" && markets.length === 0 && !market && !structure) {
     return { error: "Kies minimaal één markt voor deze marktinzichten." as const };
   }
   if (!weekStartDate || Number.isNaN(Date.parse(weekStartDate))) {
@@ -255,6 +278,7 @@ function readWeeklyUpdateInput(
 
   return {
     input: {
+      ...(structure ? { update_structure: structure } : {}),
       content_kind: contentKind as "video" | "article",
       intro: asNullableString(formData.get("intro")),
       article_html: articleHtml ? sanitizeArticle(articleHtml) : null,
@@ -262,7 +286,7 @@ function readWeeklyUpdateInput(
       content_format: contentFormat,
       body: contentFormat === "video" ? null : body,
       slug,
-      summary: asNullableString(formData.get("summary")),
+      summary,
       key_takeaways: asLineList(formData.get("key_takeaways")),
       type,
       market: type === "market_update" ? (markets.find((value): value is Market => value !== "macro") ?? market) : null,
@@ -283,12 +307,31 @@ function readWeeklyUpdateInput(
   };
 }
 
+function prepareStructuredInput(input: WeeklyUpdateInput, current: WeeklyUpdate | null, formData: FormData, author: string): { input: WeeklyUpdateInput; error?: never } | { error: string; input?: never } {
+  const structure = input.update_structure ?? getUpdateStructure(current);
+  if (!structure) return { input };
+  if (input.type !== "market_update") return { error: "Deel een gestructureerde update niet om naar een weekvooruitblik. Maak daarvoor een afzonderlijk bericht." };
+  const expected = asString(formData.get("expected_updated_at"));
+  if (current && expected && expected !== current.updated_at) return { error: "De update is intussen gewijzigd. Vernieuw de pagina voordat je verdergaat." };
+  const prepared = prepareMarketUpdateEdit({ submitted: structure, current, title: input.title, summary: input.summary, publish: input.is_published, note: asString(formData.get("change_note")), author });
+  if (!prepared.structure) return { error: prepared.error };
+  if (input.actuality_status === "archive" && prepared.structure.type === "setup" && prepared.structure.setup_status !== "closed") return { error: "Sluit de open setup eerst af voordat je archiveert." };
+  if (input.actuality_status === "archive") {
+    prepared.structure.pinned_rank = null;
+    prepared.structure.pin_until = null;
+    prepared.structure.urgent_until = null;
+  }
+  return { input: { ...input, update_structure: prepared.structure } };
+}
+
 export async function adminCreateWeeklyUpdate(
   formData: FormData
 ): Promise<ActionResult<{ weeklyUpdateId?: number }>> {
   const { actorStudent } = await requireAdmin();
   const parsed = readWeeklyUpdateInput(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
+  const structured = prepareStructuredInput(parsed.input, null, formData, publicAuthorName(actorStudent));
+  if (!structured.input) return { success: false, error: structured.error };
   if (parsed.input.is_published && parsed.input.content_kind !== "article") {
     return {
       success: false,
@@ -297,7 +340,7 @@ export async function adminCreateWeeklyUpdate(
   }
 
   const { weeklyUpdate, error } = await createWeeklyUpdateAdmin({
-    ...parsed.input,
+    ...structured.input,
     created_by_student_id: actorStudent.id,
     video_provider: "mux",
     mux_playback_policy: "public",
@@ -317,11 +360,31 @@ export async function adminCreateQuickMarketUpdate(
   formData: FormData
 ): Promise<ActionResult<{ weeklyUpdateId?: number }>> {
   const { actorStudent } = await requireAdmin();
+  const chartCount = Number(formData.get("chart_count") ?? 0);
+  if (!Number.isInteger(chartCount) || chartCount < 0 || chartCount > 4) return { success: false, error: "Voeg maximaal vier charts toe." };
+  if (formData.has("update_structure")) {
+    const draft = new FormData();
+    for (const [key, value] of formData.entries()) draft.append(key, value);
+    draft.set("type", "market_update");
+    draft.set("content_format", chartCount ? "chart" : "text");
+    draft.set("access_tier", "subscription");
+    draft.set("mentor_student_id", actorStudent.id);
+    draft.set("is_published", "false");
+    draft.set("slug", `${slugify(asString(formData.get("title"))).slice(0, 65)}-${crypto.randomUUID().slice(0, 8)}`);
+    const parsed = readWeeklyUpdateInput(draft);
+    if ("error" in parsed) return { success: false, error: parsed.error };
+    const prepared = prepareStructuredInput(parsed.input, null, draft, publicAuthorName(actorStudent));
+    if (!prepared.input) return { success: false, error: prepared.error };
+    const { weeklyUpdate, error } = await createWeeklyUpdateAdmin({ ...prepared.input, created_by_student_id: actorStudent.id, video_provider: "mux", mux_playback_policy: "public" });
+    if (error || !weeklyUpdate) return { success: false, error: error ?? "Concept kon niet worden opgeslagen." };
+    await logAdminAction("weekly_update.created", { actorStudentId: actorStudent.id, metadata: { weeklyUpdateId: weeklyUpdate.id, title: weeklyUpdate.title } });
+    revalidateWeeklyUpdatePaths(weeklyUpdate.slug);
+    return { success: true, weeklyUpdateId: weeklyUpdate.id };
+  }
   const body = asString(formData.get("body"));
   const markets = formData.getAll("markets").map(asString).filter((value): value is Market | "macro" =>
     [...MARKETS, "macro"].includes(value as Market | "macro")
   );
-  const chartCount = Number(formData.get("chart_count") ?? 0);
   if (body.length < 20 || body.length > 12000) return { success: false, error: "Schrijf 20 tot 12.000 tekens." };
   if (!markets.length) return { success: false, error: "Kies minimaal één markt." };
   if (!Number.isInteger(chartCount) || chartCount < 0 || chartCount > 4) return { success: false, error: "Voeg maximaal vier charts toe." };
@@ -353,19 +416,23 @@ export async function adminPublishQuickMarketUpdate(idRaw: unknown): Promise<Act
   const update = await getWeeklyUpdateAdmin(id);
   if (!update || update.type !== "market_update" || update.content_format === "video") return { success: false, error: "Marktupdate niet gevonden." };
   if (update.is_published) return { success: true };
-  const validation = validateMarketUpdatePublication({ contentFormat: update.content_format, body: update.body, imagePaths: update.image_paths, muxReady: false });
+  const structure = getUpdateStructure(update);
+  const prepared = structure ? prepareMarketUpdateEdit({ submitted: structure, current: update, title: update.title, summary: update.summary, publish: true, author: publicAuthorName(actorStudent) }) : null;
+  if (prepared?.error) return { success: false, error: prepared.error };
+  const validation = validateMarketUpdatePublication({ contentFormat: update.content_format, body: structure ? structureFallbackBody(structure, update.summary) : update.body, imagePaths: update.image_paths, muxReady: false });
   if (validation) return { success: false, error: validation };
   const { error, transitioned } = await updateWeeklyUpdateAdmin(id, {
+    ...(prepared?.structure ? { update_structure: prepared.structure } : {}),
     content_format: update.content_format, body: update.body, title: update.title, slug: update.slug,
     summary: update.summary, key_takeaways: update.key_takeaways, type: "market_update",
     market: update.market, week_start_date: update.week_start_date, mentor_student_id: update.mentor_student_id,
     access_tier: update.access_tier, thumbnail_url: update.thumbnail_url, markets: update.markets ?? [],
     actuality_status: update.actuality_status ?? "current", event_context: update.event_context ?? null,
     period_label: update.period_label ?? null, chapters: update.chapters ?? [], related_content: update.related_content ?? [],
-    needs_review: false, is_published: true, published_at: new Date().toISOString(),
+    needs_review: false, is_published: true, published_at: structure ? originalMarketUpdatePublication(update) ?? new Date().toISOString() : new Date().toISOString(),
     published_by_student_id: actorStudent.id,
     published_by_display_name: publicAuthorName(actorStudent),
-  }, true);
+  }, true, structure ? update.updated_at : undefined);
   if (error) return { success: false, error };
   if (!transitioned) return { success: false, error: "De update is intussen gewijzigd. Vernieuw de pagina." };
   const published = await getWeeklyUpdateAdmin(id);
@@ -422,6 +489,8 @@ export async function adminUpdateWeeklyUpdate(
   );
   if ("error" in parsed) return { success: false, error: parsed.error };
 
+  const structured = prepareStructuredInput(parsed.input, currentWeeklyUpdate, formData, publicAuthorName(actorStudent));
+  if (!structured.input) return { success: false, error: structured.error };
   const wasPublished = currentWeeklyUpdate.is_published;
   const willPublish = parsed.input.is_published && !wasPublished;
   if (parsed.input.content_format !== currentWeeklyUpdate.content_format && (wasPublished || currentWeeklyUpdate.mux_upload_id || currentWeeklyUpdate.image_paths.length > 0)) {
@@ -437,7 +506,7 @@ export async function adminUpdateWeeklyUpdate(
   if (willPublish) {
     const publicationError = validateMarketUpdatePublication({
       contentFormat: parsed.input.content_format,
-      body: parsed.input.body,
+      body: structured.input.update_structure ? structureFallbackBody(structured.input.update_structure, structured.input.summary) : parsed.input.body,
       imagePaths: currentWeeklyUpdate.image_paths,
       muxReady: canPublishWeeklyUpdate(currentWeeklyUpdate),
     });
@@ -445,17 +514,19 @@ export async function adminUpdateWeeklyUpdate(
   }
 
   const input = {
-    ...parsed.input,
+    ...structured.input,
     ...(willPublish && parsed.input.content_format !== "video" ? {
       published_by_student_id: actorStudent.id,
       published_by_display_name: publicAuthorName(actorStudent),
     } : {}),
-    published_at: parsed.input.is_published
+    published_at: structured.input.update_structure
+      ? originalMarketUpdatePublication(currentWeeklyUpdate) ?? (parsed.input.is_published ? parsed.input.published_at : null)
+      : parsed.input.is_published
       ? currentWeeklyUpdate.published_at ?? parsed.input.published_at
       : null,
   };
 
-  const { error, transitioned } = await updateWeeklyUpdateAdmin(weeklyUpdateId, input, willPublish);
+  const { error, transitioned } = await updateWeeklyUpdateAdmin(weeklyUpdateId, input, willPublish, input.update_structure || formData.has("expected_updated_at") ? currentWeeklyUpdate.updated_at : undefined);
   if (error) return { success: false, error: getMarketAnalysisSaveError(error) };
 
   if (transitioned) {
@@ -554,6 +625,8 @@ export async function adminCreateWeeklyUpdateWithMuxUpload(
   const { actorStudent } = await requireAdmin();
   const parsed = readWeeklyUpdateInput(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
+  const structured = prepareStructuredInput(parsed.input, null, formData, publicAuthorName(actorStudent));
+  if (!structured.input) return { success: false, error: structured.error };
   if (parsed.input.content_format !== "video") return { success: false, error: "Mux-upload is alleen voor video." };
   if (parsed.input.is_published) {
     return {
@@ -563,7 +636,7 @@ export async function adminCreateWeeklyUpdateWithMuxUpload(
   }
 
   const { weeklyUpdate, error } = await createWeeklyUpdateAdmin({
-    ...parsed.input,
+    ...structured.input,
     created_by_student_id: actorStudent.id,
     video_provider: "mux",
     mux_status: "preparing",
