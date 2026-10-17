@@ -1,3 +1,4 @@
+import { SourceNotificationRead } from "@/components/SourceNotificationRead";
 import { notFound } from "next/navigation";
 import { getMarketLabel } from "@/lib/market-analysis";
 import { getPublishedEnrichmentForWeeklyUpdate, getPublishedWeeklyUpdateBySlug } from "@/lib/weekly-updates";
@@ -55,6 +56,7 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
     author={author}
     publishedAt={update.published_at ?? update.created_at} tags={tags} duration={duration}
     intro={structure ? null : update.intro} postId={update.id} reaction={meta.reaction}>
+    <SourceNotificationRead targets={[{ table: "weekly_updates", id: String(update.id) }]}/>
     <MarketPostContents update={update} summary={enrichment?.summary ?? update.summary}
       takeaways={enrichment?.keyTakeaways ?? update.key_takeaways} chapters={enrichment?.chapters ?? update.chapters ?? []} muxTokens={muxTokens} />
   </MarketPostLayout>;

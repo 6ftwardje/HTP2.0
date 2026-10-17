@@ -117,6 +117,7 @@ test("admin can save an uploaded video for everyone without changing publication
 
 const Video = () => null;
 const Paywall = () => null;
+const SourceRead = () => null;
 const Library = () => null;
 const NOT_FOUND = new Error("synthetic not found");
 const freeStudent = { id: "student-free", access_level: 1 };
@@ -147,6 +148,7 @@ function detailPage(path: string, {
   const page = loadModule(path, {
     "next/link": { default: () => null },
     "next/navigation": { notFound: () => { throw NOT_FOUND; } },
+    "@/components/SourceNotificationRead": { SourceNotificationRead: SourceRead },
     "@/components/WeeklyUpdateAutoCompleteVideo": { WeeklyUpdateAutoCompleteVideo: Video },
     "@/components/market-insight/MarketPostLayout": { MarketPostLayout: () => null },
     "@/components/market-insight/MarketPostContents": { MarketPostContents: () => null },
@@ -188,6 +190,10 @@ for (const path of [
       const result = await render();
       assert.notEqual(result.type, Paywall);
       assert.equal(calls.tokens, 1);
+      const source = result.props.children.find((child: { type: unknown }) => child?.type === SourceRead);
+      assert.ok(source, "authorized content mounts its notification read boundary");
+      assert.equal(source.props.targets[0].table, "weekly_updates");
+      assert.equal(source.props.targets[0].id, "1");
     });
 
     test(`${path}: restricted video never issues tokens or reads enrichment (billing=${paid})`, async () => {
