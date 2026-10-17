@@ -5,6 +5,7 @@ import { logAdminAction } from "@/lib/admin/audit";
 import {
   createAdminMentorMessage,
   getChatMessagePage,
+  getChatProfiles,
   markAdminMentorThreadRead,
   requireChatMentor,
   updateAdminMentorThread,
@@ -96,7 +97,9 @@ export async function adminMarkMentorThreadRead(threadId: string, seenSeq: numbe
 export async function loadAdminMentorMessages(threadId: string, beforeSeq: number) {
   await requireChatMentor();
   try {
-    return { success: true as const, ...await getChatMessagePage(threadId, beforeSeq) };
+    const page = await getChatMessagePage(threadId, beforeSeq);
+    const profiles = await getChatProfiles(page.messages.flatMap((message) => message.sender_student_id ? [message.sender_student_id] : []));
+    return { success: true as const, ...page, profiles };
   } catch {
     return { success: false as const, error: "Eerdere berichten laden is niet gelukt. Probeer opnieuw." };
   }

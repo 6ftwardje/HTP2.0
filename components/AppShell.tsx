@@ -103,7 +103,7 @@ function SidebarContent({
         href={item.href === "/mentor" && isChatMentor ? "/mentor-inbox" : item.href}
         label={
           item.href === "/mentor"
-            ? `${isChatMentor ? "Studentvragen" : "Chat met Rousso"}${unreadChatCount > 0 ? ` (${Math.min(unreadChatCount, 99)})` : ""}`
+            ? `${isChatMentor ? "Studentvragen" : "Mentorchat"}${unreadChatCount > 0 ? ` (${Math.min(unreadChatCount, 99)})` : ""}`
             : item.href === "/notifications" && unreadNotificationCount > 0
             ? `${item.label} (${Math.min(unreadNotificationCount, 99)})`
             : item.label

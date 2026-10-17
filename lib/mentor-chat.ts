@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ensureCurrentStudent } from "@/lib/students";
 import { measureAsync } from "@/lib/performance";
+import type { ChatProfile, ChatMentor } from "@/lib/chat-profiles";
+export type { ChatProfile, ChatMentor } from "@/lib/chat-profiles";
 import type {
   ConversationMessage,
   ChatAttachment,
@@ -18,12 +20,11 @@ const MESSAGE_COLUMNS =
 const PAGE_SIZE = 50;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export type ChatMentor = { studentId: string; displayName: string };
 export type ChatAccess = {
   available: boolean;
   isMentor: boolean;
   unreadCount: number;
-  mentor: ChatMentor | null;
+  mentor: Pick<ChatProfile, "studentId" | "displayName"> | null;
   missingMigration: boolean;
   error: string | null;
 };
@@ -33,6 +34,7 @@ export type StudentMentorConversation = {
   hasOlder: boolean;
   lastReadSeq: number;
   currentStudentId: string;
+  profiles: ChatProfile[];
 };
 export type AdminMentorThreadRow = ConversationThread & {
   student: { id: string; name: string | null } | null;
@@ -43,6 +45,7 @@ export type AdminMentorThreadDetail = {
   messages: ConversationMessage[];
   hasOlder: boolean;
   lastReadSeq: number;
+  profiles: ChatProfile[];
 };
 export type ChatMessagePage = { messages: ConversationMessage[]; hasOlder: boolean };
 export type ChatSendResult =
@@ -72,7 +75,7 @@ export const getChatAccess = cache(async function getChatAccess(): Promise<ChatA
   const unavailable: ChatAccess = { available: false, isMentor: false, unreadCount: 0, mentor: null, missingMigration: false, error: null };
   try {
     const { student } = await ensureCurrentStudent();
-    if (!student) return { ...unavailable, error: "Log in om Rousso een bericht te sturen." };
+    if (!student) return { ...unavailable, error: "Log in om je mentor een bericht te sturen." };
     const db = await createClient();
     const { data, error } = await db.rpc("get_my_chat_access");
     if (error) {
@@ -80,7 +83,7 @@ export const getChatAccess = cache(async function getChatAccess(): Promise<ChatA
       return { ...unavailable, missingMigration: missingChatSchema(error), error: "De chat is tijdelijk niet beschikbaar." };
     }
     if (!data || typeof data.available !== "boolean" || typeof data.isMentor !== "boolean") return { ...unavailable, error: "De chat is tijdelijk niet beschikbaar." };
-    const mentor = data.mentor && typeof data.mentor.studentId === "string" && typeof data.mentor.displayName === "string" ? data.mentor as ChatMentor : null;
+    const mentor = data.mentor && typeof data.mentor.studentId === "string" && typeof data.mentor.displayName === "string" ? { studentId: data.mentor.studentId as string, displayName: data.mentor.displayName as string } : null;
     const unreadCount = Number(data.unreadCount ?? 0);
     return { ...unavailable, available: data.available && Boolean(mentor), isMentor: data.isMentor, mentor,
       unreadCount: Number.isSafeInteger(unreadCount) && unreadCount >= 0 ? unreadCount : 0 };
@@ -98,12 +101,28 @@ export async function requireChatMentor() {
   return { actorStudent: student, access };
 }
 
-async function getDefaultThread(studentId: string) {
+async function getDefaultThread(studentId: string, mentorId: string) {
   const db = await createClient();
   const { data, error } = await db.from("conversation_threads").select(THREAD_COLUMNS)
-    .eq("student_id", studentId).eq("source_type", "mentor_chat").is("source_id", null).maybeSingle();
+    .eq("student_id", studentId).eq("assigned_to_student_id", mentorId).eq("source_type", "mentor_chat").is("source_id", null).maybeSingle();
   if (error) throw error;
   return data as ConversationThread | null;
+}
+
+export const getChatMentors = cache(async function getChatMentors(): Promise<ChatMentor[]> {
+  const db = await createClient();
+  const { data, error } = await db.rpc("get_chat_mentors");
+  if (error) throw error;
+  return Array.isArray(data) ? data as ChatMentor[] : [];
+});
+
+export async function getChatProfiles(studentIds: string[]): Promise<ChatProfile[]> {
+  const ids = [...new Set(studentIds)].filter((id) => UUID.test(id));
+  if (!ids.length) return [];
+  const db = await createClient();
+  const { data, error } = await db.rpc("get_chat_profiles", { p_student_ids: ids.slice(0, 100) });
+  if (error) throw error;
+  return Array.isArray(data) ? data as ChatProfile[] : [];
 }
 
 async function getReadSeq(threadId: string): Promise<number> {
@@ -143,17 +162,21 @@ export async function getChatMessagePage(threadId: string, beforeSeq?: number): 
 }
 
 /** Opening the page never creates an empty thread; the legacy API name is retained. */
-export async function getOrCreateStudentMentorConversation(): Promise<{
-  conversation: StudentMentorConversation | null; mentor: ChatMentor | null; missingMigration: boolean; error: string | null;
+export async function getOrCreateStudentMentorConversation(selectedMentorId?: string): Promise<{
+  conversation: StudentMentorConversation | null; mentor: Pick<ChatProfile, "studentId" | "displayName"> | null; missingMigration: boolean; error: string | null;
 }> {
   const access = await getChatAccess();
-  if (!access.available) return { conversation: null, mentor: access.mentor, missingMigration: access.missingMigration, error: access.error ?? "Rousso's chat is tijdelijk niet beschikbaar." };
+  if (!access.available) return { conversation: null, mentor: access.mentor, missingMigration: access.missingMigration, error: access.error ?? "De mentorchat is tijdelijk niet beschikbaar." };
   try {
     const { student } = await ensureCurrentStudent();
     if (!student) return { conversation: null, mentor: access.mentor, missingMigration: false, error: "Niet ingelogd." };
-    const thread = await getDefaultThread(student.id);
+    const mentors = await getChatMentors();
+    const mentor = selectedMentorId ? mentors.find((item) => item.studentId === selectedMentorId) : mentors.find((item) => item.studentId === access.mentor?.studentId) ?? mentors[0];
+    if (!mentor) return { conversation: null, mentor: null, missingMigration: false, error: mentors.length ? "Deze mentor is niet beschikbaar. Probeer opnieuw om een beschikbare mentor te kiezen." : "Er zijn momenteel geen mentoren beschikbaar. Probeer het later opnieuw of mail ons als je hulp nodig hebt." };
+    const thread = await getDefaultThread(student.id, mentor.studentId);
     const [page, lastReadSeq] = thread ? await Promise.all([getChatMessagePage(thread.id), getReadSeq(thread.id)]) : [{ messages: [], hasOlder: false }, 0];
-    return { conversation: { thread, ...page, lastReadSeq, currentStudentId: student.id }, mentor: access.mentor, missingMigration: false, error: null };
+    const profiles = await getChatProfiles([student.id, mentor.studentId, ...page.messages.flatMap((message) => message.sender_student_id ? [message.sender_student_id] : [])]);
+    return { conversation: { thread, ...page, lastReadSeq, currentStudentId: student.id, profiles }, mentor, missingMigration: false, error: null };
   } catch (error) {
     const dbError = error as DatabaseError;
     logChatFailure("student_read", dbError);
@@ -189,8 +212,16 @@ async function sendChatMessage(params: ChatSendInput): Promise<ChatSendResult> {
   }
 }
 
-export async function createStudentMentorMessage(body: string, clientMessageId: string, files?: Pick<ChatSendInput, "attachmentIds" | "uploadIntent">): Promise<ChatSendResult> {
-  return sendChatMessage({ body, clientMessageId, ...files });
+export async function createStudentMentorMessage(body: string, clientMessageId: string, files?: Pick<ChatSendInput, "attachmentIds" | "uploadIntent">, mentorId?: string): Promise<ChatSendResult> {
+  if (!mentorId) return sendChatMessage({ body, clientMessageId, ...files });
+  if (!UUID.test(mentorId) || !UUID.test(clientMessageId) || !body.trim() || body.trim().length > 5000) return { success: false, error: "Controleer je bericht en de geselecteerde mentor." };
+  try {
+    const db = await createClient();
+    // The database verifies the selected mentor and current student's membership.
+    const opened = await db.rpc("open_chat_thread", { p_mentor_student_id: mentorId });
+    if (opened.error || !opened.data?.threadId) return { success: false, error: "Dit gesprek is niet beschikbaar. Vernieuw de pagina en probeer opnieuw." };
+    return sendChatMessage({ body, clientMessageId, ...files, threadId: opened.data.threadId });
+  } catch { return { success: false, error: "Je gesprek kon niet worden geopend. Je concept blijft bewaard." }; }
 }
 
 export async function createAdminMentorMessage(params: ChatSendInput & { threadId: string }): Promise<ChatSendResult> {
@@ -242,7 +273,8 @@ export async function getAdminMentorThreadDetail(threadId: string | null): Promi
     db.from("conversation_messages").select(MESSAGE_COLUMNS).eq("thread_id", threadId).eq("is_internal", true).is("deleted_at", null).order("created_at", { ascending: false }).limit(30),
   ]);
   if (!inbox.selectedThread || notes.error) return null;
-  return { thread: inbox.selectedThread, hasOlder: page.hasOlder, lastReadSeq,
+  const profiles = await getChatProfiles([inbox.selectedThread.student_id, inbox.selectedThread.assigned_to_student_id, ...page.messages.map((message) => message.sender_student_id), ...(notes.data ?? []).map((message) => message.sender_student_id)].filter((id): id is string => Boolean(id)));
+  return { thread: inbox.selectedThread, hasOlder: page.hasOlder, lastReadSeq, profiles,
     messages: [...page.messages, ...await withChatAttachments((notes.data ?? []) as ConversationMessage[])].sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)),
   };
 }

@@ -8,6 +8,7 @@ import {
 } from "@/lib/notifications";
 import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
 import { getChatAccess } from "@/lib/mentor-chat";
+import { ChatPresenceProvider } from "@/lib/chat-presence";
 
 export default async function ProtectedLayout({
   children,
@@ -64,7 +65,7 @@ export default async function ProtectedLayout({
     }));
 
   return (
-    <AppShell
+    <ChatPresenceProvider currentStudentId={student.id}><AppShell
       studentName={student.name ?? null}
       accessLevel={student.access_level}
       currentStudentId={student.id}
@@ -74,6 +75,6 @@ export default async function ProtectedLayout({
       floatingNotifications={floatingNotifications}
     >
       {children}
-    </AppShell>
+    </AppShell></ChatPresenceProvider>
   );
 }

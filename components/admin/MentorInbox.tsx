@@ -12,6 +12,7 @@ import { ChatIcon, ChatTranscript, ConnectionNotice, mergeMessages, MessageCompo
 import type { ChatDraft } from "@/components/mentor/ChatWorkspace";
 import styles from "@/components/mentor/ChatWorkspace.module.css";
 import { ChatEmailPreference } from "@/components/mentor/ChatEmailPreference";
+import { ChatAvatar, ChatPeople, ChatProfileName, useRememberChatProfiles } from "@/components/mentor/ChatPeople";
 
 function shortDate(value: string | null) {
   return value ? new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", timeZone: "Europe/Brussels" }).format(new Date(value)) : "";
@@ -23,7 +24,6 @@ function statusLabel(status: string) {
   if (status === "closed") return "Gesloten";
   return "Open";
 }
-function initials(name: string) { return name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join("").toUpperCase(); }
 function inboxUrl(basePath: string, status: string, q: string, threadId?: string | null, cursor?: string | null) {
   const params = new URLSearchParams({ status });
   if (q) params.set("q", q);
@@ -61,7 +61,7 @@ export function MentorInbox({ rows, detail, currentStudentId, mentorId, status, 
     }
   }, [basePath, router, selectedId]);
 
-  return <div className={styles.inbox} data-selected={Boolean(detail)}>
+  return <ChatPeople profiles={detail?.profiles ?? []}><div className={styles.inbox} data-selected={Boolean(detail)}>
     <aside className={styles.sidebar} aria-label="Studentgesprekken">
       <div className={styles.inboxHeader}>
         <div className={styles.inboxTitle}><h1 className={styles.heading}>Studentvragen</h1>{unreadCount > 0 && <span className={styles.count}>{unreadCount} ongelezen</span>}</div>
@@ -101,7 +101,7 @@ export function MentorInbox({ rows, detail, currentStudentId, mentorId, status, 
         if (draftsRef.current.get(detail.thread.id)?.clientMessageId === sentId) draftsRef.current.delete(detail.thread.id);
       }}/> : <div className={styles.empty}><h2>Selecteer een gesprek</h2><p>Open links een studentvraag om de berichten te lezen en te beantwoorden.</p></div>}
     </div>
-  </div>;
+  </div></ChatPeople>;
 }
 
 function Conversation({ detail, currentStudentId, mentorId, connection, chatEmailEnabled, backUrl, getDraft, saveDraft, clearDraft }: {
@@ -117,7 +117,9 @@ function Conversation({ detail, currentStudentId, mentorId, connection, chatEmai
 }) {
   const router = useRouter();
   const threadId = detail.thread.id;
+  const rememberProfiles = useRememberChatProfiles();
   const studentName = detail.thread.student?.name || "Student";
+  const mentor = detail.profiles.find((person) => person.studentId === detail.thread.assigned_to_student_id);
   const [draft, setDraft] = useState(getDraft);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -188,6 +190,7 @@ function Conversation({ detail, currentStudentId, mentorId, connection, chatEmai
       const result = await loadAdminMentorMessages(threadId, firstSeq);
       if (!mounted.current) return;
       if (!result.success) { setHistoryError(result.error); return; }
+      rememberProfiles(result.profiles);
       setOlder((current) => mergeMessages(current, result.messages));
       setOlderAvailable(result.hasOlder);
     } catch { if (mounted.current) setHistoryError("Eerdere berichten ophalen mislukt. Probeer opnieuw."); }
@@ -208,8 +211,8 @@ function Conversation({ detail, currentStudentId, mentorId, connection, chatEmai
   return <>
     <header className={styles.header}>
       <Link href={backUrl} className={styles.mobileBack} aria-label="Terug naar gesprekken" scroll={false}><ChatIcon name="back" size={20}/></Link>
-      <div className={styles.avatar} aria-hidden="true">{initials(studentName)}</div>
-      <div><h2 className={styles.heading}>{studentName}</h2><p className={styles.subheading}><ChatIcon name="lock" size={11}/>Privégesprek met Rousso</p></div>
+      <ChatAvatar studentId={detail.thread.student_id} name={studentName}/>
+      <div className={styles.headerIdentity}><h2 className={styles.heading}><ChatProfileName studentId={detail.thread.student_id}>{studentName}</ChatProfileName></h2><p className={styles.subheading}><ChatIcon name="lock" size={11}/>Privégesprek{mentor ? ` met ${mentor.displayName}` : ""}</p></div>
       <div className={styles.headerEnd}><span>{statusLabel(detail.thread.status)}</span>{chatEmailEnabled && <ChatEmailPreference/>}</div>
     </header>
     <ConnectionNotice status={connection}/>

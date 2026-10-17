@@ -179,7 +179,7 @@ test("historical mentors keep their identity while AI and system messages remain
   const historical = message("old-mentor", 1, { sender_role: "mentor", sender_student_id: "historical-mentor", sender_principal_id: "historical-principal" });
   assert.equal(chatSenderLabel(historical, "student-a", "rouss"), "Mentor");
   assert.equal(chatSenderLabel({ ...historical, sender_student_id: null }, "student-a", "rouss"), "Mentor");
-  assert.equal(chatSenderLabel({ ...historical, sender_student_id: "rouss" }, "student-a", "rouss"), "Rousso");
+  assert.equal(chatSenderLabel({ ...historical, sender_student_id: "rouss" }, "student-a", "rouss"), "Mentor");
   assert.equal(chatSenderLabel(message("own", 2), "student-a", "rouss"), "Jij");
   assert.equal(chatSenderLabel(message("student", 2), "rouss", "rouss", "Student A"), "Student A");
   assert.equal(chatSenderLabel({ ...historical, sender_role: "ai", sender_student_id: "rouss" }, "student-a", "rouss"), "AI-assistent");

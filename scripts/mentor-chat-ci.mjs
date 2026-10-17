@@ -142,7 +142,7 @@ async function app() {
 }
 
 function sql(file) {
-  assert.ok(["tests/sql/mentor-chat-privacy-routing.sql", "tests/sql/mentor-chat-email.sql"].includes(file), "Only rollback chat SQL suites are allowed.");
+  assert.ok(["tests/sql/mentor-chat-privacy-routing.sql", "tests/sql/mentor-chat-email.sql", "tests/sql/mentor-chat-profiles-presence.sql"].includes(file), "Only rollback chat SQL suites are allowed.");
   const env = readCredentials();
   const result = spawnSync("psql", ["-v", "ON_ERROR_STOP=1", "-f", path.join(root, file)], { cwd: root, stdio: "inherit", env: { ...process.env, PGDATABASE: env.DB_URL }, timeout: 120_000 });
   assert.equal(result.status, 0, `Rollback SQL suite failed: ${file}`);
@@ -153,6 +153,12 @@ function cleanup() {
   if (existsSync(credentialsFile) && existsSync(fixturesFile)) {
     const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/verify-mentor-chat-local.ts", "--cleanup"], { cwd: root, stdio: "inherit", timeout: 120_000 });
     if (result.status !== 0) failures.push("Synthetic fixture cleanup failed.");
+  }
+  const featureFixtures = process.env.LOCAL_CHAT_FEATURE_FIXTURE_FILE;
+  if (existsSync(credentialsFile) && featureFixtures && existsSync(featureFixtures)) {
+    privatePath(featureFixtures, "LOCAL_CHAT_FEATURE_FIXTURE_FILE");
+    const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/verify-chat-features-local.ts", "--cleanup"], { cwd: root, stdio: "inherit", timeout: 120_000 });
+    if (result.status !== 0) failures.push("Synthetic chat-feature cleanup failed.");
   }
   const pidFile = fileInRunner("mentor-chat-next.pid");
   if (existsSync(pidFile)) {

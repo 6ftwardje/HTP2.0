@@ -9,6 +9,7 @@ import type { ChatDraft } from "@/lib/chat-message-state";
 export { mergeChatMessages as mergeMessages, newChatDraft } from "@/lib/chat-message-state";
 export type { ChatDraft } from "@/lib/chat-message-state";
 import styles from "./ChatWorkspace.module.css";
+import { ChatAvatar, ChatProfileName, useChatPerson } from "./ChatPeople";
 
 const timeFormat = new Intl.DateTimeFormat("nl-BE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Brussels" });
 const dayFormat = new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Brussels" });
@@ -138,13 +139,13 @@ export function ChatTranscript({ messages, hasOlder, loadingOlder, onOlder, last
         const own = message.sender_student_id === currentStudentId;
         const day = dayFormat.format(new Date(message.created_at));
         const previousDay = index ? dayFormat.format(new Date(messages[index - 1].created_at)) : null;
-        const sender = chatSenderLabel(message, currentStudentId, mentorId, studentName);
         return <Fragment key={message.id}>
           {day !== previousDay && <div className={styles.date}>{day}</div>}
           {index === unreadIndex && lastReadSeq > 0 && <div className={styles.unread}>Nieuwe berichten</div>}
           <article className={`${styles.messageRow} ${own ? styles.ownRow : ""}`} data-message-id={message.id} data-seq={message.is_internal ? undefined : message.public_seq ?? undefined}>
+            <ChatAvatar studentId={message.sender_student_id} name={chatSenderLabel(message, currentStudentId, mentorId, studentName)} size="small" showPresence={false}/>
             <div className={`${styles.message} ${own ? styles.ownMessage : ""} ${message.is_internal ? styles.internalMessage : ""}`}>
-              <p className={styles.sender}>{sender}</p>
+              <MessageSender message={message} currentStudentId={currentStudentId} mentorId={mentorId} studentName={studentName}/>
               <p className={styles.body}>{message.body}</p>
               {Boolean(message.attachments?.length) && <div className={styles.attachments}>{message.attachments!.map((file) => <a key={file.id} className={styles.attachment} href={`/api/chat/attachments/${file.id}`} target="_blank" rel="noreferrer" aria-label={`Screenshot openen: ${file.fileName}`}>
                 {/* Authenticated images must use the private route, without an optimizer cache. */}
@@ -170,7 +171,13 @@ export function ChatTranscript({ messages, hasOlder, loadingOlder, onOlder, last
   </div>;
 }
 
-export function MessageComposer({ draft, onDraftChange, onSubmit, pending, error, mentorView = false, disabled = false, studentName = "student", threadId = null }: {
+function MessageSender({ message, currentStudentId, mentorId, studentName }: { message: ConversationMessage; currentStudentId: string; mentorId: string; studentName: string }) {
+  const person = useChatPerson(message.sender_student_id);
+  const fallback = chatSenderLabel(message, currentStudentId, mentorId, studentName);
+  return <p className={styles.sender}>{person && message.sender_student_id ? <><ChatProfileName studentId={person.studentId}>{person.displayName}</ChatProfileName>{message.is_internal && <span> · Interne notitie · alleen voor jou</span>}</> : fallback}</p>;
+}
+
+export function MessageComposer({ draft, onDraftChange, onSubmit, pending, error, mentorView = false, disabled = false, studentName = "student", mentorName = "je mentor", threadId = null }: {
   draft: ChatDraft;
   onDraftChange: (draft: ChatDraft) => void;
   onSubmit: () => void;
@@ -179,6 +186,7 @@ export function MessageComposer({ draft, onDraftChange, onSubmit, pending, error
   mentorView?: boolean;
   disabled?: boolean;
   studentName?: string;
+  mentorName?: string;
   threadId?: string | null;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -239,10 +247,10 @@ export function MessageComposer({ draft, onDraftChange, onSubmit, pending, error
   }, []);
   useLayoutEffect(resize, [draft.body, resize]);
   function submit(event: FormEvent) { event.preventDefault(); if (!pending && !uploading && draft.body.trim() && !disabled) onSubmit(); }
-  return <form className={styles.composer} onSubmit={submit} aria-label={mentorView ? `Antwoord aan ${studentName}` : "Bericht aan Rousso"}>
+  return <form className={styles.composer} onSubmit={submit} aria-label={mentorView ? `Antwoord aan ${studentName}` : `Bericht aan ${mentorName}`}>
     <div className={`${styles.composerBox} ${draft.internal ? styles.noteBox : ""}`}>
-      <label className="sr-only" htmlFor={mentorView ? "mentor-reply" : "mentor-message"}>{draft.internal ? "Interne notitie" : mentorView ? `Je antwoord aan ${studentName}` : "Je bericht aan Rousso"}</label>
-      <textarea ref={textareaRef} id={mentorView ? "mentor-reply" : "mentor-message"} className={styles.textarea} value={draft.body} rows={2} maxLength={5000} disabled={pending || disabled} placeholder={draft.internal ? "Schrijf een interne notitie…" : mentorView ? `Antwoord aan ${studentName}…` : "Stel je vraag aan Rousso…"} aria-describedby={error ? "chat-send-error" : undefined} onChange={(event) => onDraftChange(editChatDraft(draft, { body: event.target.value }))} onKeyDown={(event) => {
+      <label className="sr-only" htmlFor={mentorView ? "mentor-reply" : "mentor-message"}>{draft.internal ? "Interne notitie" : mentorView ? `Je antwoord aan ${studentName}` : `Je bericht aan ${mentorName}`}</label>
+      <textarea ref={textareaRef} id={mentorView ? "mentor-reply" : "mentor-message"} className={styles.textarea} value={draft.body} rows={2} maxLength={5000} disabled={pending || disabled} placeholder={draft.internal ? "Schrijf een interne notitie…" : mentorView ? `Antwoord aan ${studentName}…` : `Stel je vraag aan ${mentorName}…`} aria-describedby={error ? "chat-send-error" : undefined} onChange={(event) => onDraftChange(editChatDraft(draft, { body: event.target.value }))} onKeyDown={(event) => {
         if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && window.matchMedia("(pointer: fine)").matches) {
           event.preventDefault();
           if (!pending && !uploading && draft.body.trim() && !disabled) onSubmit();
