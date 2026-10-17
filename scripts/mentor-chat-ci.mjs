@@ -49,6 +49,22 @@ function readCredentials() {
   return env;
 }
 
+function localPostgresEnvironment(env) {
+  const database = localUrl(env.DB_URL, "Postgres", ["postgres:", "postgresql:"]);
+  const name = decodeURIComponent(database.pathname.slice(1));
+  const user = decodeURIComponent(database.username);
+  assert.ok(name && user, "Local Postgres database and user are required.");
+  return {
+    ...process.env,
+    PGHOST: database.hostname.replace(/^\[|\]$/g, ""),
+    PGPORT: database.port || "5432",
+    PGUSER: user,
+    PGPASSWORD: decodeURIComponent(database.password),
+    PGDATABASE: name,
+    PGCONNECT_TIMEOUT: "10",
+  };
+}
+
 function fileInRunner(name) { return path.join(temporaryRoot, name); }
 
 function sanitizedDiagnostics(text) {
@@ -144,7 +160,7 @@ async function app() {
 function sql(file) {
   assert.ok(["tests/sql/mentor-chat-privacy-routing.sql", "tests/sql/mentor-chat-email.sql", "tests/sql/mentor-chat-profiles-presence.sql"].includes(file), "Only rollback chat SQL suites are allowed.");
   const env = readCredentials();
-  const result = spawnSync("psql", ["-v", "ON_ERROR_STOP=1", "-f", path.join(root, file)], { cwd: root, stdio: "inherit", env: { ...process.env, PGDATABASE: env.DB_URL }, timeout: 120_000 });
+  const result = spawnSync("psql", ["-v", "ON_ERROR_STOP=1", "-f", path.join(root, file)], { cwd: root, stdio: "inherit", env: localPostgresEnvironment(env), timeout: 120_000 });
   assert.equal(result.status, 0, `Rollback SQL suite failed: ${file}`);
 }
 
@@ -198,7 +214,7 @@ select json_build_object(
 rollback;`;
   const database = spawnSync("psql", ["-X", "-qAt", "-v", "ON_ERROR_STOP=1"], {
     cwd: root, input: query, encoding: "utf8", maxBuffer: 1024 * 1024, timeout: 20_000,
-    env: { ...process.env, PGDATABASE: env.DB_URL, PGOPTIONS: "-c default_transaction_read_only=on -c statement_timeout=10000 -c lock_timeout=2000" },
+    env: { ...localPostgresEnvironment(env), PGOPTIONS: "-c default_transaction_read_only=on -c statement_timeout=10000 -c lock_timeout=2000" },
   });
   if (database.status === 0) console.log(`Local Realtime database diagnostics: ${JSON.stringify(JSON.parse(database.stdout.trim()))}`);
   else console.error(`Local database diagnostics unavailable (exit ${database.status}); ${errorLines(database.stderr ?? "").join("\n")}`);
