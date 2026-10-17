@@ -49,6 +49,22 @@ function readCredentials() {
   return env;
 }
 
+function localPostgresEnvironment(env) {
+  const database = localUrl(env.DB_URL, "Postgres", ["postgres:", "postgresql:"]);
+  const name = decodeURIComponent(database.pathname.slice(1));
+  const user = decodeURIComponent(database.username);
+  assert.ok(name && user, "Local Postgres database and user are required.");
+  return {
+    ...process.env,
+    PGHOST: database.hostname.replace(/^\[|\]$/g, ""),
+    PGPORT: database.port || "5432",
+    PGUSER: user,
+    PGPASSWORD: decodeURIComponent(database.password),
+    PGDATABASE: name,
+    PGCONNECT_TIMEOUT: "10",
+  };
+}
+
 function fileInRunner(name) { return path.join(temporaryRoot, name); }
 
 function sanitizedDiagnostics(text) {
@@ -142,10 +158,79 @@ async function app() {
 }
 
 function sql(file) {
-  assert.ok(["tests/sql/mentor-chat-privacy-routing.sql", "tests/sql/mentor-chat-email.sql"].includes(file), "Only rollback chat SQL suites are allowed.");
+  assert.ok(["tests/sql/mentor-chat-privacy-routing.sql", "tests/sql/mentor-chat-email.sql", "tests/sql/mentor-chat-profiles-presence.sql"].includes(file), "Only rollback chat SQL suites are allowed.");
   const env = readCredentials();
-  const result = spawnSync("psql", ["-v", "ON_ERROR_STOP=1", "-f", path.join(root, file)], { cwd: root, stdio: "inherit", env: { ...process.env, PGDATABASE: env.DB_URL }, timeout: 120_000 });
+  const result = spawnSync("psql", ["-v", "ON_ERROR_STOP=1", "-f", path.join(root, file)], { cwd: root, stdio: "inherit", env: localPostgresEnvironment(env), timeout: 120_000 });
   assert.equal(result.status, 0, `Rollback SQL suite failed: ${file}`);
+}
+
+function diagnostics() {
+  const env = readCredentials();
+  const config = readFileSync(path.join(workdir, "supabase", "config.toml"), "utf8");
+  const projectId = config.match(/^project_id\s*=\s*"([^"]+)"\s*$/m)?.[1];
+  assert.match(process.env.GITHUB_RUN_ID ?? "", /^\d+$/, "A hosted run ID is required for diagnostics.");
+  assert.match(process.env.GITHUB_RUN_ATTEMPT ?? "", /^\d+$/, "A hosted attempt is required for diagnostics.");
+  assert.equal(projectId, `htp-mentor-chat-ci-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`, "Diagnostics require this exact isolated run's local project.");
+  const secrets = [env.ANON_KEY, env.SERVICE_ROLE_KEY, env.DB_URL, decodeURIComponent(new URL(env.DB_URL).password)].filter(Boolean);
+  function errorLines(text) {
+    return text.split(/\r?\n/).flatMap((line) => {
+      if (!/error|failed|exception|crash|timeout|replication|\bwal\b|slot/i.test(line)) return [];
+      // Never emit request/auth payloads or credential-bearing log records.
+      if (/authorization|api.?key|access.?token|refresh.?token|\bjwt\b|claims|password|secret|headers|payload|params/i.test(line)) return [];
+      let safe = line;
+      for (const secret of secrets) safe = safe.replaceAll(secret, "[redacted]");
+      return [safe.replace(/eyJ[A-Za-z0-9_.-]+/g, "[redacted JWT]")
+        .replace(/sb_(?:secret|publishable)_[A-Za-z0-9_-]+/g, "[redacted key]")
+        .replace(/(?:https?|postgres(?:ql)?):\/\/[^\s"'<>]+/g, "[redacted URL]")
+        .replace(/[^\s"'<>@]+@[^\s"'<>@]+/g, "[redacted identity]")
+        .slice(0, 800)];
+    }).slice(-20);
+  }
+  const query = `begin read only;
+select json_build_object(
+  'walLevel', current_setting('wal_level'),
+  'publishedChatTables', (select coalesce(json_agg(tablename order by tablename), '[]'::json)
+    from pg_publication_tables where pubname='supabase_realtime' and schemaname='public'
+      and tablename in ('conversation_messages','conversation_threads','notification_recipients')),
+  'logicalSlots', (select count(*) from pg_replication_slots where slot_type='logical'),
+  'activeLogicalSlots', (select count(*) from pg_replication_slots where slot_type='logical' and active),
+  'retainedWalBytes', (select coalesce(sum(pg_wal_lsn_diff(pg_current_wal_lsn(),restart_lsn)),0)
+    from pg_replication_slots where slot_type='logical'),
+  'unconfirmedWalBytes', (select coalesce(sum(pg_wal_lsn_diff(pg_current_wal_lsn(),confirmed_flush_lsn)),0)
+    from pg_replication_slots where slot_type='logical'),
+  'replicationStates', (select coalesce(json_agg(json_build_object('state',state,'syncState',sync_state)), '[]'::json)
+    from pg_stat_replication),
+  'realtimeTableStats', (select coalesce(json_agg(json_build_object('table',relname,'estimatedRows',n_live_tup)
+    order by relname), '[]'::json) from pg_stat_user_tables where schemaname='realtime'),
+  'realtimeCompositeTypes', (select coalesce(json_agg(json_build_object('type',t.typname,'attributeCount',
+    (select count(*) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped))
+    order by t.typname), '[]'::json) from pg_type t join pg_namespace n on n.oid=t.typnamespace
+    where n.nspname='realtime' and t.typtype='c'),
+  'authenticatedChatSelect', json_build_object(
+    'messages',has_table_privilege('authenticated','public.conversation_messages','SELECT'),
+    'threads',has_table_privilege('authenticated','public.conversation_threads','SELECT'),
+    'notifications',has_table_privilege('authenticated','public.notification_recipients','SELECT'))
+);
+rollback;`;
+  const database = spawnSync("psql", ["-X", "-qAt", "-v", "ON_ERROR_STOP=1"], {
+    cwd: root, input: query, encoding: "utf8", maxBuffer: 1024 * 1024, timeout: 20_000,
+    env: { ...localPostgresEnvironment(env), PGOPTIONS: "-c default_transaction_read_only=on -c statement_timeout=10000 -c lock_timeout=2000" },
+  });
+  if (database.status === 0) console.log(`Local Realtime database diagnostics: ${JSON.stringify(JSON.parse(database.stdout.trim()))}`);
+  else console.error(`Local database diagnostics unavailable (exit ${database.status}); ${errorLines(database.stderr ?? "").join("\n")}`);
+  const containers = spawnSync("docker", ["ps", "-a", "--format", "{{.ID}}\t{{.Names}}"], { encoding: "utf8", timeout: 10_000 });
+  if (containers.status !== 0) { console.error("Local Realtime container discovery unavailable."); return; }
+  const realtime = containers.stdout.split(/\r?\n/).flatMap((line) => {
+    const [id, name] = line.split("\t");
+    return /^[a-f0-9]+$/.test(id ?? "") && /(?:^|[._-])realtime(?:[._-]|$)/.test(name ?? "")
+      && [`.${projectId}`, `_${projectId}`, `-${projectId}`].some((suffix) => name.endsWith(suffix)) ? [id] : [];
+  });
+  console.log(`Local Realtime containers for this run: ${realtime.length}`);
+  for (const id of realtime) {
+    const logs = spawnSync("docker", ["logs", "--tail", "250", id], { encoding: "utf8", maxBuffer: 2 * 1024 * 1024, timeout: 10_000 });
+    const lines = errorLines(`${logs.stdout ?? ""}\n${logs.stderr ?? ""}`);
+    console.log(lines.length ? `Sanitized local Realtime diagnostics:\n${lines.join("\n")}` : "No eligible Realtime error/replication lines in the last 250 container log lines.");
+  }
 }
 
 function cleanup() {
@@ -153,6 +238,12 @@ function cleanup() {
   if (existsSync(credentialsFile) && existsSync(fixturesFile)) {
     const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/verify-mentor-chat-local.ts", "--cleanup"], { cwd: root, stdio: "inherit", timeout: 120_000 });
     if (result.status !== 0) failures.push("Synthetic fixture cleanup failed.");
+  }
+  const featureFixtures = process.env.LOCAL_CHAT_FEATURE_FIXTURE_FILE;
+  if (existsSync(credentialsFile) && featureFixtures && existsSync(featureFixtures)) {
+    privatePath(featureFixtures, "LOCAL_CHAT_FEATURE_FIXTURE_FILE");
+    const result = spawnSync(process.execPath, ["--import", "tsx", "scripts/verify-chat-features-local.ts", "--cleanup"], { cwd: root, stdio: "inherit", timeout: 120_000 });
+    if (result.status !== 0) failures.push("Synthetic chat-feature cleanup failed.");
   }
   const pidFile = fileInRunner("mentor-chat-next.pid");
   if (existsSync(pidFile)) {
@@ -176,8 +267,9 @@ try {
   if (command === "start") start();
   else if (command === "app") await app();
   else if (command === "sql") sql(arg);
+  else if (command === "diagnostics") diagnostics();
   else if (command === "cleanup") cleanup();
-  else throw new Error("Expected start, app, sql or cleanup.");
+  else throw new Error("Expected start, app, sql, diagnostics or cleanup.");
 } catch (error) {
   console.error(error instanceof Error ? error.message : "Local chat CI setup failed.");
   process.exitCode = 1;

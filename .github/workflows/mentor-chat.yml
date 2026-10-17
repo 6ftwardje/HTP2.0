@@ -27,6 +27,7 @@ jobs:
             "CHAT_CI_WORKDIR=$RUNNER_TEMP/mentor-chat-supabase" \
             "LOCAL_SUPABASE_ENV_FILE=$RUNNER_TEMP/mentor-chat.env" \
             "LOCAL_CHAT_FIXTURE_FILE=$RUNNER_TEMP/mentor-chat-fixtures.json" \
+            "LOCAL_CHAT_FEATURE_FIXTURE_FILE=$RUNNER_TEMP/chat-feature-fixtures.json" \
             "CHAT_ATTACHMENT_TEST_FIXTURES=$RUNNER_TEMP/mentor-chat-fixtures.json" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,10 +55,19 @@ jobs:
         run: |
           node scripts/mentor-chat-ci.mjs sql tests/sql/mentor-chat-privacy-routing.sql
           node scripts/mentor-chat-ci.mjs sql tests/sql/mentor-chat-email.sql
+          node scripts/mentor-chat-ci.mjs sql tests/sql/mentor-chat-profiles-presence.sql
       - name: Start local Next API with local-only credentials
         run: node scripts/mentor-chat-ci.mjs app
       - name: Private screenshots through authenticated HTTP, RPC and Storage
         run: node --import tsx tests/chat/attachments.integration.ts
+      - name: Mentor selection, authorized profiles, account photos and online leases
+        run: |
+          node --import tsx scripts/verify-mentor-chat-local.ts --cleanup
+          node --import tsx scripts/verify-chat-features-local.ts
+      - name: Diagnose isolated Realtime before removing local containers
+        if: failure()
+        continue-on-error: true
+        run: node scripts/mentor-chat-ci.mjs diagnostics
       - name: Remove fixtures, stop local processes and delete private credentials
         if: always()
         run: node scripts/mentor-chat-ci.mjs cleanup

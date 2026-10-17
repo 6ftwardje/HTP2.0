@@ -120,7 +120,7 @@ export function chatSenderLabel(message: ConversationMessage, currentStudentId: 
   if (message.sender_role === "ai") return "AI-assistent";
   if (message.sender_role === "system") return "Systeembericht";
   if (message.sender_student_id === currentStudentId) return "Jij";
-  if (message.sender_student_id === mentorId) return "Rousso";
+  if (message.sender_student_id === mentorId) return "Mentor";
   if (message.sender_role === "student") return studentName;
   return "Mentor";
 }
