@@ -1,6 +1,6 @@
 # HTP feedback: gefaseerd uitvoeringsplan
 
-17 oktober 2026. **F1/HTP-49 gepubliceerd via PR #51; F2 na expliciete opdracht gepubliceerd op main 64f3136 / PR #60. F3a uitsluitend lokaal goedgekeurd; Mux is de enige actieve provider. Stop vóór F3b.** [Centraal bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Analyse, bestandspaden en besluitregister](HTP-FEEDBACK-ANALYSE.md).
+17 oktober 2026. **F1/HTP-49, F2 en F3a gepubliceerd; F3a main 0fd99e2 / PR #64. F3b uitsluitend lokaal uitgevoerd en geverifieerd. Stop vóór F4.** [Centraal bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Analyse en besluiten](HTP-FEEDBACK-ANALYSE.md).
 
 Elke onderstaande fase/deelfase krijgt afzonderlijke goedkeuring. Een goedgekeurde fase geeft geen toestemming om de volgende automatisch uit te voeren. Bij extra scope of onopgeloste criteria terug naar Backlog/Geblokkeerd; geen stilzwijgende uitbreiding. Er zijn geen datums of uren beloofd.
 
@@ -67,7 +67,7 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 
 **Test en klaar:** oude/nieuwe updates met 1/meerdere markten, arrays/structured-save-roundtrip, SQL/actionvalidatie en databehoud; providerproef legt ondersteund/beperkt/onbekend vast voor poster/seek/snelheden/pitch/events/shortcuts. Klaar met geaccepteerd contract en beperkingenmatrix; daarmee kan F3b zonder gokken starten.
 
-**Uitvoering F3a:** HTP-12 en HTP-20 Done voor de lokale scope. Contract 726c615, providerverifier 6829c38; 250 tests, herhaalbare additieve migratie zonder content-/RLS-writes, echte browser/action/DB-roundtrips en Mux-proef. 24 beeldcombinaties plus twaalf gerichte editor-/AA-/focusbevestigingen. Ward bepaalt dat Mux de enige actieve provider is. [Contract, beperkingen en volledig bewijs](HTP-F3A-VERIFICATIE.md). F3a niet gepusht. **Stop vóór F3b**; D2/D3 en de F3b-uitvoeringsgoedkeuring blijven bij die volgende fase.
+**Uitvoering F3a:** HTP-12 en HTP-20 Done voor de lokale scope. Contract 726c615, providerverifier 6829c38; 250 tests, herhaalbare additieve migratie zonder content-/RLS-writes, echte browser/action/DB-roundtrips en Mux-proef. 24 beeldcombinaties plus twaalf gerichte editor-/AA-/focusbevestigingen. Ward bepaalt dat Mux de enige actieve provider is. [Contract, beperkingen en volledig bewijs](HTP-F3A-VERIFICATIE.md). Daarna op expliciete opdracht gereleaset via PR #64, main 0fd99e2; PR- en main-CI groen. Geen remote databasemigratie. F3b is afzonderlijk lokaal goedgekeurd; D2/D3 zijn vastgelegd in het F3b-ontwerpbesluit.
 
 ## F3b — Feed, weekritueel en artikelvervolg
 
@@ -79,9 +79,11 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 
 **Geraakt:** `MarketInsightLibrary` en CSS Module, gedeelde kaart/MarketTag, dashboardfeed waar gedeeld, Marktinzicht route/querys, `MarketPostLayout/Contents`, hoofdstuk-/seekverbinding en wrappers, update-editor. Modelaanpassing alleen voortbouwend op F3a, geen tweede chaptermodel.
 
-**Vooraf:** D2/D3, twee voorgestelde thumbnailcomposities en goedgekeurde navigatiecombinatie. Werkelijke outlookinhoud, thumbnail en betrouwbare tijdstempels; zonder echte huidige outlook geen fictief weekblok. De beperkingenmatrix uit [F3a](HTP-F3A-VERIFICATIE.md) is leidend: alleen Mux actief, geen native garantie voor onbewezen browsers of signed media; slow-ratebediening, posterdoorgifte en URL-seek pas in de eigen taak/fase implementeren.
+**Vooraf:** D2/D3, twee voorgestelde thumbnailcomposities en goedgekeurde navigatiecombinatie. Werkelijke outlookinhoud, thumbnail en betrouwbare tijdstempels; zonder echte huidige outlook geen fictief weekblok. De beperkingenmatrix uit [F3a](HTP-F3A-VERIFICATIE.md) is leidend: alleen Mux actief, geen native garantie voor onbewezen browsers of signed media; slow-ratebediening en posterdoorgifte pas in F4; URL-seek hoort bij HTP-24 binnen F3b.
 
 **Test en klaar:** 1/5/30 updates, 1/3 markten, beperkte rechten, lang/geen/legacy content, archiefcontext, 0/1/2 vervolgkandidaten; één focusbare contentlink, hoofdstukklik/actieve staat/timestamp-URL en oude aliases. Structuur en vrije artikels apart testen. Klaar als alle in-scope acties werkelijk werken; hero met dode marktlinks is geen afgeronde fase.
+
+**Uitvoering F3b:** HTP-13 t/m 17 en HTP-24 Done voor de lokale scope. Variant A na gedelegeerde keuze van Ward; tabs blijven tot F6, Open update blijft binnen één kaartlink. Gedeelde kaart/feed, echte weekhero en veilige vervolgselectie, optionele artikelcontext/ol en Mux-hoofdstukken uitgevoerd. [Ontwerp](HTP-F3B-ONTWERP.md) · [Acceptatiebewijs en beperkingen](HTP-F3B-VERIFICATIE.md). Geen F3b-publicatie. **Stop vóór F4.** Voor F4 zijn geen nieuwe productbeslisvragen nodig om het bestaande voorstel te beoordelen; uitvoering wacht op expliciete goedkeuring.
 
 ## F4 — Video: bediening, posters en hervatten
 

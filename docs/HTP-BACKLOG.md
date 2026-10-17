@@ -4,21 +4,21 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 
 **Centrale voortgang:** [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Dit bestand bevat de complete taakspecificaties en een gedateerde statussnapshot; bij faseoverdracht worden bord en snapshot samen bijgewerkt. Filter op `HTP-` voor dit feedbackpakket. De bestaande MU/M1-items behouden hun eigen scope.
 
-**Update 17 oktober 2026:** F1/HTP-49 staan op main via PR #51; F2 is op expliciete opdracht gepubliceerd als **64f3136 / [PR #60](https://github.com/6ftwardje/HTP2.0/pull/60)**, met groene CI en verse database-/chatintegratie. Crypto blijft amber; meldingen blijven uitsluitend een bel met klikgedrag. Ward heeft daarna F3a uitsluitend lokaal goedgekeurd en bevestigd dat Mux de enige actieve provider is. **F3a is lokaal uitgevoerd en aantoonbaar geverifieerd; stop vóór F3b.** Geen remote databasewijzigingen of betaalcutover. Ready betekent inhoudelijk voorbereid, geen uitvoertoestemming. Documentprompts zijn bronmateriaal. [F1-bewijs](HTP-F1-VERIFICATIE.md) · [F2-bewijs](HTP-F2-VERIFICATIE.md) · [F3a-bewijs/contract](HTP-F3A-VERIFICATIE.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan](HTP-FASENPLAN.md).
+**Update 17 oktober 2026:** F1/HTP-49 staan op main via PR #51; F2 via **64f3136 / [PR #60](https://github.com/6ftwardje/HTP2.0/pull/60)**. F3a is op expliciete opdracht gepubliceerd als **0fd99e2 / [PR #64](https://github.com/6ftwardje/HTP2.0/pull/64)**; PR- en main-CI zijn groen. Ward keurde daarna F3b lokaal goed en delegeerde de keuze tussen de voorgelegde feedvarianten. Variant A is uitgevoerd: bestaande tabs behouden tot F6, één inhoudsfilter, dynamische marktchips, Open update binnen één kaartlink. **F3b lokaal geverifieerd; stop vóór F4.** Crypto blijft amber; meldingen uitsluitend een bel met bestaand klikgedrag. Geen remote databasewijzigingen, Mux-writes of betaalcutover. Ready betekent inhoudelijk voorbereid, geen uitvoertoestemming. [F1](HTP-F1-VERIFICATIE.md) · [F2](HTP-F2-VERIFICATIE.md) · [F3a](HTP-F3A-VERIFICATIE.md) · [F3b-bewijs](HTP-F3B-VERIFICATIE.md) · [Ontwerpbesluiten](HTP-F3B-ONTWERP.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan](HTP-FASENPLAN.md).
 
 ## Werkafspraken
 
 - **Backlog → Ready → In uitvoering → Te controleren → Done**. **Geblokkeerd** is een aparte status met concrete oorzaak en volgende actie. De eerste blokkadeactie is steeds: afhankelijkheden afronden of het genoemde besluit bij die fase vastleggen; de fase-eigenaar pakt dit op. Productbesluiten zijn van Ward, technische uitwerking van de uitvoerder.
-- Ready: criteria helder, relevante besluiten/dependencies afgerond. Start: expliciete fasegoedkeuring, daarna één repository-issue per uitvoerslice volgens CONTRIBUTING.md. Nog niet gestarte taken blijven drafttaken; F1-, F2- en F3a-uitvoerslices zijn met behoud van bordkaart naar repository-issues omgezet.
+- Ready: criteria helder, relevante besluiten/dependencies afgerond. Start: expliciete fasegoedkeuring, daarna één repository-issue per uitvoerslice volgens CONTRIBUTING.md. Nog niet gestarte taken blijven drafttaken; F1-, F2-, F3a- en F3b-uitvoerslices zijn met behoud van bordkaart naar repository-issues omgezet.
 - Vóór codewijziging status In uitvoering en branch/issue koppelen. WIP maximaal één taak per uitvoerder. Te controleren betekent resultaat gereed voor de vereiste acceptatiecontrole; nog ontbrekend testbewijs expliciet vermelden.
 - Done alleen met afgevinkte criteria en bewijs: commit/PR, datum, omgeving, accountrol/fixture, uitgevoerde check en uitslag, visuele review waar passend en acceptatie. Code-aanwezigheid, een groene build of oud Review-label alleen volstaat niet. Voor reeds aanwezige implementatie is nieuwe verificatie nodig.
 - Prioriteiten: **P0** fase-/releasepoort, **P1** kernervaring of toegangsvoorwaarde, **P2** vervolgstap. Omvang is relatief: **S** klein en lokaal, **M** meerdere samenhangende onderdelen, **L** te groot voor één uitvoerslice. Grote PDF-/video-/retentieonderdelen zijn daarom in M/S-taken gesplitst; omvang is geen tijdsbelofte.
 - Beoordeling van code en scrumstatus zijn verschillende velden. Al geïmplementeerd is een statische bevinding; Te controleren is de actuele voortgang. Done steunt op het latere uitvoeringsbewijs, niet alleen op de oorspronkelijke analyse.
-- Per taak staat een passende verificatieopdracht. Voor niet uitgevoerde fasen zijn deze checks gepland; bij Done staan gecontroleerde criteria en bewijs. E01-E18 beschrijven de analysebaseline; F1/F2/F3a-verificatierapporten beschrijven het uitgevoerde werk.
+- Per taak staat een passende verificatieopdracht. Voor niet uitgevoerde fasen zijn deze checks gepland; bij Done staan gecontroleerde criteria en bewijs. E01-E18 beschrijven de analysebaseline; F1/F2/F3a/F3b-verificatierapporten beschrijven het uitgevoerde werk.
 
 ## Scrumboard: snapshot
 
-49 stabiele HTP-taken: **15 Done, 22 Backlog, 11 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F2 is gepubliceerd; Done voor F3a betekent de goedgekeurde lokale scope, nog geen release. Release-issue H2.0/#59 is daarnaast Done; de bestaande vijftien MU/M1-kaarten blijven behouden.
+49 stabiele HTP-taken: **21 Done, 18 Backlog, 9 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F3a is gepubliceerd; Done voor F3b betekent de goedgekeurde lokale scope, geen release. Release-issues H2.0/#59 en H3.0/#63 zijn daarnaast Done; de vijftien bestaande MU/M1-kaarten blijven behouden.
 
 | ID | Taak | Prio | Fase | Omvang | Beoordeling | Status |
 |---|---|---|---|---|---|---|
@@ -34,18 +34,18 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-10](#htp-10) | Markeer meldingen gelezen bij openen van hun bron | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
 | [HTP-11](#htp-11) | Vernieuw meldingendropdown en overzicht | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
 | [HTP-12](#htp-12) | Harmoniseer marktmodel en weekhoofdstukken | P1 | F3a | M | Gedeeltelijk aanwezig | Done |
-| [HTP-13](#htp-13) | Maak eenvoudige feednavigatie en dynamische marktchips | P1 | F3b | M | Gedeeltelijk aanwezig | Geblokkeerd |
-| [HTP-14](#htp-14) | Maak gedeelde redactionele feedkaarten | P1 | F3b | M | Gedeeltelijk aanwezig | Geblokkeerd |
-| [HTP-15](#htp-15) | Geef weekvooruitblik een eigen hoofdblok | P1 | F3b | M | Gedeeltelijk aanwezig | Backlog |
-| [HTP-16](#htp-16) | Voeg precies twee relevante vervolgkaarten toe | P1 | F3b | M | Nog uit te voeren | Backlog |
-| [HTP-17](#htp-17) | Herstel artikelcontext en genummerde takeaways | P1 | F3b | M | Gedeeltelijk aanwezig | Backlog |
+| [HTP-13](#htp-13) | Maak eenvoudige feednavigatie en dynamische marktchips | P1 | F3b | M | Al geïmplementeerd | Done |
+| [HTP-14](#htp-14) | Maak gedeelde redactionele feedkaarten | P1 | F3b | M | Al geïmplementeerd | Done |
+| [HTP-15](#htp-15) | Geef weekvooruitblik een eigen hoofdblok | P1 | F3b | M | Al geïmplementeerd | Done |
+| [HTP-16](#htp-16) | Voeg precies twee relevante vervolgkaarten toe | P1 | F3b | M | Al geïmplementeerd | Done |
+| [HTP-17](#htp-17) | Herstel artikelcontext en genummerde takeaways | P1 | F3b | M | Al geïmplementeerd | Done |
 | [HTP-18](#htp-18) | Gebruik update-thumbnail als videoposter | P1 | F4 | S | Nog uit te voeren | Backlog |
 | [HTP-19](#htp-19) | Onderzoek en reproduceer YouTube-fout 153 | P1 | F1 (diagnose), herstel pas F4 | S | Nader te onderzoeken | Geblokkeerd |
 | [HTP-20](#htp-20) | Controleer mogelijkheden van elke videoprovider | P1 | F3a | S | Nader te onderzoeken | Done |
 | [HTP-21](#htp-21) | Voeg snelheidsvoorkeur en veilige sneltoetsen toe | P2 | F4 | M | Nader te onderzoeken / gedeeltelijk | Backlog |
 | [HTP-22](#htp-22) | Modelleer veilige videopositie en voltooiing | P1 | F4 | M | Gedeeltelijk aanwezig | Geblokkeerd |
 | [HTP-23](#htp-23) | Sla videopositie op en toon hervatten in speler/lijsten | P1 | F4 | M | Nog uit te voeren | Backlog |
-| [HTP-24](#htp-24) | Maak hoofdstukken sticky, actief en via marktlinks bereikbaar | P1 | F3b | M | Gedeeltelijk aanwezig | Backlog |
+| [HTP-24](#htp-24) | Maak hoofdstukken sticky, actief en via marktlinks bereikbaar | P1 | F3b | M | Al geïmplementeerd | Done |
 | [HTP-25](#htp-25) | Beslis PDF-contract, rubrieken en beschermingsniveau | P1 | F5a | M | Nader te onderzoeken | Geblokkeerd |
 | [HTP-26](#htp-26) | Maak private PDF-opslag en geautoriseerde uitlevering | P1 | F5a | M | Nog uit te voeren | Backlog |
 | [HTP-27](#htp-27) | Personaliseer PDF-watermerken en registreer openacties | P1 | F5a | M | Nog uit te voeren | Backlog |
@@ -366,21 +366,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 06 p.17-18; 02 p.9.
 - **Prioriteit / fase / omvang:** P1 / F3b / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Geblokkeerd**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F3b-scope).
 - **Resultaat:** Zoeken en filteren blijven eenvoudig en tonen alleen bruikbare, toegankelijke markten.
 - **Afhankelijkheden:** HTP-03, HTP-12.
-- **Besluiten / blokkades:** D2: voorstel navigatielagen en chipdrempel eerst beoordelen.
-- **Bestaande implementatie:** E05: zoeken/dropdowns bestaan; geen dynamische chips en teller staat naast kop.
+- **Besluiten / blokkades:** D2 beslist na delegatie door Ward: variant A, Actueel/Open setups/Archief tot F6; één inhoudsfilter Alles/Tekst & charts/Video en chips vanaf twee toegankelijke markten, drempel 0. PDF wacht op F5.
+- **Analysebaseline vóór uitvoering:** E05: zoeken/dropdowns bestaan; geen dynamische chips en teller staat naast kop.
 
 **Acceptatiecriteria**
 
-- [ ] Eerst concreet voorstel voor Actueel/Zones/Vastgepind versus Alles/Tekstupdates/Video updates goedkeuren; charts/PDF-posts hebben duidelijke plaats, geen dubbele navigatie.
-- [ ] Chips alleen voor markten met minstens één gepubliceerde toegankelijke update; minstens twee markten en instelbare MIN_ITEMS_FOR_FILTERS; zoekbalk doorzoekt titels/samenvatting over markten.
-- [ ] Zichtbare berichtenteller bij Actueel/lijstkop weg; 0 resultaten toont uitleg + Toon alle updates; 1-2 resultaten tonen rustig vervolgblok, geen gedimde ontoegankelijke content.
+- [x] Eerst concreet voorstel voor Actueel/Zones/Vastgepind versus Alles/Tekstupdates/Video updates goedkeuren; charts/PDF-posts hebben duidelijke plaats, geen dubbele navigatie.
+- [x] Chips alleen voor markten met minstens één gepubliceerde toegankelijke update; minstens twee markten en instelbare MIN_ITEMS_FOR_FILTERS; zoekbalk doorzoekt titels/samenvatting over markten.
+- [x] Zichtbare berichtenteller bij Actueel/lijstkop weg; 0 resultaten toont uitleg + Toon alle updates; 1-2 resultaten tonen rustig vervolgblok, geen gedimde ontoegankelijke content.
 
 **Verificatie:** Fixtures 1/5/30 updates en 1/3 markten, gecombineerd zoeken/format/markt, gratis versus betaald, keyboard en mobiele chipoverflow; screenreaderstatus mag resultaataantal behouden.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #67](https://github.com/6ftwardje/HTP2.0/issues/67), 17 oktober 2026, uitsluitend localhost en synthetische free-/Academy-/adminaccounts. `lib/market-feed.ts`, `MarketInsightLibrary.tsx`: beschikbare marktchips met vaste volgorde/drempel 0, titel-/samenvattingszoeker en één formatfilter; huidige tabs behouden. Tests 1/5/30 items, 1/3 markten, 0/1/2 resultaten; echte free-/Academy-browserfilters, reset/continuatie en mobiele overflow gecontroleerd. [Volledig resultaat, commits en beperkingen](HTP-F3B-VERIFICATIE.md).
 
 <a id="htp-14"></a>
 
@@ -388,24 +388,24 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 06 p.16-18; 02 p.9; 01 p.6.
 - **Prioriteit / fase / omvang:** P1 / F3b / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Geblokkeerd**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F3b-scope).
 - **Resultaat:** Elke update herkenbaar in eigen kader met markt, auteur en thumbnail, gedeeld met vervolgkaarten en dashboard waar passend.
 - **Afhankelijkheden:** HTP-03, HTP-04, HTP-12, HTP-13.
-- **Besluiten / blokkades:** D3: één kaartlink met hoverpijl of Open update; eerst twee thumbnailcomposities beoordelen.
-- **Bestaande implementatie:** E05, E14; thumbnails/playoverlay en samenvatting bestaan, huidige rijen hebben aparte links/klein beeld en mobiel drie regels.
+- **Besluiten / blokkades:** D3 beslist: beide composities vooraf getoond; Ward delegeert keuze. A voor feed, compact beeld boven voor dashboard/vervolg. Hele kaart één link, Open update behouden.
+- **Analysebaseline vóór uitvoering:** E05, E14; thumbnails/playoverlay en samenvatting bestaan, huidige rijen hebben aparte links/klein beeld en mobiel drie regels.
 
 **Acceptatiecriteria**
 
-- [ ] Toon vóór bouw twee varianten: afbeelding links >=40% desktopbreedte of tweekolomskaarten met beeld bovenaan; bestaande thumbnails behouden.
-- [ ] Kaart gebruikt oppervlak/hover, avatar+naam+relatieve tijd, MarketTags rechts+neutraal type en dun eerste-marktaccent links; altijd gereserveerde twee samenvattingsregels met inhoudsfallback.
-- [ ] Goedgekeurde linkactie levert één focusbare contentlink, geen geneste links; playoverlay op thumbnail zonder live embed; keyboardfocus en reduced-motion; latere PDF-knop krijgt aparte bereikbare actie.
+- [x] Toon vóór bouw twee varianten: afbeelding links >=40% desktopbreedte of tweekolomskaarten met beeld bovenaan; bestaande thumbnails behouden.
+- [x] Kaart gebruikt oppervlak/hover, avatar+naam+relatieve tijd, MarketTags rechts+neutraal type en dun eerste-marktaccent links; altijd gereserveerde twee samenvattingsregels met inhoudsfallback.
+- [x] Goedgekeurde linkactie levert één focusbare contentlink, geen geneste links; playoverlay op thumbnail zonder live embed; keyboardfocus en reduced-motion; latere PDF-knop krijgt aparte bereikbare actie.
 
 **Verificatie:** 1/5/30 items, lange/ontbrekende tekst, geen thumbnail, meerdere tags; desktop/tablet/mobiel screenshots en link/focus-audit; regressie #30/#32/#33 vergelijken.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #68](https://github.com/6ftwardje/HTP2.0/issues/68), 17 oktober 2026, uitsluitend localhost en synthetische free-/Academy-/adminaccounts. `MarketUpdateCard.tsx` en CSS delen kaart over feed, dashboard en vervolg. A met 42% beeld, tags/1px eerste-marktaccent, avatar/relatieve tijd, twee vaste samenvattingsregels en één volledige link met Open update. Bestaande thumbnails en fallback behouden; keyboard/reduced-motion en drie schermklassen in beide thema’s gecontroleerd. [Volledig resultaat, commits en beperkingen](HTP-F3B-VERIFICATIE.md).
 
 
-**Afgebakend deelbewijs:** het bestaande kaartvlak is via HTP-49 / main 1067df4 volledig klikbaar. Deze taak blijft Backlog voor het overige F3b-feedontwerp; verwijderen van de zichtbare Open-update-tekst is niet impliciet goedgekeurd.
+**Afgebakend deelbewijs:** het bestaande kaartvlak is via HTP-49 / main 1067df4 volledig klikbaar. Het overige feedontwerp is nu lokaal uitgevoerd; de zichtbare Open-update-tekst blijft behouden.
 
 <a id="htp-15"></a>
 
@@ -413,21 +413,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 06 p.16,18.
 - **Prioriteit / fase / omvang:** P1 / F3b / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F3b-scope).
 - **Resultaat:** Een herkenbaar wekelijks startpunt boven de spontane marktinzichten.
 - **Afhankelijkheden:** HTP-12, HTP-13, HTP-14, HTP-24.
 - **Besluiten / blokkades:** Kwalitatieve publicatiedata/hoofdstukken beschikbaar; verouderde week duidelijk labelen.
-- **Bestaande implementatie:** E06/E09 en lib/weekly-updates.ts:listPublishedWeeklyOutlooks; weekmetadata bestaat, aparte hero niet.
+- **Analysebaseline vóór uitvoering:** E06/E09 en lib/weekly-updates.ts:listPublishedWeeklyOutlooks; weekmetadata bestaat, aparte hero niet.
 
 **Acceptatiecriteria**
 
-- [ ] Volle-breedteblok met grote thumbnail, week/periode, titel en MarketTags; daaronder sectie Sindsdien/Marktinzichten.
-- [ ] Alleen tonen in juiste Alles-/marktfiltercontext; geen dubbeltelling/ongewenste duplicaatkaart; respecteer free/subscriptionrechten.
-- [ ] Marktlinks openen videodetail met tijdstempel; oude week krijgt eerlijk label, ontbreken van een vooruitblik geeft geen lege hero.
+- [x] Volle-breedteblok met grote thumbnail, week/periode, titel en MarketTags; daaronder sectie Sindsdien/Marktinzichten.
+- [x] Alleen tonen in juiste Alles-/marktfiltercontext; geen dubbeltelling/ongewenste duplicaatkaart; respecteer free/subscriptionrechten.
+- [x] Marktlinks openen videodetail met tijdstempel; oude week krijgt eerlijk label, ontbreken van een vooruitblik geeft geen lege hero.
 
 **Verificatie:** Weekovergang/jaargrens/Brussel, geen/bestaande/verouderde outlook en marktfilters testen; timestampdelegatie aan HTP-24 en toegangsgates controleren.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #69](https://github.com/6ftwardje/HTP2.0/issues/69), 17 oktober 2026, uitsluitend localhost en synthetische free-/Academy-/adminaccounts. `WeeklyHero` in `MarketInsightLibrary.tsx`, `outlookPeriod`/`latestWeeklyOutlook` in `lib/market-feed.ts`: echte toegankelijke outlook, duidelijke weekperiode, geen dubbele kaart, expliciete gevalideerde markt-timestamps. Geen hero bij ontbrekende/niet-passende inhoud. Brussel/DST/jaargrens en echte Mux-URL-seek gecontroleerd. [Volledig resultaat, commits en beperkingen](HTP-F3B-VERIFICATIE.md).
 
 <a id="htp-16"></a>
 
@@ -435,21 +435,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 08 p.21-22; 13 p.33.
 - **Prioriteit / fase / omvang:** P1 / F3b / M.
-- **Beoordeling / status:** Nog uit te voeren / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F3b-scope).
 - **Resultaat:** Na een artikel/video volgt een zinvolle volgende stap vóór de behouden disclaimer.
 - **Afhankelijkheden:** HTP-12, HTP-14.
 - **Besluiten / blokkades:** Geen.
-- **Bestaande implementatie:** E08: footer heeft alleen Nuttig en disclaimer; related_content in editor is geen geïmplementeerd tweekaartenblok.
+- **Analysebaseline vóór uitvoering:** E08: footer heeft alleen Nuttig en disclaimer; related_content in editor is geen geïmplementeerd tweekaartenblok.
 
 **Acceptatiecriteria**
 
-- [ ] Tussen reacties en disclaimer twee kaarten: eerstvolgende recentere update (nieuwste gebruikt vorige) en actuele weekvooruitblik; huidige outlook gebruikt andere update.
-- [ ] Geen eigen of dubbele kaart en geen ontoegankelijke/conceptinhoud; bij onvoldoende content alleen echte kandidaten tonen, nooit fictieve twee kaarten.
-- [ ] Kaarten gebruiken gedeelde feedcomponent, thumbnail/markttag/relatieve datum; desktop naast elkaar, mobiel onder elkaar; artikeltypografie ongewijzigd.
+- [x] Tussen reacties en disclaimer twee kaarten: eerstvolgende recentere update (nieuwste gebruikt vorige) en actuele weekvooruitblik; huidige outlook gebruikt andere update.
+- [x] Geen eigen of dubbele kaart en geen ontoegankelijke/conceptinhoud; bij onvoldoende content alleen echte kandidaten tonen, nooit fictieve twee kaarten.
+- [x] Kaarten gebruiken gedeelde feedcomponent, thumbnail/markttag/relatieve datum; desktop naast elkaar, mobiel onder elkaar; artikeltypografie ongewijzigd.
 
 **Verificatie:** Dataset 0/1/2/veel kandidaten, gelijke timestamps, huidige nieuwste/outlook/archief, gratis versus subscriber; SSR-/browsernavigatie en a11y controleren.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #70](https://github.com/6ftwardje/HTP2.0/issues/70), 17 oktober 2026, uitsluitend localhost en synthetische free-/Academy-/adminaccounts. `followingMarketUpdates`, serverdetail na ouder-toegangsgate, `MarketFollowing` en gedeelde kaart: eerstvolgende recentere publicatie of vorige bij nieuwste; actuele outlook als tweede, huidige outlook krijgt andere recente update. 0/1/2 kandidaten, gelijke tijden, geen eigen/dubbele/concept/ontoegankelijke kaart getest; footerpositie, SSR-navigatie en responsive compositie gecontroleerd. [Volledig resultaat, commits en beperkingen](HTP-F3B-VERIFICATIE.md).
 
 <a id="htp-17"></a>
 
@@ -457,21 +457,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 08 p.22; 14 p.35-36.
 - **Prioriteit / fase / omvang:** P1 / F3b / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F3b-scope).
 - **Resultaat:** Redactionele inhoud zonder lege/formulierachtige secties of dubbele nummering.
 - **Afhankelijkheden:** HTP-01.
 - **Besluiten / blokkades:** Geen; een volledige zin betrouwbaar beoordelen zonder inhoud te herschrijven.
-- **Bestaande implementatie:** E07-E08: lege secties al conditioneel, korte tekst nog sectie; takeaways ul met raw tekst.
+- **Analysebaseline vóór uitvoering:** E07-E08: lege secties al conditioneel, korte tekst nog sectie; takeaways ul met raw tekst.
 
 **Acceptatiecriteria**
 
-- [ ] Samenvatting/Wat is er gebeurd optioneel in editor; alleen zinvolle volledige zinnen als sectie, korte context als labels, leeg verborgen; structured en legacy pad apart beoordeeld.
-- [ ] Key takeaways blijft vaste sectie als gevuld, semantisch ol; render stript uitsluitend voorloopnummer 1. / 1) en editor slaat nieuwe items zonder nummer op.
-- [ ] Bestaande inhoud, titel, intro, byline, regellengte, thumbnails en disclaimer blijven behouden; inhoud niet vernietigend opschonen.
+- [x] Samenvatting/Wat is er gebeurd optioneel in editor; alleen zinvolle volledige zinnen als sectie, korte context als labels, leeg verborgen; structured en legacy pad apart beoordeeld.
+- [x] Key takeaways blijft vaste sectie als gevuld, semantisch ol; render stript uitsluitend voorloopnummer 1. / 1) en editor slaat nieuwe items zonder nummer op.
+- [x] Bestaande inhoud, titel, intro, byline, regellengte, thumbnails en disclaimer blijven behouden; inhoud niet vernietigend opschonen.
 
 **Verificatie:** Fixture leeg/korte woorden/zin/afkorting/numerieke inhoud/HTML/legacy genummerde items; DOM en visuele controle beide contentpaden; veilige opslag/sanitization regressie.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #65](https://github.com/6ftwardje/HTP2.0/issues/65), 17 oktober 2026, uitsluitend localhost en synthetische free-/Academy-/adminaccounts. `market-editorial.ts`, `MarketPostContents/Layout`, `WeeklyUpdateFields` en serveraction: optionele legacycontext, korte labels/lege secties, vaste gevulde ol-takeaways met beperkte prefixnormalisatie. Structured kernboodschap blijft publicatievereiste. Echte browser/action/DB-opslag behoudt titel/intro/body/HTML/auteur/datum/marktvolgorde; financiële waarden blijven intact. [Volledig resultaat, commits en beperkingen](HTP-F3B-VERIFICATIE.md).
 
 <a id="htp-18"></a>
 
@@ -611,21 +611,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 08 p.21-22; 09 p.24; 06 p.18.
 - **Prioriteit / fase / omvang:** P1 / F3b / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F3b-scope).
 - **Resultaat:** Eén hoofdstuk-/seekcontract voor outlooklinks, detail en actuele playerpositie.
 - **Afhankelijkheden:** HTP-12, HTP-20.
 - **Besluiten / blokkades:** Provider met ontbrekende API eerst afhandelen in HTP-20.
-- **Bestaande implementatie:** E09: bestaande hoofdstukken onder video met Mux/Vimeo seek, geen active tracking/sticky/mobilecollapse.
+- **Analysebaseline vóór uitvoering:** E09: bestaande hoofdstukken onder video met Mux/Vimeo seek, geen active tracking/sticky/mobilecollapse.
 
 **Acceptatiecriteria**
 
-- [ ] Desktop sticky rail In deze video met tijd+title, mobiel inklapbaar direct onder video; huidige hoofdstuk actief gemarkeerd.
-- [ ] Klik springt en start afspelen binnen browserregels; URL-tijdstip opent de juiste video op de bedoelde plek, ook opnieuw hetzelfde tijdstip.
-- [ ] Ongeldige/ontbrekende hoofdstukken of onondersteunde provider geven bruikbare fallback; goedgekeurde hoofdstukken blijven van drafts gescheiden.
+- [x] Desktop sticky rail In deze video met tijd+title, mobiel inklapbaar direct onder video; huidige hoofdstuk actief gemarkeerd.
+- [x] Klik springt en start afspelen binnen browserregels; URL-tijdstip opent de juiste video op de bedoelde plek, ook opnieuw hetzelfde tijdstip.
+- [x] Ongeldige/ontbrekende hoofdstukken of onondersteunde provider geven bruikbare fallback; goedgekeurde hoofdstukken blijven van drafts gescheiden.
 
 **Verificatie:** Eerste/middelste/laatste/zelfde hoofdstuk, autoplayblokkade en direct URL incl. legacyalias; toetsenbord/mobile en provider-matrix.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #66](https://github.com/6ftwardje/HTP2.0/issues/66), 17 oktober 2026, uitsluitend localhost en synthetische free-/Academy-/adminaccounts. `VideoChapterLayout`, `market-video-navigation.ts`, Mux-/legacywrapper: sticky desktoprail, mobiele details direct onder video, actieve staat uit timeupdate/seeked, nonce per klik en metadata-veilige URL-seek. Echte Mux-proef inclusief hetzelfde hoofdstuk, legacyalias en ongeldige tijd; geïnjecteerde autoplayweigering geeft bedieningstekst. Gepubliceerde enrichmentprojectie blijft ongewijzigd; geen F4-positieopslag. [Volledig resultaat, commits en beperkingen](HTP-F3B-VERIFICATIE.md).
 
 <a id="htp-25"></a>
 
@@ -1131,7 +1131,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Gebruik synthetische fixtures; non-admin RLS en directe assetrequests, fout/retry/missingmigration testen. CI-scripts eerst op geschiktheid controleren; geen productieschrijfacties in planningsfase.
 
-**Bewijs van uitvoering:** F1-, F2- en F3a-deelbewijs geleverd in [F1-verificatie](HTP-F1-VERIFICATIE.md), [F2-verificatie](HTP-F2-VERIFICATIE.md) en [F3a-contract/verificatie](HTP-F3A-VERIFICATIE.md). F2 is gepubliceerd als main 64f3136; F3a alleen lokaal (726c615/6829c38), 250 tests en SQL/browser/AA-bewijs. Status Backlog voor controles van nog niet goedgekeurde fasen; de integrale F10-criteria blijven open.
+**Bewijs van uitvoering:** F1/F2/F3a-deelbewijs en releases vastgelegd; F3a main 0fd99e2 met groene CI. F3b uitsluitend lokaal geverifieerd; [volledig dossier](HTP-F3B-VERIFICATIE.md). Status Backlog voor controles van nog niet goedgekeurde fasen; de integrale F10-criteria blijven open.
 
 <a id="htp-48"></a>
 
@@ -1153,7 +1153,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Controleer alle IDs/dependencies/bronnen en borditems; lees na schrijven de statussen/inhoud terug. Bij faseoverdracht snapshot+besluitlog+bewijslocatie bijwerken; huidig opzetten is geen toestemming voor code.
 
-**Bewijs van uitvoering:** huidige F1/F2/F3a-overdracht gecontroleerd: 49 unieke IDs, bestaande bordkaarten behouden, 15 Done met bron/criteria/bewijs; F2 gepubliceerd, F3a alleen lokaal, stop vóór F3b. Status Ready voor onderhoud bij een volgende goedgekeurde fase; geen definitieve afronding van de doorlopende borging.
+**Bewijs van uitvoering:** F3a-release en lokale F3b-overdracht gecontroleerd: 49 unieke IDs; 21 Done, 18 Backlog, 9 Geblokkeerd en 1 Ready; bestaande MU/M1- en releasekaarten behouden. Bord en dossier na synchronisatie teruggelezen. Stop vóór F4; F3b niet gepusht. Status Ready voor doorlopend onderhoud, geen definitieve afronding.
 
 
 

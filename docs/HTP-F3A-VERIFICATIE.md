@@ -1,5 +1,7 @@
 # F3a — Marktcontract en Mux-bewijs, lokaal
 
+**Release-aanvulling 17 oktober 2026:** F3a is op Wards expliciete opdracht gepubliceerd via [PR #64](https://github.com/6ftwardje/HTP2.0/pull/64), main **0fd99e2ddd0c27440be9a0b9cc157951fbf9d703**. CI, verse database-/chatintegratie en main-CI groen. Release-issue #63 Done. Geen remote databasemigratie of betaalactivering. F3b is daarna afzonderlijk lokaal goedgekeurd en geverifieerd; [actuele overdracht](HTP-F3B-VERIFICATIE.md), **stop vóór F4**. De tekst hieronder bewaart het oorspronkelijke lokale F3a-acceptatiemoment; de toenmalige stop-/publicatiezinnen zijn historisch.
+
 17 oktober 2026. Ward heeft F2-publicatie en daarna uitsluitend lokale F3a goedgekeurd. **F2 staat op main 64f31369314f6a57c5a0fc1911460e476e2b44fc via [PR #60](https://github.com/6ftwardje/HTP2.0/pull/60). F3b is niet gestart.**
 
 [Centraal scrumboard](https://github.com/users/6ftwardje/projects/3) · [HTP-12 #61](https://github.com/6ftwardje/HTP2.0/issues/61) · [HTP-20 #62](https://github.com/6ftwardje/HTP2.0/issues/62) · [Complete backlog](HTP-BACKLOG.md).
