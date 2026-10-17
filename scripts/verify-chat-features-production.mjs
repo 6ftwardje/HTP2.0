@@ -2,19 +2,34 @@
  * HTP_PRODUCTION_ENV_FILE=/private/production.env \
  * HTP_CHAT_PRODUCTION_VERIFICATION=hettradeplatform.be \
  * node scripts/verify-chat-features-production.mjs --execute
+ * --prepublish https://<24hex>--htp2.netlify.app checks a draft with one Auth-only student.
  * --cleanup replays targeted recovery cleanup from the private state file.
  * Never changes default mentor routing, sends to existing members or prints credentials.
  */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { chromium } from "playwright";
 import sharp from "sharp";
 
 const EXPECTED_PROJECT = "swohtycdqbydqrtjzwwf";
-const BASE = "https://hettradeplatform.be";
+const previewIndex = process.argv.indexOf("--prepublish");
+const prepublish = previewIndex >= 0;
+function allowedSite(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && (url.hostname === "hettradeplatform.be" || /^[0-9a-f]{24}--htp2\.netlify\.app$/.test(url.hostname));
+  } catch { return false; }
+}
+const BASE = prepublish ? new URL(process.argv[previewIndex + 1]).origin : "https://hettradeplatform.be";
+assert.ok(allowedSite(BASE), "Only the canonical HTP site or an exact HTP2 deployment preview may be verified.");
+function persist(file, state) {
+  const temporary = `${file}.${randomUUID()}.tmp`;
+  writeFileSync(temporary, JSON.stringify(state), { mode: 0o600, flag: "wx" });
+  renameSync(temporary, file);
+}
 const stateFile = process.env.HTP_CHAT_PRODUCTION_STATE_FILE ?? "/tmp/htp-chat-production-verification.json";
 const output = "output/playwright";
 function environment(file) {
@@ -25,7 +40,7 @@ function environment(file) {
   }));
 }
 function ok(result, label) {
-  assert.equal(result.error, null, `${label}: ${result.error?.code ?? result.error?.message ?? "unexpected error"}`);
+  if (result.error) throw new Error(`${label}: ${result.error.code ?? result.error.message ?? "unexpected error"}`);
   return result;
 }
 function ownThread(state, row) {
@@ -34,7 +49,7 @@ function ownThread(state, row) {
 }
 async function main() {
   assert.equal(process.env.HTP_CHAT_PRODUCTION_VERIFICATION, "hettradeplatform.be", "Production verification requires explicit target authorization.");
-  assert.ok(process.argv.includes("--execute") || process.argv.includes("--cleanup"), "Choose --execute or --cleanup after deployment is confirmed.");
+  assert.ok(process.argv.includes("--execute") || process.argv.includes("--cleanup") || prepublish, "Choose --execute, --cleanup or an explicitly supplied --prepublish preview URL.");
   assert.ok(process.env.HTP_PRODUCTION_ENV_FILE, "HTP_PRODUCTION_ENV_FILE must point to verified server credentials.");
   const env = environment(process.env.HTP_PRODUCTION_ENV_FILE);
   assert.equal(new URL(env.NEXT_PUBLIC_SUPABASE_URL).origin, `https://${EXPECTED_PROJECT}.supabase.co`, "Unexpected Supabase project; production writes refused.");
@@ -47,22 +62,30 @@ async function main() {
     return ok(result, label);
   };
   async function cleanup(state) {
-    assert.equal(state.project, EXPECTED_PROJECT); assert.equal(state.base, BASE);
+    assert.equal(state.project, EXPECTED_PROJECT); assert.ok(allowedSite(state.base));
     assert.match(state.runId, /^[0-9a-f-]{36}$/i);
-    const ids = state.users.map((user) => user.studentId);
-    const mentorIds = state.users.filter((user) => user.kind === "mentor").map((user) => user.studentId);
     for (const user of state.users) {
       const account = await service.auth.admin.getUserById(user.userId);
       if (!account.error) assert.equal(account.data.user?.email, `chat-production-${state.runId}-${user.index}@example.invalid`, "Recovery identity must match the exact synthetic run.");
       else assert.equal(account.error.status, 404, "Unexpected Auth recovery lookup failure.");
-      const profile = ok(await service.from("students").select("auth_user_id").eq("id", user.studentId).maybeSingle(), "validate owned recovery profile").data;
-      if (profile) assert.equal(profile.auth_user_id, user.userId, "Recovery refuses another account's student profile.");
+      const profile = ok(await service.from("students").select("id,auth_user_id").eq("email", user.email).maybeSingle(), "discover owned recovery profile including Auth-trigger-created rows").data;
+      if (profile) {
+        assert.ok(profile.auth_user_id === user.userId || (account.error?.status === 404 && profile.auth_user_id === null), "Recovery refuses another account's student profile.");
+        user.studentId = profile.id;
+      }
     }
+    persist(stateFile, state);
+    const ids = state.users.map((user) => user.studentId);
+    const mentorIds = state.users.filter((user) => user.kind === "mentor").map((user) => user.studentId);
+    // Withdraw only the verified temporary mentors before checking for external
+    // interactions, so new real-member conversations cannot start during cleanup.
+    if (mentorIds.length) ok(await service.from("user_roles").delete().eq("role", "mentor").in("student_id", mentorIds), "withdraw temporary mentor directory entries before destructive cleanup");
     const mentorThreads = mentorIds.length ? ok(await service.from("conversation_threads").select("id,student_id,assigned_to_student_id").in("assigned_to_student_id", mentorIds), "check temporary mentors for external interactions").data ?? [] : [];
     assert.ok(mentorThreads.every((row) => ownThread(state, row)), "A real member contacted a temporary mentor; retain recovery state and review instead of changing that conversation.");
     const threads = ids.length ? ok(await service.from("conversation_threads").select("id,student_id,assigned_to_student_id").in("student_id", ids), "discover own production test threads").data ?? [] : [];
     assert.ok(threads.every((row) => ownThread(state, row)), "Unexpected non-synthetic conversation; cleanup requires review.");
     const threadIds = threads.map((row) => row.id);
+    const messageCount = threadIds.length ? ok(await service.from("conversation_messages").select("id", { count: "exact", head: true }).in("thread_id", threadIds), "count only own test messages before cleanup").count : 0;
     const attachments = ids.length ? ok(await service.from("conversation_attachments").select("id,object_path").in("uploader_student_id", ids), "find own uploaded screenshots").data ?? [] : [];
     if (attachments.length) {
       ok(await service.storage.from("mentor-chat-attachments").remove(attachments.map((row) => row.object_path)), "remove own screenshot objects");
@@ -106,6 +129,8 @@ async function main() {
       await optional(service.from("email_contacts").delete().in("id", contactIds), "remove own optional email contacts");
     }
     if (authIds.length) await optional(service.from("email_auth_events").delete().in("auth_user_id", authIds), "remove own optional signup events");
+    const lateThreads = mentorIds.length ? ok(await service.from("conversation_threads").select("id,student_id,assigned_to_student_id").in("assigned_to_student_id", mentorIds), "recheck late external interactions before deleting temporary identities").data ?? [] : [];
+    assert.ok(lateThreads.every((row) => ownThread(state, row)), "A late real-member interaction requires preserving temporary identities for review.");
     if (ids.length) ok(await service.from("students").delete().in("id", ids), "remove own production test student profiles");
     for (const user of state.users) {
       const result = await service.auth.admin.deleteUser(user.userId);
@@ -129,15 +154,26 @@ async function main() {
       assert.equal(ok(await service.from("conversation_threads").select("id", { count: "exact", head: true }).in("student_id", ids), "confirm fixture conversations removed").count, 0);
     }
     unlinkSync(stateFile);
-    console.log("CLEANUP PASS: temporary production accounts, roles, conversations, notifications, queues, avatars, screenshots and presence removed.");
+    console.log(`CLEANUP PASS: users=${state.users.length}, mentorRoles=${mentorIds.length}, threads=${threadIds.length}, messages=${messageCount}, avatars=${avatarPaths.length}, screenshots=${attachments.length}; own notifications, queues and presence removed.`);
   }
   if (process.argv.includes("--cleanup")) { await cleanup(JSON.parse(readFileSync(stateFile, "utf8"))); return; }
   assert.equal(existsSync(stateFile), false, "Existing recovery state must be cleaned before another production run.");
+  if (prepublish) {
+    const response = await fetch(BASE, { signal: AbortSignal.timeout(20000) });
+    assert.equal(response.status, 200, "Preview public HTML must load before creating an Auth fixture.");
+    const html = await response.text();
+    const assets = [...new Set([...html.matchAll(/(?:src|href)="(\/_next\/static\/[^\"]+\.(?:js|css)(?:\?[^\"]*)?)"/g)].map((match) => match[1]))];
+    assert.ok(assets.some((path) => path.endsWith(".css")) && assets.some((path) => path.endsWith(".js")), "Preview must reference actual Next CSS and JavaScript assets.");
+    const checks = await Promise.all(assets.map(async (path) => ({ path, status: (await fetch(new URL(path, BASE), { method: "HEAD", signal: AbortSignal.timeout(20000) })).status })));
+    const failed = checks.filter((check) => check.status !== 200);
+    assert.equal(failed.length, 0, `Preview static assets must load before Auth smoke: ${failed.map((check) => `${check.path}:${check.status}`).join(", ")}`);
+    console.log(`PASS: preview public HTML and all ${checks.length} referenced Next CSS/JS assets return200 before any fixture creation.`);
+  }
   const config = ok(await service.from("chat_mentor_config").select("mentor_student_id,enabled").single(), "read production chat routing without modifying it").data;
   assert.equal(config.enabled, true, "Production chat must already be enabled.");
   const runId = randomUUID();
   const state = { project: EXPECTED_PROJECT, base: BASE, runId, users: [] };
-  const save = () => writeFileSync(stateFile, JSON.stringify(state), { mode: 0o600 });
+  const save = () => persist(stateFile, state);
   writeFileSync(stateFile, JSON.stringify(state), { mode: 0o600, flag: "wx" });
   const actors = [], contexts = [], runtimeErrors = [];
   let browser;
@@ -152,6 +188,10 @@ async function main() {
       return { name: item.slice(0, separator), value: item.slice(separator + 1), domain: new URL(BASE).hostname, path: "/", httpOnly: false, secure: true, sameSite: "Lax" };
     }));
     const page = await context.newPage(); page.on("pageerror", (error) => runtimeErrors.push(error.message));
+    page.on("response", (response) => {
+      const path = new URL(response.url()).pathname;
+      if (response.status() >= 400 && path.startsWith("/_next/static/")) console.error(`Static asset failed: ${path} HTTP ${response.status()}`);
+    });
     return { page, context };
   }
   const text = (page, value) => page.getByText(value, { exact: true }).first().waitFor({ timeout: 35000 });
@@ -170,7 +210,10 @@ async function main() {
   async function profile(page, actor, role) {
     await page.bringToFront();
     const button = page.getByRole("button", { name: `Profiel van ${actor.name} bekijken`, exact: true }).first();
-    await hydrated(page, `button[aria-label="Profiel van ${actor.name} bekijken"]`, "onClick");
+    await page.waitForFunction((name) => {
+      const button = [...document.querySelectorAll("button")].find((element) => element.getAttribute("aria-label") === `Profiel van ${name} bekijken`);
+      return button && Object.keys(button).some((key) => key.startsWith("__reactProps$") && typeof button[key]?.onClick === "function");
+    }, actor.name);
     await button.click(); const dialog = page.getByRole("dialog", { name: "Gebruikersprofiel" });
     await dialog.getByRole("heading", { name: actor.name, exact: true }).waitFor();
     await dialog.getByText(role, { exact: true }).waitFor();
@@ -179,13 +222,20 @@ async function main() {
     assert.ok(await button.evaluate((element) => element === document.activeElement), "Profile Escape restores the trigger focus.");
   }
   try {
-    for (const [index, kind] of ["student", "student", "mentor", "mentor"].entries()) {
-      const email = `chat-production-${runId}-${index}@example.invalid`, password = randomUUID();
+    for (const [index, kind] of (prepublish ? ["student"] : ["student", "student", "mentor", "mentor"]).entries()) {
+      const email = `chat-production-${runId}-${index}@example.invalid`, password = `Htp-${randomUUID()}-Aa9!`;
       const created = ok(await service.auth.admin.createUser({ email, password, email_confirm: true }), "create a temporary synthetic Auth account").data.user;
       assert.ok(created);
       const fixture = { index, kind, userId: created.id, studentId: randomUUID(), email, password, cookie: "", name: `Tijdelijke controle ${kind === "mentor" ? "mentor" : "student"} ${index % 2 === 0 ? "A" : "B"} ${runId.slice(0, 6)}` };
       state.users.push(fixture); save();
-      ok(await service.from("students").insert({ id: fixture.studentId, auth_user_id: fixture.userId, email, name: fixture.name, access_level: 1 }), "create own synthetic student identity");
+      const automatic = ok(await service.from("students").select("id,auth_user_id").eq("email", email).maybeSingle(), "look up production Auth-trigger-created profile").data;
+      if (automatic) {
+        assert.equal(automatic.auth_user_id, fixture.userId, "Only this Auth account's automatic student profile may be adopted.");
+        fixture.studentId = automatic.id; save();
+        ok(await service.from("students").update({ name: fixture.name, access_level: 1 }).eq("id", fixture.studentId).eq("auth_user_id", fixture.userId), "name own automatic synthetic profile");
+      } else {
+        ok(await service.from("students").insert({ id: fixture.studentId, auth_user_id: fixture.userId, email, name: fixture.name, access_level: 1 }), "create own synthetic student identity");
+      }
       ok(await service.from("chat_email_preferences").insert({ student_id: fixture.studentId, enabled: false }), "disable emails for this synthetic account before any sends");
       const jar = new Map();
       const db = createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { cookies: {
@@ -196,6 +246,35 @@ async function main() {
       fixture.cookie = [...jar].map(([name, value]) => `${name}=${value}`).join("; ");
       actors.push({ ...fixture, db }); save();
     }
+    if (prepublish) {
+      const student = actors[0];
+      const directory = ok(await student.db.rpc("get_chat_mentors"), "read existing mentor directory for preview smoke").data;
+      const existingMentor = directory.find((mentor) => mentor.studentId === config.mentor_student_id);
+      assert.ok(existingMentor, "The configured real mentor must be visible without any temporary mentor roles.");
+      const expectedProfile = ok(await student.db.rpc("get_chat_profiles", { p_student_ids: [existingMentor.studentId] }), "read authorized existing mentor profile without messaging").data[0];
+      assert.ok(expectedProfile);
+      browser = await chromium.launch({ channel: "chrome", headless: true });
+      const session = await browserSession(student), page = session.page;
+      const response = await page.goto(`${BASE}/mentor?mentor=${existingMentor.studentId}`, { waitUntil: "domcontentloaded" });
+      const invalidServerEnvironment = (await page.locator("body").innerText()).includes("Invalid supabaseUrl");
+      assert.ok(response?.status() === 200 && !invalidServerEnvironment, `Preview authenticated SSR must succeed (HTTP ${response?.status()}; invalid Supabase URL=${invalidServerEnvironment}).`);
+      await page.getByRole("navigation", { name: "Kies je mentor" }).waitFor({ timeout: 30000 });
+      await hydrated(page, "#mentor-message", "onChange");
+      await profile(page, { ...existingMentor, name: expectedProfile.displayName }, expectedProfile.role === "admin" ? "Admin" : "Mentor");
+      if (expectedProfile.avatarPath) {
+        await page.waitForFunction((path) => {
+          const image = [...document.querySelectorAll("img")].find((element) => element.getAttribute("src") === `/api/avatars/${path}`);
+          return image?.complete && image.naturalWidth > 0;
+        }, expectedProfile.avatarPath);
+      }
+      const attachment = await page.request.get("/api/chat/attachments/not-a-uuid");
+      assert.equal(attachment.status(), 404, "Preview attachment native runtime must load before production promotion.");
+      assert.equal(ok(await service.from("conversation_threads").select("id", { count: "exact", head: true }).eq("student_id", student.studentId), "preview smoke creates no conversation").count, 0);
+      assert.deepEqual(runtimeErrors, [], "No preview browser runtime errors.");
+      assert.deepEqual(ok(await service.from("chat_mentor_config").select("mentor_student_id,enabled").single(), "preview smoke leaves routing unchanged").data, config);
+      await page.screenshot({ path: `${output}/chat-production-prepublish-authenticated.png`, fullPage: false });
+      pass("prepublish authenticated protected SSR, hydrated new mentor menu, actual configured mentor profile/photo and attachment runtime404; no mentor roles, messages, conversations or uploads created");
+    } else {
     const [student, unrelated, firstMentor, secondMentor] = actors;
     for (const [index, actor] of [student, firstMentor].entries()) {
       const avatarPath = `${actor.userId}/${randomUUID()}.webp`;
@@ -298,6 +377,8 @@ async function main() {
     await mentorPage.screenshot({ path: `${output}/chat-production-features-mentor-1440.png`, fullPage: false });
     pass("production 1440/768/390px: no horizontal overflow, full send controls hit-tested, real mobile profile/dark-mode modal verified");
 
+    const attachmentRoute = await fetch(`${BASE}/api/chat/attachments/not-a-uuid`, { signal: AbortSignal.timeout(20000) });
+    assert.equal(attachmentRoute.status, 404, "Production attachment route must load its native image runtime before a real upload.");
     const fresh = await browserSession(unrelated), freshPage = fresh.page;
     await freshPage.goto(`${BASE}/mentor?mentor=${secondMentor.studentId}`, { waitUntil: "domcontentloaded" });
     await text(freshPage, "Waar kan ik je mee helpen?"); await hydrated(freshPage, 'input[type="file"]', "onChange");
@@ -328,6 +409,7 @@ async function main() {
     assert.deepEqual(runtimeErrors, [], "No browser runtime errors.");
     assert.deepEqual(ok(await service.from("chat_mentor_config").select("mentor_student_id,enabled").single(), "confirm global routing untouched").data, config);
     pass("no browser runtime errors, no real-member messages and global chat routing unchanged");
+    }
   } catch (error) {
     failure = error;
     if (browser) for (const [index, context] of contexts.entries()) {
@@ -340,7 +422,7 @@ async function main() {
     await Promise.all(actors.map((actor) => actor.db.removeAllChannels()));
     try { await cleanup(state); }
     catch (error) { console.error(`Targeted cleanup requires recovery state at ${stateFile}.`); failure ??= error; }
-    writeFileSync(`${output}/chat-production-features-verification.txt`, results.map((result) => `PASS: ${result}`).join("\n") + `\n${failure ? "FAILED: inspect the terminal and retained recovery state if present." : "PASS: targeted production fixtures cleaned."}\n`);
+    writeFileSync(`${output}/${prepublish ? "chat-production-prepublish-verification" : "chat-production-features-verification"}.txt`, results.map((result) => `PASS: ${result}`).join("\n") + `\n${failure ? "FAILED: inspect the terminal and retained recovery state if present." : "PASS: targeted production fixtures cleaned."}\n`);
   }
   if (failure) throw failure;
 }

@@ -31,13 +31,16 @@ const databaseUrl = new URL(connection);
 assert.ok(databaseUrl.hostname.endsWith(".supabase.com") && decodeURIComponent(databaseUrl.username) === `postgres.${PROJECT}`, "Unexpected database pooler target.");
 
 function read(sql) {
-  const result = spawnSync("psql", [connection, "-X", "-At", "-v", "ON_ERROR_STOP=1"], {
+  const result = spawnSync("psql", [connection, "-X", "-qAt", "-0", "-v", "ON_ERROR_STOP=1"], {
     input: `begin read only;\n${sql}\nrollback;`, encoding: "utf8", timeout: 30_000,
     env: { ...process.env, PGPASSWORD: env.SUPABASE_DB_PASSWORD, PGCONNECT_TIMEOUT: "10",
       PGOPTIONS: "-c default_transaction_read_only=on -c statement_timeout=20000 -c lock_timeout=5000" },
   });
   if (result.status !== 0) throw new Error(`Read-only verification failed: ${(result.stderr ?? "").replaceAll(env.SUPABASE_DB_PASSWORD, "[redacted]").slice(-500)}`);
-  return result.stdout.split("\n").filter((line) => line.startsWith("{")).map((line) => JSON.parse(line));
+  // json_agg(record) can contain formatting newlines. A NUL record separator
+  // preserves each complete JSON value while quiet mode suppresses SQL tags.
+  return result.stdout.split("\0").map((value) => value.trim())
+    .filter((value) => value.startsWith("{")).map((value) => JSON.parse(value));
 }
 const summary = read(`select json_build_object('stage','metadata',
   'configuredMentor', (select enabled and mentor_student_id='${MENTOR}'::uuid from public.chat_mentor_config where singleton),
