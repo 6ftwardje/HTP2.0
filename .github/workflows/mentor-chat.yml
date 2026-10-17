@@ -64,6 +64,10 @@ jobs:
         run: |
           node --import tsx scripts/verify-mentor-chat-local.ts --cleanup
           node --import tsx scripts/verify-chat-features-local.ts
+      - name: Diagnose isolated Realtime before removing local containers
+        if: failure()
+        continue-on-error: true
+        run: node scripts/mentor-chat-ci.mjs diagnostics
       - name: Remove fixtures, stop local processes and delete private credentials
         if: always()
         run: node scripts/mentor-chat-ci.mjs cleanup

@@ -206,9 +206,22 @@ async function main() {
         channel = channel.on("postgres_changes", { event: "*", schema: "public", table, filter }, (payload) => received.push({ table, record: payload.new as Row }));
       }
       await new Promise<void>((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error("Local Realtime subscription timed out.")), 15_000);
+        let joined = false;
+        let postgresReady = false;
+        const timer = setTimeout(() => reject(new Error(`Local Realtime subscription timed out (joined=${joined}, postgresReady=${postgresReady}).`)), 30_000);
+        const ready = () => {
+          if (joined && postgresReady) { clearTimeout(timer); resolve(); }
+        };
+        // SUBSCRIBED confirms the socket, not the replication listener. A fresh
+        // stack can otherwise miss writes made immediately after the join.
+        // https://supabase.com/docs/guides/troubleshooting/realtime-postgres-changes-troubleshooting
+        channel.on("system", {}, (payload) => {
+          if (payload.extension !== "postgres_changes") return;
+          if (payload.status === "ok") { postgresReady = true; ready(); }
+          if (payload.status === "error") { clearTimeout(timer); reject(new Error("Local Realtime PostgreSQL listener failed.")); }
+        });
         channel.subscribe((status) => {
-          if (status === "SUBSCRIBED") { clearTimeout(timer); resolve(); }
+          if (status === "SUBSCRIBED") { joined = true; ready(); }
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { clearTimeout(timer); reject(new Error(`Local Realtime subscription failed: ${status}`)); }
         });
       });
