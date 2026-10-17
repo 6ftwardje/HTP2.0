@@ -51,10 +51,10 @@ async function main() {
       const after = await visibleRows(db, fixture.studentId);
       if (JSON.stringify(before) !== JSON.stringify(after)) continue;
       assert.equal(shell.studentId, fixture.studentId, "definer RPC cannot return another identity");
-      assert.equal(shell.unreadCount, before.filter((row) => row.read_at === null).length, `${label} shell count matches independent RLS`);
-      const expectedPreview = before.slice(0, 8).map((row) => ({ id: row.id, created_at: row.created_at, read_at: row.read_at, event: { title: row.event.title, body: row.event.body, href: row.event.href } }));
+      assert.equal(shell.unreadCount, before.filter((row) => row.read_at === null && Date.parse(row.created_at) >= Date.now() - 30 * 86400000).length, `${label} shell count matches independent RLS`);
+      const expectedPreview = before.slice(0, 5).map((row) => ({ id: row.id, created_at: row.created_at, read_at: row.read_at, event: { type: row.event.type, title: row.event.title, body: row.event.body, href: row.event.href } }));
       assert.deepEqual(shell.notifications, expectedPreview, `${label} shell preview matches independent RLS ordering and contents`);
-      assert.ok(shell.notifications.length <= 8);
+      assert.ok(shell.notifications.length <= 5);
       if (index === 0 || index === 1) assert.equal(before.some((row) => row.event.type === "mentor_new_message"), false, "students never receive mentor inbox notifications");
       if (index === 3) {
         const stale = ok(await service.from("notification_recipients").select("id,event:notification_events!inner(type)").eq("student_id", fixture.studentId), "service-only stale-delivery oracle").data as unknown as Row[];
@@ -74,7 +74,7 @@ async function main() {
     }
     const maximum = Math.max(...timings);
     assert.ok(maximum < 250, `${label} warm shell exceeds 250ms: ${maximum.toFixed(1)}ms`);
-    console.log(`PASS: ${label} own identity, count and latest eight match independent RLS; visible=${visible.length}; warm shell max=${maximum.toFixed(1)}ms.`);
+    console.log(`PASS: ${label} own identity, count and latest five match independent RLS; visible=${visible.length}; warm shell max=${maximum.toFixed(1)}ms.`);
   }
   console.log("PASS: optimized SECURITY DEFINER shell preserves participant privacy, stale-delivery filtering, exact counts and preview bounds for all four authenticated roles; anonymous access denied.");
 }

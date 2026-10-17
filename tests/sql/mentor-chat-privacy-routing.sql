@@ -28,18 +28,19 @@ declare
 begin
   select count(*) into v_count from public.notification_recipients nr
   where nr.student_id = public.current_chat_student_id()
-    and nr.read_at is null and nr.archived_at is null;
+    and nr.read_at is null and nr.archived_at is null
+    and nr.created_at >= now() - interval '720 hours';
   select coalesce(jsonb_agg(jsonb_build_object(
       'id', r.id, 'created_at', r.created_at, 'read_at', r.read_at,
-      'event', jsonb_build_object('title', r.title, 'body', r.body, 'href', r.href)
+      'event', jsonb_build_object('type', r.type, 'title', r.title, 'body', r.body, 'href', r.href)
     ) order by r.created_at desc, r.id desc), '[]'::jsonb)
     into v_preview
   from (
-    select nr.id, nr.created_at, nr.read_at, ne.title, ne.body, ne.href
+    select nr.id, nr.created_at, nr.read_at, ne.type, ne.title, ne.body, ne.href
     from public.notification_recipients nr
     join public.notification_events ne on ne.id = nr.event_id
     where nr.student_id = public.current_chat_student_id() and nr.archived_at is null
-    order by nr.created_at desc, nr.id desc limit 8
+    order by nr.created_at desc, nr.id desc limit 5
   ) r;
   if v_shell->>'studentId' <> public.current_chat_student_id()::text
      or (v_shell->>'unreadCount')::bigint <> v_count
