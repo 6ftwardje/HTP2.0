@@ -351,6 +351,7 @@ export default async function ModuleDetailPage({ params }: Props) {
         {isLocked || intakeLocked ? (
           <div className="grid gap-0 sm:grid-cols-[176px_minmax(0,1fr)]">
             <CourseThumbnail
+              videoRef={{kind:"lesson",id:lesson.id}}
               src={lesson.thumbnail_url}
               title={lesson.title}
               eyebrow={`${lesson.order_index}`}
@@ -365,6 +366,7 @@ export default async function ModuleDetailPage({ params }: Props) {
             className="group grid gap-0 transition-colors hover:bg-[var(--surface-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)] sm:grid-cols-[176px_minmax(0,1fr)]"
           >
             <CourseThumbnail
+              videoRef={{kind:"lesson",id:lesson.id}}
               src={lesson.thumbnail_url}
               title={lesson.title}
               eyebrow={`${lesson.order_index}`}

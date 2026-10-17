@@ -1,0 +1,13 @@
+.player { min-width: 0; }
+.player [role="group"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 12px; font-size: .82rem; color: var(--foreground); }
+.toolbar select { min-height: 44px; min-width: 90px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.toolbar select:focus-visible, .feedback button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.shortcuts { color: var(--muted); margin-left: auto; font-size: .75rem; }
+.resume { margin-top: 16px; padding: 16px 0; border-top: 1px solid var(--border); }
+.resume p { margin: 0 0 12px; font-size: .9rem; color: var(--foreground); }
+.resume > div { display: flex; gap: 12px; flex-wrap: wrap; }
+.feedback, .notice { margin-top: 12px; font-size: .85rem; line-height: 1.65; color: var(--foreground); }
+.feedback button { min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
+.jump { position: absolute; pointer-events: none; top: 42%; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 6px; background: var(--media-background); color: var(--media-foreground); font-size: 1rem; font-weight: 650; }
+@media (max-width: 640px) { .shortcuts { display: none; } .toolbar select { font-size: 16px; } }

@@ -21,7 +21,7 @@ function WeeklyHero({ update, now }: { update: FeedUpdate; now: number }) {
   const marketChapters = chapters.filter((chapter, index) => chapters.findIndex((other) => other.market === chapter.market) === index);
   return <section className={styles.hero} aria-label="Weekvooruitblik">
     <Link href={`/market-analysis/${update.slug}`} className={styles.heroLink}>
-      <div className={styles.heroImage}><CourseThumbnail src={update.thumbnail_url} title={update.title} className="h-full w-full" imageClassName="!object-contain" sizes="(min-width: 768px) 55vw, 100vw" priority /></div>
+      <div className={styles.heroImage}><CourseThumbnail src={update.thumbnail_url} videoRef={{kind:"update",id:update.id}} title={update.title} className="h-full w-full" imageClassName="!object-contain" sizes="(min-width: 768px) 55vw, 100vw" priority /></div>
       <div className={styles.heroBody}><p className={styles.period}>{label} · {period}</p><h2>{update.title}</h2>
         <div className={styles.heroTags}>{getUpdateMarkets(update).map((market) => marketTagMarket(market) ? <MarketTag key={market} market={marketTagMarket(market)!}>{categoryLabel(market)}</MarketTag> : <span key={market}>{categoryLabel(market)}</span>)}</div>
         <span className={styles.heroOpen}>Open vooruitblik <span aria-hidden="true">→</span></span>

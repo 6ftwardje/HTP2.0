@@ -1,5 +1,7 @@
 "use client";
 
+import { VideoThumbnailProgress } from "@/components/VideoProgressProvider";
+import type { VideoRef } from "@/lib/video-position";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -16,6 +18,7 @@ type CourseThumbnailProps = {
   sizes?: string;
   unoptimized?: boolean;
   showImageShade?: boolean;
+  videoRef?: VideoRef;
 };
 
 export function CourseThumbnail({
@@ -31,6 +34,7 @@ export function CourseThumbnail({
   sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
   unoptimized = false,
   showImageShade = true,
+  videoRef,
 }: CourseThumbnailProps) {
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -98,6 +102,8 @@ export function CourseThumbnail({
           </h3>
         </div>
       ) : null}
+
+      {videoRef ? <VideoThumbnailProgress video={videoRef} /> : null}
 
       {shouldShowModuleOverlay && imageLoaded ? (
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover/thumbnail:opacity-100">
