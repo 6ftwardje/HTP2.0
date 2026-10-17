@@ -1,8 +1,10 @@
 "use client";
 
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import { useRef } from "react";
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
+import { MarketTag, marketTagMarket } from "@/components/ui/MarketTag";
 import type { WeeklyUpdateWithMentor } from "@/lib/weekly-updates";
 import { marketUpdateAuthorName } from "@/lib/market-update-author";
 
@@ -30,7 +32,7 @@ export function RecentMarketUpdatesFeed({
   return <section aria-labelledby="recent-market-updates" className="min-w-0">
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 id="recent-market-updates" className="text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-[1.75rem]">{title}</h2>
+        <h2 id="recent-market-updates" className="cb-section-title">{title}</h2>
         <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{description}</p>
       </div>
       <div className="flex items-center gap-2">
@@ -38,7 +40,7 @@ export function RecentMarketUpdatesFeed({
           <button type="button" onClick={() => rail.current?.scrollBy({ left: -340, behavior: "smooth" })} aria-label="Vorige inzichten" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="left" /></button>
           <button type="button" onClick={() => rail.current?.scrollBy({ left: 340, behavior: "smooth" })} aria-label="Volgende inzichten" className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"><Arrow direction="right" /></button>
         </div>}
-        <Link href="/market-analysis" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">Bekijk Marktinzicht <span aria-hidden="true" className="ml-1">→</span></Link>
+        <Link href="/market-analysis" className="inline-flex min-h-11 items-center text-sm font-bold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">Bekijk Marktinzicht <span aria-hidden="true" className="ml-1">→</span></Link>
       </div>
     </div>
     {visibleUpdates.length === 0 ? <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-6 text-sm leading-6 text-[var(--muted)]">Er zijn nog geen marktinzichten gepubliceerd. Nieuwe berichten verschijnen hier zodra ze gedeeld worden.</div> :
@@ -56,13 +58,16 @@ export function RecentMarketUpdatesFeed({
           return <Link key={update.id} href={`/market-analysis/${update.slug}`} className="group flex w-[min(82vw,320px)] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] sm:w-[320px]">
             {isVideo || hasChart ? <div className="relative aspect-video overflow-hidden bg-[var(--surface-hover)]">
               {isVideo ? <CourseThumbnail src={image} title={update.title} className="h-full w-full transition-transform duration-200 group-hover:scale-[1.025]" /> : <img src={image ?? ""} alt={`Chart bij ${update.title}`} className="h-full w-full object-contain" />}
-              {isVideo && update.video_duration_seconds ? <span className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-xs font-bold text-white">{Math.round(update.video_duration_seconds / 60)} min</span> : null}
-            </div> : <div className="flex min-h-20 items-center gap-3 border-b border-[var(--border)] px-5 py-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--accent)_18%,var(--card))] text-xs font-extrabold text-[var(--accent)]">{author.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("")}</span><span className="min-w-0 text-sm font-semibold text-[var(--foreground)]">{author}</span></div>}
+              {isVideo && update.video_duration_seconds ? <span className="absolute bottom-2 right-2 rounded bg-[var(--media-background)] px-1.5 py-0.5 text-xs font-bold text-[var(--media-foreground)]">{Math.round(update.video_duration_seconds / 60)} min</span> : null}
+            </div> : <div className="flex min-h-20 items-center gap-3 border-b border-[var(--border)] px-5 py-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-hover)] text-xs font-extrabold text-[var(--foreground)]">{author.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("")}</span><span className="min-w-0 text-sm font-semibold text-[var(--foreground)]">{author}</span></div>}
             <div className={`flex flex-1 flex-col p-5 ${isVideo || hasChart ? "min-h-[174px]" : "min-h-[154px]"}`}>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-[var(--muted)]"><span className="text-[var(--accent)]">{isVideo ? "Video" : isChart ? "Chartupdate" : "Bericht"}</span>{markets.slice(0, 2).map((market) => <span key={market}>· {marketNames[market] ?? market}</span>)}</div>
-              <h3 className="mt-2 line-clamp-2 text-base font-bold leading-snug text-[var(--foreground)] group-hover:underline">{update.title}</h3>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-[var(--muted)]"><span className="text-[var(--foreground)]">{isVideo ? "Video" : isChart ? "Chartupdate" : "Bericht"}</span>{markets.slice(0, 2).map((value) => {
+                const market = marketTagMarket(value);
+                return market ? <MarketTag key={value} market={market}>{marketNames[value] ?? value}</MarketTag> : <span key={value}>· {marketNames[value] ?? value}</span>;
+              })}</div>
+              <h3 className="mt-2 line-clamp-2 cb-item-title group-hover:underline">{update.title}</h3>
               {showBody && <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{body}</p>}
-              <p className="mt-auto pt-4 text-xs text-[var(--muted)]"><time dateTime={date}>{new Intl.DateTimeFormat("nl-BE", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date))}</time>{isVideo || hasChart ? ` · ${author}` : ""}</p>
+              <p className="mt-auto pt-4 text-xs text-[var(--muted)]"><RelativeDate value={date} focusable={false} />{isVideo || hasChart ? ` · ${author}` : ""}</p>
             </div>
           </Link>;
         })}

@@ -93,14 +93,14 @@ async function AdminDashboard() {
         <section aria-labelledby="admin-follow-up-title">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="admin-follow-up-title" className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
+              <h2 id="admin-follow-up-title" className="cb-section-title">
                 Op te volgen
               </h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
                 Vragen van studenten en updates die nog niet gepubliceerd zijn.
               </p>
             </div>
-            {chatAccess.isMentor && <Link href="/mentor-inbox" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+            {chatAccess.isMentor && <Link href="/mentor-inbox" className="text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
               Open mentor inbox →
             </Link>}
           </div>
@@ -108,8 +108,8 @@ async function AdminDashboard() {
           <div className={`grid gap-4 ${chatAccess.isMentor ? "lg:grid-cols-2" : ""}`}>
             {chatAccess.isMentor && <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-base font-bold text-[var(--foreground)]">Ongelezen studentvragen</h3>
-                <Link href="/mentor-inbox?status=unread" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+                <h3 className="cb-item-title">Ongelezen studentvragen</h3>
+                <Link href="/mentor-inbox?status=unread" className="text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
                   Bekijk alles
                 </Link>
               </div>
@@ -118,12 +118,12 @@ async function AdminDashboard() {
                   De mentor inbox is nog niet beschikbaar. Controleer de inrichting in het beheer.
                 </p>
               ) : unreadThreads.length > 0 ? (
-                <ul className="mt-4 divide-y divide-[var(--border)]">
+                <ul className="mt-4 space-y-1">
                   {unreadThreads.map((thread) => (
                     <li key={thread.id}>
                       <Link
                         href={`/mentor-inbox?status=unread&thread=${thread.id}`}
-                        className="group block rounded-md py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                        className="group block rounded-md py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                       >
                         <span className="block text-sm font-semibold text-[var(--foreground)] group-hover:underline">
                           {thread.student?.name || "Student"}
@@ -144,18 +144,18 @@ async function AdminDashboard() {
 
             <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-base font-bold text-[var(--foreground)]">Conceptupdates</h3>
-                <Link href="/admin/market-analysis" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+                <h3 className="cb-item-title">Conceptupdates</h3>
+                <Link href="/admin/market-analysis" className="text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
                   Beheer updates
                 </Link>
               </div>
               {drafts.length > 0 ? (
-                <ul className="mt-4 divide-y divide-[var(--border)]">
+                <ul className="mt-4 space-y-1">
                   {drafts.map((draft) => (
                     <li key={draft.id}>
                       <Link
                         href={`/admin/market-analysis?update=${draft.id}`}
-                        className="group flex items-center justify-between gap-3 rounded-md py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                        className="group flex items-center justify-between gap-3 rounded-md py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                       >
                         <span className="min-w-0 truncate text-sm font-semibold text-[var(--foreground)] group-hover:underline">
                           {draft.title || "Naamloos concept"}
@@ -178,7 +178,7 @@ async function AdminDashboard() {
 
         <section className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between" aria-labelledby="admin-live-title">
           <div>
-            <h2 id="admin-live-title" className="text-lg font-bold text-[var(--foreground)]">
+            <h2 id="admin-live-title" className="cb-section-title">
               {nextLiveSession ? "Volgende live marktsessie" : "Live marktsessies"}
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">
@@ -187,7 +187,7 @@ async function AdminDashboard() {
                 : "Er staat nog geen gepubliceerde sessie gepland."}
             </p>
           </div>
-          <Link href="/admin/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+          <Link href="/admin/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
             {nextLiveSession ? "Beheer sessies" : "Plan een sessie"} →
           </Link>
         </section>
@@ -302,7 +302,7 @@ async function StudentDashboard({
             <p className="text-sm font-semibold text-[var(--foreground)]">
               Je intake is opgeslagen. Je volgende stap staat klaar.
             </p>
-            <Link href="/dashboard" className="text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline">
+            <Link href="/dashboard" className="text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline">
               Melding sluiten
             </Link>
           </section>
@@ -369,14 +369,14 @@ async function StudentDashboard({
         {hasSubscriberAccess && nextLiveSession && (
           <section aria-labelledby="student-live-title" className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 id="student-live-title" className="text-lg font-bold text-[var(--foreground)]">
+              <h2 id="student-live-title" className="cb-section-title">
                 Volgende live marktsessie
               </h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
                 {nextLiveSession.title} · {sessionDate(nextLiveSession.starts_at)}
               </p>
             </div>
-            <Link href="/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+            <Link href="/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
               Bekijk sessie →
             </Link>
           </section>
@@ -385,12 +385,12 @@ async function StudentDashboard({
         {!hasSubscriberAccess && paidProductsEnabled() && (
           <section className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-bold text-[var(--foreground)]">Marktinzicht</h2>
+              <h2 className="cb-section-title">Marktinzicht</h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
                 Ontgrendel Weekly Outlooks en marktupdates met een abonnement.
               </p>
             </div>
-            <Link href="/account#subscription" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+            <Link href="/account#subscription" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
               Bekijk abonnement →
             </Link>
           </section>
@@ -399,12 +399,12 @@ async function StudentDashboard({
         {nextStep.type !== "completed" && (
           <section id="mentor" className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-bold text-[var(--foreground)]">Loop je vast?</h2>
+              <h2 className="cb-section-title">Loop je vast?</h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
                 Stel je vraag aan je mentor en ga met meer vertrouwen verder.
               </p>
             </div>
-            <Link href="/mentor" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">
+            <Link href="/mentor" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
               Stel een vraag →
             </Link>
           </section>

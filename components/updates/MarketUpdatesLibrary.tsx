@@ -1,22 +1,15 @@
 import Link from "next/link";
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import { MARKET_OPTIONS } from "@/lib/market-analysis";
 import type { Market } from "@/lib/types";
 import type { WeeklyUpdateWithMentor } from "@/lib/weekly-updates";
 
-const categoryStyles: Record<Market, { background: string; icon: string }> = {
-  forex: { background: "#E9F1FF", icon: "#5067EA" },
-  crypto: { background: "#F0EAFE", icon: "#7452C8" },
-  stocks: { background: "#E7F6EF", icon: "#278563" },
-  commodities: { background: "#FFF2DD", icon: "#C17B22" },
-};
-
-function formatDate(value: string | null, fallback: string) {
-  return new Intl.DateTimeFormat("nl-NL", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(value ?? fallback));
-}
+const categoryStyles: Record<Market, { background: string; icon: string }> = Object.fromEntries(
+  MARKET_OPTIONS.map(({ value }) => [value, {
+    background: `color-mix(in srgb, var(--market-${value}) 14%, var(--card))`,
+    icon: `var(--market-${value}-text)`,
+  }]),
+) as Record<Market, { background: string; icon: string }>;
 
 function CalendarIcon() {
   return (
@@ -35,7 +28,7 @@ function CalendarIcon() {
 function PlayButton({ small = false }: { small?: boolean }) {
   return (
     <span
-      className={`flex items-center justify-center rounded-full bg-[#5067EA] text-white shadow-[0_8px_24px_rgba(80,103,234,0.3)] transition-transform duration-200 group-hover:scale-105 ${
+      className={`flex items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] transition-transform duration-200 group-hover:scale-105 ${
         small ? "h-12 w-12" : "h-16 w-16"
       }`}
     >
@@ -100,9 +93,7 @@ function VideoDate({ update }: { update: WeeklyUpdateWithMentor }) {
   return (
     <p className="flex items-center gap-2 text-sm text-[var(--muted)]">
       <CalendarIcon />
-      <time dateTime={update.published_at ?? update.created_at}>
-        {formatDate(update.published_at, update.created_at)}
-      </time>
+      <RelativeDate value={update.published_at ?? update.created_at} focusable={false} />
     </p>
   );
 }
@@ -135,9 +126,9 @@ export function MarketUpdatesLibrary({
               key={option.value}
               href={`/updates/${option.value}`}
               aria-current={active ? "page" : undefined}
-              className={`mb-[-0.5px] shrink-0 rounded-t-lg border-[0.5px] px-5 py-3 text-sm font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5067EA]/30 ${
+              className={`mb-[-0.5px] shrink-0 rounded-t-lg border-[0.5px] px-5 py-3 text-sm font-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
                 active
-                  ? "border-[color-mix(in_oklab,var(--accent)_24%,var(--border))] border-b-[var(--surface-hover)] bg-[var(--surface-hover)] text-[var(--accent)]"
+                  ? "border-[color-mix(in_oklab,var(--accent)_24%,var(--border))] border-b-[var(--surface-hover)] bg-[var(--surface-hover)] text-[var(--accent-text)]"
                   : "border-transparent text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
               }`}
             >
@@ -152,13 +143,13 @@ export function MarketUpdatesLibrary({
           <section aria-labelledby="latest-update-title">
             <Link
               href={`/updates/watch/${featured.slug}`}
-              className="group block overflow-hidden rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--card)] transition-shadow duration-200 hover:shadow-[0_14px_38px_rgba(80,103,234,0.1)]"
+              className="group block overflow-hidden rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--card)] transition-shadow duration-200 "
             >
-              <div className="relative flex min-h-[260px] items-center justify-center overflow-hidden bg-[#0D1B3E] sm:min-h-[350px] lg:min-h-[410px]">
-                <span className="absolute left-5 top-5 z-10 rounded-md bg-[#5067EA] px-3 py-1.5 text-xs font-extrabold text-white">
+              <div className="relative flex min-h-[260px] items-center justify-center overflow-hidden bg-[var(--surface-subtle)] sm:min-h-[350px] lg:min-h-[410px]">
+                <span className="absolute left-5 top-5 z-10 rounded-md bg-[var(--surface-hover)] px-3 py-1.5 text-xs font-extrabold text-[var(--foreground)]">
                   Nieuwste
                 </span>
-                <span className="absolute inset-0 flex items-center justify-center text-white/[0.12] transition-transform duration-300 group-hover:scale-105">
+                <span className="absolute inset-0 flex items-center justify-center text-[var(--muted)] opacity-20 transition-transform duration-300 group-hover:scale-105">
                   <MarketIcon market={market} className="h-44 w-44 sm:h-56 sm:w-56" />
                 </span>
                 <span className="relative z-10">
@@ -186,14 +177,14 @@ export function MarketUpdatesLibrary({
                   <Link
                     key={update.id}
                     href={`/updates/watch/${update.slug}`}
-                    className="group overflow-hidden rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--card)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[#5067EA]/60 hover:shadow-[0_8px_26px_rgba(80,103,234,0.13)]"
+                    className="group overflow-hidden rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--card)] transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-[var(--field-border)] "
                   >
                     <div
                       className="relative flex aspect-[16/8.5] items-center justify-center overflow-hidden"
                       style={{ backgroundColor: colors.background, color: colors.icon }}
                     >
                       <MarketIcon market={market} className="h-20 w-20 opacity-80 transition-transform duration-300 group-hover:scale-105" />
-                      <span className="absolute inset-0 flex items-center justify-center bg-[#0D1B3E]/20 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <span className="absolute inset-0 flex items-center justify-center bg-[var(--surface-subtle)]/20 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
                         <PlayButton small />
                       </span>
                     </div>

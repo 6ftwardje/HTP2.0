@@ -1,4 +1,5 @@
 import { fromZonedTime } from "date-fns-tz";
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import type { ReactNode } from "react";
 import type { WeeklyUpdate } from "@/lib/types";
 import {
@@ -54,7 +55,7 @@ function Targets({ targets, compact = false }: { targets: MarketUpdateStructure[
     {targets.map((target, index) => <li key={index}>
       <span className={styles.targetName}>Doel {index + 1}</span>
       <span className={styles.targetValue}>{target.label}</span>
-      <span className={styles.targetStatus}>{target.reached_at ? <>Bereikt{!compact ? <time dateTime={target.reached_at}>{dateLabel(target.reached_at)}</time> : null}</> : "Open"}</span>
+      <span className={styles.targetStatus}>{target.reached_at ? <>Bereikt{!compact ? <RelativeDate value={target.reached_at} /> : null}</> : "Open"}</span>
     </li>)}
   </ol>;
 }
@@ -71,12 +72,12 @@ export function MarketUpdateStructureContent({ update, children }: { update: Wee
     {isPinnedUpdate(update) || isUrgentUpdate(update) || updated ? <div className={styles.metadata}>
       {isPinnedUpdate(update) ? <span>Vastgezet</span> : null}
       {isUrgentUpdate(update) ? <span>Urgent</span> : null}
-      {updated ? <span>Inhoudelijk bijgewerkt <time dateTime={activityAt}>{dateLabel(activityAt)}</time></span> : null}
+      {updated ? <span>Inhoudelijk bijgewerkt <RelativeDate value={activityAt} /></span> : null}
     </div> : null}
     {update.summary?.trim() ? <p className={styles.summary}>{update.summary}</p> : null}
     {structure.type === "setup" ? <section className={styles.setupState} aria-label="Setupvoortgang">
       <p className={styles.status}>{setupStatusLabel(structure.setup_status)}{structure.setup_status === "closed" && structure.close_reason ? <span> · {closeReasonLabel(structure.close_reason)}</span> : null}</p>
-      {structure.closed_at ? <p className={styles.closedAt}>Afgesloten op <time dateTime={structure.closed_at}>{dateLabel(structure.closed_at)}</time></p> : null}
+      {structure.closed_at ? <p className={styles.closedAt}>Afgesloten op <RelativeDate value={structure.closed_at} /></p> : null}
     </section> : null}
     <TemplateValues structure={structure} />
     {structure.type === "setup" && structure.targets.length ? <section className={styles.targetSection} aria-labelledby={`setup-targets-${update.id}`}>
@@ -88,7 +89,7 @@ export function MarketUpdateStructureContent({ update, children }: { update: Wee
       <h2 id={`update-history-${update.id}`}>Opvolging</h2>
       <ol className={styles.timeline}>
         {history.map((entry) => <li key={entry.id}>
-          <div className={styles.historyHeading}><h3>{historyLabels[entry.kind]}</h3><time dateTime={entry.at}>{dateLabel(entry.at)}</time></div>
+          <div className={styles.historyHeading}><h3>{historyLabels[entry.kind]}</h3><RelativeDate value={entry.at} /></div>
           <p className={styles.historyAuthor}>{entry.author}</p>
           {entry.note.trim() ? <p className={styles.historyNote}>{entry.note}</p> : null}
           {entry.snapshot ? <details className={styles.snapshot}>

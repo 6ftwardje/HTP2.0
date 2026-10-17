@@ -1,18 +1,7 @@
 import Link from "next/link";
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import type { AdminStudentListRow } from "@/lib/admin/types";
 import { AccessLevelSelect } from "@/components/admin/AccessLevelSelect";
-
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  try {
-    return new Intl.DateTimeFormat("nl-BE", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
 
 function mentorStatusLabel(status: AdminStudentListRow["mentor_status"]) {
   if (status === "needs_attention") return "Aandacht nodig";
@@ -133,10 +122,10 @@ export function StudentsTable({
                   )}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-[var(--muted)]">
-                  {formatDate(s.created_at)}
+                  <RelativeDate value={s.created_at} />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-[var(--muted)]">
-                  {formatDate(s.last_seen)}
+                  {s.last_seen ? <RelativeDate value={s.last_seen} /> : "—"}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <Link

@@ -26,7 +26,7 @@ export function SidebarNavItem({
         "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]",
         active
           ? [
-              "bg-[color-mix(in_oklab,var(--accent)_13%,var(--card))] text-[var(--accent)]",
+              "bg-[color-mix(in_oklab,var(--accent)_13%,var(--card))] text-[var(--accent-text)]",
               "before:absolute before:-left-5 before:top-0 before:h-full before:w-[3px] before:bg-[var(--accent)]",
             ].join(" ")
           : [
@@ -38,7 +38,7 @@ export function SidebarNavItem({
         className={[
           "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
           active
-            ? "text-[var(--accent)]"
+            ? "text-[var(--accent-text)]"
             : "text-[var(--muted)] group-hover:text-[var(--foreground)]",
         ].join(" ")}
         aria-hidden

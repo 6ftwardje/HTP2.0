@@ -1,5 +1,6 @@
 "use client";
 
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -958,7 +959,7 @@ export function AdminWeeklyUpdatesManager({
                     <p className="mt-1 text-sm text-[var(--muted)]">
                       {update.type === "weekly_outlook"
                         ? `Week ${getIsoWeekNumber(update.week_start_date)} · ${formatDate(update.week_start_date)}`
-                        : formatDate(update.published_at ?? update.created_at)}
+                        : <RelativeDate value={update.published_at ?? update.created_at} />}
                       {update.content_format !== "video" && update.is_published
                         ? ` · Geplaatst door ${marketUpdateAuthorName(update)}`
                         : update.mentor ? ` · ${update.mentor.name ?? update.mentor.email}` : ""}

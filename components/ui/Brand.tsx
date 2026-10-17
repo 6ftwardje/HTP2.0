@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
+import styles from "./Brand.module.css";
 
 export const BRAND = {
   name: "Het Trade Platform",
@@ -17,6 +18,7 @@ export function BrandLogo({
   variant = "full",
   priority = true,
   style,
+  tone = "theme",
 }: {
   className?: string;
   iconClassName?: string;
@@ -24,6 +26,7 @@ export function BrandLogo({
   variant?: "full" | "icon";
   priority?: boolean;
   style?: CSSProperties;
+  tone?: "theme" | "on-dark";
 }) {
   if (variant === "icon") {
     return (
@@ -40,26 +43,15 @@ export function BrandLogo({
   }
 
   return (
-    <>
-      <Image
-        src={BRAND.logoWithTextLightSrc}
-        alt={BRAND.name}
-        width={1855}
-        height={315}
-        className={`block shrink-0 dark:hidden ${logoClassName} ${className}`}
-        priority={priority}
-        style={style}
-      />
-      <Image
-        src={BRAND.logoWithTextSrc}
-        alt={BRAND.name}
-        width={1855}
-        height={315}
-        className={`hidden shrink-0 dark:block ${logoClassName} ${className}`}
-        priority={priority}
-        style={style}
-      />
-    </>
+    <span role="img" aria-label={BRAND.name} style={style}
+      className={`${styles.logo} ${tone === "on-dark" ? styles.onDark : ""} ${logoClassName} ${className}`}>
+      <span className={styles.wordmark} aria-hidden="true">
+        <span className={styles.mark}>
+          <Image src={BRAND.logoIconSrc} alt="" width={3000} height={3000} priority={priority} sizes="160px" />
+        </span>
+        <span className={styles.text}><small>HET</small><strong>TRADE</strong>PLATFORM</span>
+      </span>
+    </span>
   );
 }
 

@@ -204,7 +204,7 @@ export function AppShell({
   useNotificationsRealtime(currentStudentId);
 
   return (
-    <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+    <div className="platform-surface flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       {/* Desktop sidebar: vaste viewporthoogte; alleen main rechts scrollt */}
       <aside className="relative hidden h-full min-h-0 w-[252px] shrink-0 flex-col overflow-hidden border-r-[0.5px] border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] text-[var(--foreground)] md:flex">
         <div className="flex h-full min-h-0 flex-col px-5 py-8">

@@ -1,17 +1,11 @@
 import Link from "next/link";
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import {
   markNotificationsRead,
   markOneNotificationRead,
 } from "@/app/actions/mentor-chat";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { listMyNotifications } from "@/lib/notifications";
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("nl-NL", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 export default async function NotificationsPage() {
   const { notifications, missingMigration } = await listMyNotifications();
@@ -43,7 +37,7 @@ export default async function NotificationsPage() {
             We kunnen je meldingen nu niet laden. Probeer het later opnieuw.
             Je kunt je mentorberichten rechtstreeks in de chat bekijken.
           </p>
-          <Link href="/mentor" className="mt-4 inline-flex text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline">
+          <Link href="/mentor" className="mt-4 inline-flex text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline">
             Open mentorchat →
           </Link>
         </section>
@@ -83,7 +77,7 @@ export default async function NotificationsPage() {
                         </p>
                       )}
                       <p className="mt-2 text-xs font-semibold uppercase tracking-[0.13em] text-[var(--muted)]">
-                        {formatDateTime(notification.created_at)}
+                        <RelativeDate value={notification.created_at} />
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">

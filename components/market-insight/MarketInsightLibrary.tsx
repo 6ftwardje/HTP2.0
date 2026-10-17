@@ -1,8 +1,10 @@
 "use client";
 
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
+import { MarketTag, marketTagMarket } from "@/components/ui/MarketTag";
 import type { Market, WeeklyUpdate } from "@/lib/types";
 import { marketUpdateAuthorName } from "@/lib/market-update-author";
 import {
@@ -25,15 +27,6 @@ const views: Array<{ value: View; label: string }> = [
   { value: "open", label: "Open setups" },
   { value: "archive", label: "Archief" },
 ];
-
-function dateLabel(value: string) {
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return "Datum onbekend";
-  return new Intl.DateTimeFormat("nl-BE", {
-    day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-    timeZone: "Europe/Brussels",
-  }).format(date);
-}
 
 function plainText(value: string | null | undefined) {
   return (value ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -67,15 +60,18 @@ function UpdateRow({ update, pinned, urgent }: { update: Update; pinned: boolean
     ? [structure.fields.instrument, structure.fields.direction === "long" ? "Long" : structure.fields.direction === "short" ? "Short" : structure.fields.direction, structure.fields.timeframe].filter(Boolean)
     : [];
 
-  return <article className={styles.row}>
+  return <Link href={href} className={styles.row} aria-label={update.title}>
     <div className={styles.rowMain}>
       <div className={styles.labels}>
-        {categories.map((label) => <span key={label}>{label}</span>)}
+        {categories.map((label) => {
+          const market = marketTagMarket(label);
+          return market ? <MarketTag key={label} market={market}>{label}</MarketTag> : <span key={label}>{label}</span>;
+        })}
         <span className={styles.type}>{weekly ? "Weekvooruitblik" : structure ? updateTypeLabel(structure.type) : "Marktupdate"}</span>
         {pinned ? <span className={styles.flag}><PinIcon />Vastgezet</span> : null}
         {urgent ? <span className={styles.flag}>Urgent</span> : null}
       </div>
-      <h3 className={styles.title}><Link href={href}>{update.title}</Link></h3>
+      <h3 className={styles.title}>{update.title}</h3>
       {summary && summary.toLocaleLowerCase("nl-BE") !== update.title.trim().toLocaleLowerCase("nl-BE") ? <p className={styles.summary}>{summary}</p> : null}
       {structure?.type === "setup" ? <div className={styles.setup}>
         {setupMeta.length ? <span className={styles.instrument}>{setupMeta.join(" · ")}</span> : null}
@@ -84,17 +80,17 @@ function UpdateRow({ update, pinned, urgent }: { update: Update; pinned: boolean
       </div> : null}
       <p className={styles.byline}>
         <span>{marketUpdateAuthorName(update)}</span>
-        <time dateTime={publishedAt}>{dateLabel(publishedAt)}</time>
+        <RelativeDate value={publishedAt} focusable={false} />
         {video ? <span>Video{update.video_duration_seconds ? ` · ${Math.max(1, Math.round(update.video_duration_seconds / 60))} min` : ""}</span> : chart ? <span>Grafiek</span> : null}
       </p>
-      {updated ? <p className={styles.updated}>Bijgewerkt <time dateTime={activityAt}>{dateLabel(activityAt)}</time></p> : null}
-      <Link href={href} className={styles.open}>Open {weekly ? "vooruitblik" : "update"}<ArrowIcon /></Link>
+      {updated ? <p className={styles.updated}>Bijgewerkt <RelativeDate value={activityAt} focusable={false} /></p> : null}
+      <span className={styles.open}>Open {weekly ? "vooruitblik" : "update"}<ArrowIcon /></span>
     </div>
-    {showThumbnail ? <Link href={href} className={styles.thumbnail} aria-label={`${video ? "Bekijk video" : "Open grafiek"}: ${update.title}`}>
+    {showThumbnail ? <div className={styles.thumbnail}>
       {chart ? <img src={thumbnail ?? ""} alt="" loading="lazy" /> : <CourseThumbnail src={thumbnail} title={update.title} className={styles.thumbnailImage} sizes="(max-width: 640px) 104px, 180px" />}
       {video ? <span className={styles.play}><PlayIcon /><span className="sr-only">Video</span></span> : null}
-    </Link> : null}
-  </article>;
+    </div> : null}
+  </Link>;
 }
 
 function ArrowIcon() {

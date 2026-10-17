@@ -2,26 +2,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Manrope } from "next/font/google";
 import { TopLoadingBar } from "@/components/TopLoadingBar";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-sans",
 });
-
-const themeScript = `
-(function () {
-  try {
-    var stored = window.localStorage.getItem("htp-theme");
-    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var theme = stored === "light" || stored === "dark" ? stored : prefersDark ? "dark" : "light";
-    var root = document.documentElement;
-    root.dataset.theme = theme;
-    root.classList.toggle("dark", theme === "dark");
-    root.style.colorScheme = theme;
-  } catch (_) {}
-})();
-`;
 
 export const metadata: Metadata = {
   title: "Het Trade Platform",
@@ -39,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="nl" suppressHydrationWarning>
+    <html lang="nl" data-theme="dark" className="dark" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className={`${manrope.variable} font-sans antialiased`}>
         <Suspense fallback={null}>
