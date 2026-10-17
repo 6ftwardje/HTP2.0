@@ -68,7 +68,7 @@ export function CourseThumbnail({
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)]" />
           <div className="absolute inset-0 opacity-80 [background-image:linear-gradient(90deg,color-mix(in_oklab,var(--foreground)_7%,transparent)_1px,transparent_1px),linear-gradient(180deg,color-mix(in_oklab,var(--foreground)_7%,transparent)_1px,transparent_1px)] [background-size:48px_48px]" />
-          <div className="absolute bottom-4 left-4 flex h-12 w-12 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] text-xl font-black text-[var(--foreground)]">
+          <div className="absolute bottom-4 left-4 flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] text-xl font-black text-[var(--foreground)]">
             {initial}
           </div>
         </div>
@@ -79,22 +79,22 @@ export function CourseThumbnail({
       ) : null}
 
       {eyebrow && (!hasImage || imageLoaded) ? (
-        <div className="absolute left-3 top-3 rounded-md border border-white/20 bg-stone-950/54 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
+        <div className="absolute left-3 top-3 rounded-md bg-[var(--media-background)] px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--media-foreground)]">
           {eyebrow}
         </div>
       ) : null}
 
       {showTitleOverlay && (!hasImage || imageLoaded) ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
-          <h3 className="max-w-[92%] text-balance text-lg font-extrabold leading-tight text-white drop-shadow-sm sm:text-xl">
+          <h3 className="max-w-[92%] text-balance text-lg font-extrabold leading-tight text-[var(--media-foreground)] drop-shadow-sm sm:text-xl">
             {title}
           </h3>
         </div>
       ) : null}
 
       {shouldShowModuleOverlay && imageLoaded ? (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover/thumbnail:opacity-100">
-          <div className="text-[clamp(4.5rem,18vw,9rem)] font-black leading-none text-white/88 drop-shadow-xl">
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover/thumbnail:opacity-100">
+          <div className="text-[clamp(4.5rem,18vw,9rem)] font-black leading-none text-[var(--media-foreground)] drop-shadow-xl">
             {moduleNumber}
           </div>
         </div>

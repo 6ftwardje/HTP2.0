@@ -11,8 +11,8 @@ const MuxLessonPlayer = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-stone-950">
-        <span className="text-sm font-semibold text-white/70">
+      <div className="flex h-full w-full items-center justify-center bg-[var(--media-background)]">
+        <span className="text-sm font-semibold text-[var(--media-foreground)]">
           Video laden...
         </span>
       </div>
@@ -74,7 +74,7 @@ export function VimeoPlayer({
   const latestSeekRef = useRef<VideoSeekRequest | null>(seekRequest);
   latestSeekRef.current = seekRequest;
   const shouldListen = (!!onEnded || enableSeeking) && !!videoId;
-  const frameClass = surface === "insight" ? "relative aspect-video w-full overflow-hidden rounded-md bg-stone-950" : "relative aspect-video w-full overflow-hidden rounded-2xl border border-stone-200 bg-stone-950";
+  const frameClass = surface === "insight" ? "relative aspect-video w-full overflow-hidden rounded-md bg-[var(--media-background)]" : "relative aspect-video w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--media-background)]";
   useEffect(() => { setProviderError(false); setLoading(true); }, [videoUrl, muxPlaybackId]);
 
   const embedUrl = useMemo(() => {
@@ -176,17 +176,17 @@ export function VimeoPlayer({
           onEnded={onEnded}
           tokens={muxTokens}
           seekRequest={seekRequest}
-          accentColor={surface === "insight" ? "#9a8cff" : undefined}
+          accentColor="var(--accent)"
           onError={() => setProviderError(true)}
         />
-        {providerError ? <p role="alert" className="absolute inset-x-0 top-0 bg-stone-950/95 p-4 text-center text-sm text-white">De videoprovider kon deze video niet laden. Controleer je verbinding en vernieuw de pagina.</p> : null}
+        {providerError ? <p role="alert" className="absolute inset-x-0 top-0 bg-[var(--media-background)] p-4 text-center text-sm text-[var(--media-foreground)]">De videoprovider kon deze video niet laden. Controleer je verbinding en vernieuw de pagina.</p> : null}
       </div>
     );
   }
 
   if (muxId && muxPlaybackPolicy === "signed") {
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-[var(--border)] bg-stone-950 px-6 text-center text-sm font-semibold text-white/70">
+      <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--media-background)] px-6 text-center text-sm font-semibold text-[var(--media-foreground)]">
         De beveiligde video is tijdelijk niet beschikbaar. Probeer later opnieuw.
       </div>
     );
@@ -218,8 +218,8 @@ export function VimeoPlayer({
         onLoad={() => setLoading(false)}
         onError={() => setProviderError(true)}
       />
-      {loading && !providerError ? <p role="status" className="pointer-events-none absolute inset-0 flex items-center justify-center bg-stone-950 text-sm text-white/70">Video laden…</p> : null}
-      {providerError ? <p role="alert" className="absolute inset-x-0 top-0 bg-stone-950/95 p-4 text-center text-sm text-white">De videoprovider kon deze video niet laden. Controleer je verbinding en vernieuw de pagina.</p> : null}
+      {loading && !providerError ? <p role="status" className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--media-background)] text-sm text-[var(--media-foreground)]">Video laden…</p> : null}
+      {providerError ? <p role="alert" className="absolute inset-x-0 top-0 bg-[var(--media-background)] p-4 text-center text-sm text-[var(--media-foreground)]">De videoprovider kon deze video niet laden. Controleer je verbinding en vernieuw de pagina.</p> : null}
     </div>
   );
 }

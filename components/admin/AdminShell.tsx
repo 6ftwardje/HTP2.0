@@ -150,7 +150,7 @@ export function AdminShell({
   const isWideWorkspace = pathname.startsWith("/admin/videos");
 
   return (
-    <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+    <div className="platform-surface flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       <aside className="relative hidden h-full min-h-0 w-[272px] shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] md:flex">
         <div className="flex h-full min-h-0 flex-col px-5 py-7">
           <SidebarContent

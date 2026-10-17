@@ -235,7 +235,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
         <section className="relative hidden overflow-hidden border-r border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_88%,var(--card)_12%)] px-12 py-14 lg:flex lg:flex-col lg:justify-between">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,color-mix(in_oklab,var(--muted)_28%,transparent),transparent_38%),radial-gradient(circle_at_90%_85%,color-mix(in_oklab,var(--foreground)_12%,transparent),transparent_42%)]" />
           <div className="relative">
-            <BrandLogo logoClassName="h-auto w-[250px]" />
+            <BrandLogo tone="on-dark" logoClassName="h-auto w-[250px]" />
           </div>
           <div className="relative max-w-lg">
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-[var(--muted)]">

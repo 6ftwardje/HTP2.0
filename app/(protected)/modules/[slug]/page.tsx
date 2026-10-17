@@ -206,7 +206,7 @@ export default async function ModuleDetailPage({ params }: Props) {
                 {progressPercent}%
               </div>
             </div>
-            <div className="mt-5 h-1 overflow-hidden rounded-sm bg-white/[0.08]">
+            <div className="mt-5 h-1 overflow-hidden rounded-sm bg-[var(--progress-track)]">
               <div
                 className="h-full rounded-sm bg-[var(--accent)]"
                 style={{ width: `${progressPercent}%` }}
@@ -279,12 +279,12 @@ export default async function ModuleDetailPage({ params }: Props) {
       lesson.status === "completed"
         ? "text-emerald-300"
         : lesson.status === "available" && !intakeLocked
-          ? "text-[var(--accent)]"
+          ? "text-[var(--foreground)]"
           : "text-[var(--muted)]";
     const rowContent = (
       <div
         className={[
-          "grid min-w-0 gap-4 px-4 py-4 transition-colors sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5",
+          "grid min-w-0 gap-4 px-4 py-2.5 transition-colors sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5",
           isCurrent
             ? "bg-[color-mix(in_oklab,var(--accent)_8%,var(--card))]"
             : "bg-transparent",
@@ -346,7 +346,7 @@ export default async function ModuleDetailPage({ params }: Props) {
     );
 
     return (
-      <li key={lesson.id} className="border-b border-[var(--border)] last:border-b-0">
+      <li key={lesson.id} className="bg-[var(--card)]">
         {isLocked || intakeLocked ? (
           <div className="grid gap-0 sm:grid-cols-[176px_minmax(0,1fr)]">
             <CourseThumbnail
@@ -361,7 +361,7 @@ export default async function ModuleDetailPage({ params }: Props) {
         ) : (
           <Link
             href={`/lessons/${lesson.slug}`}
-            className="group grid gap-0 transition-colors hover:bg-white/[0.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)] sm:grid-cols-[176px_minmax(0,1fr)]"
+            className="group grid gap-0 transition-colors hover:bg-[var(--surface-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_oklab,var(--foreground)_22%,transparent)] sm:grid-cols-[176px_minmax(0,1fr)]"
           >
             <CourseThumbnail
               src={lesson.thumbnail_url}
@@ -463,7 +463,7 @@ export default async function ModuleDetailPage({ params }: Props) {
             <span className="mx-2 text-[var(--muted)]">/</span>
             <span>Module {moduleData.order_index}</span>
           </nav>
-          <h1 className="mt-6 max-w-4xl text-4xl font-extrabold leading-[1.04] text-[var(--foreground)] sm:text-5xl">
+          <h1 className="mt-6 max-w-4xl cb-page-title">
             {formatModuleTitle(moduleData.order_index, moduleData.title)}
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--muted)]">
@@ -476,7 +476,7 @@ export default async function ModuleDetailPage({ params }: Props) {
             </Link>
             <Link
               href="#lessen"
-              className="cb-btn cb-btn-secondary border-transparent bg-transparent px-0 text-[var(--accent)] hover:bg-transparent hover:text-[var(--foreground)]"
+              className="cb-btn cb-btn-secondary border-transparent bg-transparent px-0 text-[var(--foreground)] hover:bg-transparent hover:text-[var(--foreground)]"
             >
               Bekijk alle lessen
             </Link>
@@ -484,7 +484,7 @@ export default async function ModuleDetailPage({ params }: Props) {
         </div>
 
         <div className="hidden lg:block">
-          <div className="h-1 overflow-hidden rounded-sm bg-white/[0.08]">
+          <div className="h-1 overflow-hidden rounded-sm bg-[var(--progress-track)]">
             <div
               className="h-full rounded-sm bg-[var(--accent)]"
               style={{ width: `${progressPercent}%` }}

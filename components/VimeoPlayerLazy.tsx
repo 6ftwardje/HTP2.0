@@ -10,8 +10,8 @@ const VimeoPlayerCore = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-stone-950">
-        <span className="text-sm font-semibold text-white/70">
+      <div className="flex h-full w-full items-center justify-center bg-[var(--media-background)]">
+        <span className="text-sm font-semibold text-[var(--media-foreground)]">
           Video laden...
         </span>
       </div>
@@ -45,7 +45,7 @@ export function VimeoPlayer(props: Props) {
     props.videoProvider === "mux" ? muxPosterUrl(props.muxPlaybackId) : null;
 
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-[color-mix(in_oklab,#f50101_34%,var(--border)_66%)] bg-stone-950">
+    <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--media-background)]">
       {poster ? (
         <Image
           src={poster}
@@ -60,7 +60,7 @@ export function VimeoPlayer(props: Props) {
       <button
         type="button"
         onClick={() => setActivated(true)}
-        className="absolute inset-0 flex w-full items-center justify-center text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+        className="absolute inset-0 flex w-full items-center justify-center text-[var(--media-foreground)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
         aria-label={`${props.title ?? "Video"} afspelen`}
       >
         <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/70 bg-black/45 backdrop-blur-sm">

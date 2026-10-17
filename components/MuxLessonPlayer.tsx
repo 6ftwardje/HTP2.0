@@ -5,8 +5,6 @@ import { useEffect, useRef } from "react";
 import type { MuxPlaybackTokens } from "@/lib/types";
 import type { VideoSeekRequest } from "@/lib/video-seek";
 
-const COACHEDBY_RED = "#f50101";
-
 export function MuxLessonPlayer({
   playbackId,
   title,
@@ -14,7 +12,7 @@ export function MuxLessonPlayer({
   tokens,
   seekRequest,
   onError,
-  accentColor = COACHEDBY_RED,
+  accentColor = "var(--accent)",
 }: {
   playbackId: string;
   title?: string;
@@ -38,8 +36,8 @@ export function MuxLessonPlayer({
       playbackId={playbackId}
       videoTitle={title ?? "Lesvideo"}
       className="h-full w-full"
-      primaryColor="#ffffff"
-      secondaryColor="#0c0a09"
+      primaryColor="var(--media-foreground)"
+      secondaryColor="var(--media-background)"
       accentColor={accentColor}
       onError={onError}
       onEnded={onEnded ?? undefined}

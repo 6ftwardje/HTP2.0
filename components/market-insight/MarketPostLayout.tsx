@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import { Avatar } from "@/components/ui/Avatar";
 import { UsefulReaction } from "@/components/market-insight/UsefulReaction";
-import { formatPostPublication } from "@/lib/market-article";
 
 export function MarketPostLayout({ title, author, publishedAt, tags, duration, intro, postId, reaction, children }: {
   title: string; author: { name: string; object_path: string | null; student_id?: string }; publishedAt: string;
@@ -17,7 +17,7 @@ export function MarketPostLayout({ title, author, publishedAt, tags, duration, i
           <Avatar name={author.name} objectPath={author.object_path} studentId={author.student_id} />
           <div className="min-w-0">
             <p className="market-post-author">{author.name}</p>
-            <p className="market-post-meta"><time dateTime={publishedAt}>{formatPostPublication(publishedAt)}</time>{duration ? <><span aria-hidden="true"> · </span>{duration}</> : null}</p>
+            <p className="market-post-meta"><RelativeDate value={publishedAt} />{duration ? <><span aria-hidden="true"> · </span>{duration}</> : null}</p>
           </div>
           {tags.length ? <ul className="market-post-tags" aria-label="Markten">{tags.map((tag) => <li key={tag}>{tag}</li>)}</ul> : null}
         </div>

@@ -80,7 +80,7 @@ export function QuickMarketUpdateComposer() {
         <h2 id="quick-update-title" className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Deel een marktupdate</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">Kies een categorie en type. Het juiste sjabloon staat meteen klaar.</p>
       </div>
-      <Link href="/admin/market-analysis" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline-offset-4 hover:underline focus-visible:underline">Alle updates beheren →</Link>
+      <Link href="/admin/market-analysis" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">Alle updates beheren →</Link>
     </div>
 
     <button
@@ -92,7 +92,7 @@ export function QuickMarketUpdateComposer() {
       className={`mt-5 flex min-h-14 w-full items-center justify-between gap-4 rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 text-left text-sm transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${expanded ? "hidden" : ""}`}
     >
       <span className="text-[var(--muted)]">Wat wil je met studenten delen?</span>
-      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 text-[var(--accent)]">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0 text-[var(--foreground)]">
         <path d="m4 20 4.2-.9L19 8.3 15.7 5 4.9 15.8 4 20ZM14.3 6.4l3.3 3.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
@@ -129,7 +129,7 @@ export function QuickMarketUpdateComposer() {
       {files.length ? <p className="text-xs text-[var(--muted)]">{files.length} chart{files.length === 1 ? "" : "s"} geselecteerd · JPG, PNG of WebP · max. 10 MB per bestand</p> : null}
       <p className="text-xs text-[var(--muted)]">Publiceren maakt de update zichtbaar voor studenten met toegang en kan meldingen versturen. Bewaar als concept om eerst te controleren.</p>
       </fieldset>
-      <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={pending} onClick={() => setExpanded(false)} className="cb-btn cb-btn-secondary min-h-11 text-sm">Sluiten</button>{savedDraftId ? <Link href={`/admin/market-analysis?update=${savedDraftId}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--accent)] underline underline-offset-4">Opgeslagen concept openen →</Link> : null}</div>
+      <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={pending} onClick={() => setExpanded(false)} className="cb-btn cb-btn-secondary min-h-11 text-sm">Sluiten</button>{savedDraftId ? <Link href={`/admin/market-analysis?update=${savedDraftId}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--foreground)] underline underline-offset-4">Opgeslagen concept openen →</Link> : null}</div>
     </form>
     {step ? <p role="status" className="mt-3 text-sm">{step}</p> : null}
     {notice ? <p role="status" className="mt-3 text-sm text-green-700 dark:text-green-300">{notice}</p> : null}

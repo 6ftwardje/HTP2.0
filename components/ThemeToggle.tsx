@@ -1,14 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type Theme = "light" | "dark";
-
-const STORAGE_KEY = "htp-theme";
+import { THEME_STORAGE_KEY, type Theme } from "@/lib/theme";
 
 function getCurrentTheme(): Theme {
-  if (typeof document === "undefined") return "light";
-  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  if (typeof document === "undefined") return "dark";
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
 }
 
 function applyTheme(theme: Theme) {
@@ -46,7 +43,7 @@ function MoonIcon() {
 }
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
     setTheme(getCurrentTheme());
@@ -65,7 +62,11 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   function toggleTheme() {
     const nextTheme = theme === "dark" ? "light" : "dark";
     applyTheme(nextTheme);
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch {
+      // The current tab still works in browsers that disallow persistent storage.
+    }
     setTheme(nextTheme);
     window.dispatchEvent(new Event("htp-theme-change"));
   }
@@ -76,9 +77,9 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={toggleTheme}
-      aria-label={isDark ? "Light mode inschakelen" : "Dark mode inschakelen"}
-      title={isDark ? "Light mode" : "Dark mode"}
-      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_86%,var(--background)_14%)] text-[var(--foreground)] shadow-sm transition hover:bg-[var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--accent)_45%,transparent)] ${className}`}
+      aria-label={isDark ? "Lichte modus inschakelen" : "Donkere modus inschakelen"}
+      title={isDark ? "Lichte modus" : "Donkere modus"}
+      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${className}`}
     >
       {isDark ? <SunIcon /> : <MoonIcon />}
     </button>

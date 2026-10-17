@@ -1,6 +1,6 @@
 .content { min-width: 0; max-width: 78ch; }
 .content :is(a, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-.content ::selection { background: var(--accent); color: var(--background); }
+.content ::selection { background: var(--accent); color: var(--accent-contrast); }
 .metadata { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-bottom: 18px; color: var(--muted); font-size: .82rem; line-height: 1.7; }
 .metadata > span:not(:last-child) { color: var(--foreground); font-weight: 600; }
 .summary { max-width: 70ch; font-size: clamp(1.08rem, 1.8vw, 1.25rem); line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -14,7 +14,7 @@
 .fields dt { color: var(--muted); font-size: .83rem; font-weight: 600; line-height: 1.5; }
 .fields dd { margin-top: 6px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--foreground); font-size: 1rem; line-height: 1.8; }
 .fields dd a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
-.fields dd a:hover { color: var(--accent); }
+.fields dd a:hover { color: var(--foreground); }
 .help { margin-top: 6px; color: var(--muted); font-size: .8rem; line-height: 1.65; }
 .targetSection { margin-top: 34px; }
 .targetSection > h2, .history > h2 { font-size: 1.25rem; font-weight: 700; line-height: 1.4; letter-spacing: -.015em; }

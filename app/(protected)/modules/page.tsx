@@ -138,7 +138,7 @@ export default async function ModulesPage() {
                             {lessonCount} {lessonCount === 1 ? "les" : "lessen"}
                           </span>}
                       </div>
-                      <h2 className="mt-2 text-lg font-semibold leading-snug text-[var(--foreground)]">
+                      <h2 className="mt-2 cb-item-title">
                         {moduleTitle}
                       </h2>
                       {shortDesc && (
@@ -153,7 +153,7 @@ export default async function ModulesPage() {
                     </div>
                   </Link>
                 ) : (
-                  <div className="h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,var(--muted)_8%)] opacity-70">
+                  <div className="h-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,var(--muted)_8%)]">
                     <CourseThumbnail
                       src={mod.thumbnail_url}
                       title={moduleTitle}
@@ -172,7 +172,7 @@ export default async function ModulesPage() {
                             {lessonCount} {lessonCount === 1 ? "les" : "lessen"}
                           </span>}
                       </div>
-                      <h2 className="mt-2 text-lg font-semibold leading-snug text-[var(--foreground)]">
+                      <h2 className="mt-2 cb-item-title">
                         {moduleTitle}
                       </h2>
                       {shortDesc && (

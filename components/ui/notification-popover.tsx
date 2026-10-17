@@ -1,5 +1,6 @@
 "use client";
 
+import { RelativeDate } from "@/components/ui/RelativeDate";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -16,15 +17,6 @@ export type FloatingNotification = {
   read: boolean;
   href: string | null;
 };
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("nl-NL", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 function BellIcon() {
   return (
@@ -149,11 +141,11 @@ export function NotificationPopover({
           }
           aria-haspopup="dialog"
           aria-expanded={isOpen}
-          className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_84%,var(--card)_16%)] text-[var(--foreground)] shadow-[0_12px_32px_rgba(0,0,0,0.18)] backdrop-blur-md transition hover:bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--accent)_55%,transparent)]"
+          className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_84%,var(--card)_16%)] text-[var(--foreground)] shadow-[0_12px_32px_rgba(0,0,0,0.18)] backdrop-blur-md transition hover:bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
         >
           <BellIcon />
           {unreadCount > 0 && (
-            <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border border-[var(--background)] bg-[var(--accent)] px-1 text-[0.65rem] font-extrabold leading-none text-black">
+            <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border border-[var(--background)] bg-[var(--foreground)] px-1 text-[0.65rem] font-extrabold leading-none text-[var(--background)]">
               {cappedUnread}
             </span>
           )}
@@ -202,7 +194,7 @@ export function NotificationPopover({
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           {!notification.read && (
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--foreground)]" />
                           )}
                           <h3 className="truncate text-sm font-bold text-[var(--foreground)]">
                             {notification.title}
@@ -212,11 +204,9 @@ export function NotificationPopover({
                           {notification.description || "Nieuwe update"}
                         </p>
                       </div>
-                      <time className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                        {formatDate(notification.timestamp)}
-                      </time>
+                      <RelativeDate value={notification.timestamp} focusable={false} className="shrink-0 text-xs font-medium text-[var(--muted)]" />
                     </div>
-                    <span className="mt-2 inline-flex text-xs font-bold text-[var(--accent)]">
+                    <span className="mt-2 inline-flex text-xs font-bold text-[var(--foreground)]">
                       {pendingId === notification.id ? "Openen..." : "Openen"}
                     </span>
                   </button>
