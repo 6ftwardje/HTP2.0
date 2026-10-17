@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { MarketUpdateStructure } from "@/lib/market-update-structure";
 import type {
   Market,
+  UpdateMarket,
+  MarketInsightChapter,
   MarketAnalysisType,
   Student,
   WeeklyUpdate,
@@ -38,11 +40,11 @@ export type WeeklyUpdateInput = {
   mentor_student_id: string | null;
   access_tier: WeeklyUpdateAccessTier;
   thumbnail_url: string | null;
-  markets: Array<Market | "macro">;
+  markets: UpdateMarket[];
   actuality_status: "current" | "still_relevant" | "archive";
   event_context: string | null;
   period_label: string | null;
-  chapters: Array<{ title: string; seconds: number }>;
+  chapters: MarketInsightChapter[];
   related_content: Array<{ label: string; href: string }>;
   needs_review: boolean;
   is_published: boolean;

@@ -149,7 +149,9 @@ export type MarketAnalysisType =
   | "market_update"
   | "live_session";
 
-export type Market = "stocks" | "forex" | "crypto" | "commodities";
+export type Market = "stocks" | "forex" | "crypto" | "gold" | "commodities" | "trading";
+/** Historical labels remain distinct; they are never silently renamed to a document market. */
+export type UpdateMarket = Market | "macro" | "indices" | "general";
 
 export type MarketInsightFormat =
   | "weekly_outlook"
@@ -163,6 +165,7 @@ export type WeeklyUpdateContentFormat = "video" | "chart" | "text";
 export type MarketInsightChapter = {
   title: string;
   seconds: number;
+  market?: UpdateMarket;
 };
 
 export type WeeklyUpdate = {
@@ -201,7 +204,7 @@ export type WeeklyUpdate = {
   published_at: string | null;
   created_at: string;
   updated_at: string;
-  markets?: Array<Market | "macro">;
+  markets?: UpdateMarket[];
   actuality_status?: MarketInsightActuality;
   event_context?: string | null;
   period_label?: string | null;

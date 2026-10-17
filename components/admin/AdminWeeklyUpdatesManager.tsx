@@ -37,7 +37,8 @@ import {
   SETUP_STATUS_OPTIONS,
   UPDATE_TYPE_OPTIONS,
   categoryLabel,
-  getUpdateCategory,
+  getUpdateMarkets,
+  matchesUpdateMarket,
   getUpdateStructure,
   needsUpdateFollowUp,
   setupStatusLabel,
@@ -458,7 +459,7 @@ export function AdminWeeklyUpdatesManager({
       const structure = getUpdateStructure(update);
       const query = search.trim().toLocaleLowerCase("nl");
       if (!matchesView(update, archiveFilter)) return false;
-      if (categoryFilter && getUpdateCategory(update) !== categoryFilter) return false;
+      if (categoryFilter && !matchesUpdateMarket(update, categoryFilter)) return false;
       if (typeFilter && structure?.type !== typeFilter) return false;
       if (authorFilter && marketUpdateAuthorName(update) !== authorFilter) return false;
       if (statusFilter && structure?.setup_status !== statusFilter) return false;
@@ -951,7 +952,7 @@ export function AdminWeeklyUpdatesManager({
                         {getMarketAnalysisTypeLabel(update.type)}
                       </span> : null}
                       {needsClassification(update) ? <span className="cb-badge cb-badge-locked">Nog indelen</span> : null}
-                      {getUpdateStructure(update) ? <><span className="cb-badge cb-badge-available">{categoryLabel(getUpdateCategory(update))} · {updateTypeLabel(getUpdateStructure(update)!.type)}</span>{getUpdateStructure(update)?.type === "setup" ? <span className="cb-badge cb-badge-locked">{setupStatusLabel(getUpdateStructure(update)!.setup_status)}</span> : null}</> : update.type === "market_update" ? (
+                      {getUpdateStructure(update) ? <><span className="cb-badge cb-badge-available">{getUpdateMarkets(update).map(categoryLabel).join(" · ")} · {updateTypeLabel(getUpdateStructure(update)!.type)}</span>{getUpdateStructure(update)?.type === "setup" ? <span className="cb-badge cb-badge-locked">{setupStatusLabel(getUpdateStructure(update)!.setup_status)}</span> : null}</> : update.type === "market_update" ? (
                         <span className="cb-badge cb-badge-available">{getMarketLabel(update.market)}</span>
                       ) : null}
                       {update.actuality_status === "archive" ? <span className="cb-badge cb-badge-locked">Archief</span> : update.type === "market_update" && suggestsUpdateArchive(update) ? <span className="cb-badge cb-badge-locked">Archiefsuggestie · 90 dagen</span> : null}

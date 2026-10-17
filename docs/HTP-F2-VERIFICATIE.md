@@ -1,6 +1,6 @@
 # F2 — Lokale uitvoering en verificatie
 
-17 oktober 2026. Ward keurde F2 uitsluitend lokaal goed: **alleen het belletje, openen op klik behouden**. De in-scope criteria zijn gecontroleerd. **Stop vóór F3a.**
+17 oktober 2026. Ward keurde F2 uitsluitend lokaal goed: **alleen het belletje, openen op klik behouden**. De in-scope criteria zijn gecontroleerd. **Historische lokale acceptatie; F2 daarna op verzoek gepubliceerd via PR #60, main 64f3136.**
 
 [Scrumboard](https://github.com/users/6ftwardje/projects/3) · [Backlog](HTP-BACKLOG.md) · [Fasenplan](HTP-FASENPLAN.md).
 
@@ -8,7 +8,7 @@
 
 F1 plus HTP-49 staan op main **1067df4**, via [PR #51](https://github.com/6ftwardje/HTP2.0/pull/51). CI inclusief chat-/database-integratie is geslaagd. Het volledige kaartvlak is in de schone lokale productiebuild getest met muis en Enter, desktop/mobiel en licht/donker: één focusbare link per kaart.
 
-F2 staat uitsluitend lokaal op **codex/htp-f2-local**, vanaf die main-commit, in `/Users/wardjanssen/.codex/worktrees/htp-f1-release/Het Trade Platform 2.0`. De oorspronkelijke vuile werkmap is behouden. **Geen F2-push, F2-PR, productie-uitrol of remote databasewijziging.** De lokale gebruikersscope gaat voor de repositoryaanbeveling om vroeg een PR te openen.
+F2 staat uitsluitend lokaal op **codex/htp-f2-local**, vanaf die main-commit, in `/Users/wardjanssen/.codex/worktrees/htp-f1-release/Het Trade Platform 2.0`. De oorspronkelijke vuile werkmap is behouden. **Dit was de lokale handoff vóór publicatie. Op de latere expliciete opdracht is F2 via PR #60 naar main 64f3136 gepubliceerd, met groene CI/verse DB-integratie. Er is geen remote databasewijziging uitgevoerd.** De lokale gebruikersscope gaat voor de repositoryaanbeveling om vroeg een PR te openen.
 
 | Lokale commit | Resultaat / taak |
 |---|---|
@@ -74,4 +74,4 @@ Niet uitgevoerd: productie-/externe datawrites, betalingen, e-mailverzending, pr
 
 De zeven F2-taken zijn **Done voor de goedgekeurde lokale scope**. HTP-47 heeft dit deelbewijs maar blijft open voor F10; HTP-48 blijft de faseoverdracht ondersteunen. [Lokale preview](http://127.0.0.1:3118/notifications). Inloggegevens uitsluitend lokaal in `output/playwright/htp-f2/LOCAL-ACCESS.md` (0600).
 
-**F3a en iedere volgende fase wachten op afzonderlijke expliciete goedkeuring.**
+**Ward heeft daarna F2-publicatie en lokale F3a expliciet goedgekeurd. Zie HTP-F3A-VERIFICATIE.md. Stop vóór F3b.**

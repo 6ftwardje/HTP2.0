@@ -1,6 +1,6 @@
 # HTP feedback: gefaseerd uitvoeringsplan
 
-17 oktober 2026. **F1 goedgekeurd door Ward op 17 oktober 2026; F1 plus HTP-49 op main 1067df4 / PR #51; F2 uitsluitend lokaal afgerond/gecontroleerd, bel met klikgedrag. Stop vóór F3a; F2 niet gepubliceerd.** [Centraal bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Analyse, bestandspaden en besluitregister](HTP-FEEDBACK-ANALYSE.md).
+17 oktober 2026. **F1/HTP-49 gepubliceerd via PR #51; F2 na expliciete opdracht gepubliceerd op main 64f3136 / PR #60. F3a uitsluitend lokaal goedgekeurd; Mux is de enige actieve provider. Stop vóór F3b.** [Centraal bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Analyse, bestandspaden en besluitregister](HTP-FEEDBACK-ANALYSE.md).
 
 Elke onderstaande fase/deelfase krijgt afzonderlijke goedkeuring. Een goedgekeurde fase geeft geen toestemming om de volgende automatisch uit te voeren. Bij extra scope of onopgeloste criteria terug naar Backlog/Geblokkeerd; geen stilzwijgende uitbreiding. Er zijn geen datums of uren beloofd.
 
@@ -51,13 +51,13 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 
 **Test en klaar:** rollen en directe URLs, 0/1/9/10/>50 meldingen, 29/30/31-dagentelling, nul-href, verwijderen, directe bronopen, dubbele realtime-events/reconnect, fout/retry/ontbrekende migration, chatworkspace/mobile/safe areas en alles-gelezen over volledige set. Klaar als alle badges dezelfde waarheid tonen en notificatierechten/leeractie/composer intact zijn.
 
-**Uitvoering F2:** HTP-06 t/m 11 en HTP-39 Done voor de lokale scope; 241 tests, SQL-/RLS-/browserbewijs, 66 beeldcombinaties en gerichte bevestiging in [F2-verificatie](HTP-F2-VERIFICATIE.md). D4 gesloten: alleen bel, openen op klik. Geen F2-release en geen F3a-start. Betaalactivering blijft afzonderlijk onder #28/productbesluit.
+**Uitvoering F2:** HTP-06 t/m 11 en HTP-39 Done voor de lokale scope; 241 tests, SQL-/RLS-/browserbewijs, 66 beeldcombinaties en gerichte bevestiging in [F2-verificatie](HTP-F2-VERIFICATIE.md). D4 gesloten: alleen bel, openen op klik. Daarna op expliciete opdracht gereleaset via PR #60, main 64f3136, groene CI en verse DB-/chatintegratie. Ward heeft vervolgens F3a lokaal goedgekeurd. Geen remote database-uitrol. Betaalactivering blijft afzonderlijk onder #28/productbesluit.
 
 ## F3a — Marktcontract en providerbewijs
 
 **Doel en taken:** gegevens en afspeelmogelijkheden helder vóór de nieuwe feed. HTP-12, HTP-20; HTP-47/48.
 
-**Binnen:** expliciete mapping van markt/type/invalshoek voor legacy en structured posts; meerdere markten incl. Goud/Trading zonder verlies van macro/indices/historiek. Weekdatum/periode/hoofdstukken hergebruiken en markt aan hoofdstuk kunnen koppelen. Werkelijke provider/browser/accountmogelijkheden van Mux/Vimeo/YouTube toetsen.
+**Binnen:** expliciete mapping van markt/type/invalshoek voor legacy en structured posts; meerdere markten incl. Goud/Trading zonder verlies van macro/indices/historiek. Weekdatum/periode/hoofdstukken hergebruiken en markt aan hoofdstuk kunnen koppelen. Werkelijke provider/browser/accountmogelijkheden toetsen; Ward bevestigt tijdens F3a dat uitsluitend Mux actief is. Vimeo/YouTube behouden alleen hun bestaande legacyafhandeling.
 
 **Buiten:** grote visuele feed, nieuwe zones/pincollecties, snelheids-/positieopslag en PDF's. Nog geen aannames over providerdefaults als implementatie presenteren.
 
@@ -66,6 +66,8 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 **Vooraf:** mapping bestaande categorieën en echte schema-/RLS-baseline; testmedia/provideraccount. Bij ontbrekende productbetekenis een mappingvoorstel voorleggen vóór migratie. Geen bestaande auteurs/publicatiemomenten/URLs of financiële labels herschrijven.
 
 **Test en klaar:** oude/nieuwe updates met 1/meerdere markten, arrays/structured-save-roundtrip, SQL/actionvalidatie en databehoud; providerproef legt ondersteund/beperkt/onbekend vast voor poster/seek/snelheden/pitch/events/shortcuts. Klaar met geaccepteerd contract en beperkingenmatrix; daarmee kan F3b zonder gokken starten.
+
+**Uitvoering F3a:** HTP-12 en HTP-20 Done voor de lokale scope. Contract 726c615, providerverifier 6829c38; 250 tests, herhaalbare additieve migratie zonder content-/RLS-writes, echte browser/action/DB-roundtrips en Mux-proef. 24 beeldcombinaties plus twaalf gerichte editor-/AA-/focusbevestigingen. Ward bepaalt dat Mux de enige actieve provider is. [Contract, beperkingen en volledig bewijs](HTP-F3A-VERIFICATIE.md). F3a niet gepusht. **Stop vóór F3b**; D2/D3 en de F3b-uitvoeringsgoedkeuring blijven bij die volgende fase.
 
 ## F3b — Feed, weekritueel en artikelvervolg
 
@@ -77,7 +79,7 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 
 **Geraakt:** `MarketInsightLibrary` en CSS Module, gedeelde kaart/MarketTag, dashboardfeed waar gedeeld, Marktinzicht route/querys, `MarketPostLayout/Contents`, hoofdstuk-/seekverbinding en wrappers, update-editor. Modelaanpassing alleen voortbouwend op F3a, geen tweede chaptermodel.
 
-**Vooraf:** D2/D3, twee voorgestelde thumbnailcomposities en goedgekeurde navigatiecombinatie. Werkelijke outlookinhoud, thumbnail en betrouwbare tijdstempels; zonder echte huidige outlook geen fictief weekblok. Providerbeperkingen uit F3a oplossen of expliciet beperkte scope goedkeuren vóór acceptatie.
+**Vooraf:** D2/D3, twee voorgestelde thumbnailcomposities en goedgekeurde navigatiecombinatie. Werkelijke outlookinhoud, thumbnail en betrouwbare tijdstempels; zonder echte huidige outlook geen fictief weekblok. De beperkingenmatrix uit [F3a](HTP-F3A-VERIFICATIE.md) is leidend: alleen Mux actief, geen native garantie voor onbewezen browsers of signed media; slow-ratebediening, posterdoorgifte en URL-seek pas in de eigen taak/fase implementeren.
 
 **Test en klaar:** 1/5/30 updates, 1/3 markten, beperkte rechten, lang/geen/legacy content, archiefcontext, 0/1/2 vervolgkandidaten; één focusbare contentlink, hoofdstukklik/actieve staat/timestamp-URL en oude aliases. Structuur en vrije artikels apart testen. Klaar als alle in-scope acties werkelijk werken; hero met dode marktlinks is geen afgeronde fase.
 

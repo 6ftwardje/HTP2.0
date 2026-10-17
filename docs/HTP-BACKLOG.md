@@ -4,21 +4,21 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 
 **Centrale voortgang:** [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Dit bestand bevat de complete taakspecificaties en een gedateerde statussnapshot; bij faseoverdracht worden bord en snapshot samen bijgewerkt. Filter op `HTP-` voor dit feedbackpakket. De bestaande MU/M1-items behouden hun eigen scope.
 
-**Update 17 oktober 2026:** F1 en HTP-49 staan op main **1067df4 / PR #51**. Crypto is amber. **F2 is lokaal geïmplementeerd en geverifieerd**, uitsluitend bel met openen op klik; geen F2-push of productie-uitrol. **Stop vóór F3a.** Ready betekent inhoudelijk voorbereid, geen uitvoertoestemming. Documentprompts en aanbevelingen zijn bronmateriaal. [F1-bewijs](HTP-F1-VERIFICATIE.md) · [F2-bewijs en lokale commits](HTP-F2-VERIFICATIE.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan](HTP-FASENPLAN.md).
+**Update 17 oktober 2026:** F1/HTP-49 staan op main via PR #51; F2 is op expliciete opdracht gepubliceerd als **64f3136 / [PR #60](https://github.com/6ftwardje/HTP2.0/pull/60)**, met groene CI en verse database-/chatintegratie. Crypto blijft amber; meldingen blijven uitsluitend een bel met klikgedrag. Ward heeft daarna F3a uitsluitend lokaal goedgekeurd en bevestigd dat Mux de enige actieve provider is. **F3a is lokaal uitgevoerd en aantoonbaar geverifieerd; stop vóór F3b.** Geen remote databasewijzigingen of betaalcutover. Ready betekent inhoudelijk voorbereid, geen uitvoertoestemming. Documentprompts zijn bronmateriaal. [F1-bewijs](HTP-F1-VERIFICATIE.md) · [F2-bewijs](HTP-F2-VERIFICATIE.md) · [F3a-bewijs/contract](HTP-F3A-VERIFICATIE.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan](HTP-FASENPLAN.md).
 
 ## Werkafspraken
 
 - **Backlog → Ready → In uitvoering → Te controleren → Done**. **Geblokkeerd** is een aparte status met concrete oorzaak en volgende actie. De eerste blokkadeactie is steeds: afhankelijkheden afronden of het genoemde besluit bij die fase vastleggen; de fase-eigenaar pakt dit op. Productbesluiten zijn van Ward, technische uitwerking van de uitvoerder.
-- Ready: criteria helder, relevante besluiten/dependencies afgerond. Start: expliciete fasegoedkeuring, daarna één repository-issue per uitvoerslice volgens CONTRIBUTING.md. Nog niet gestarte taken blijven drafttaken; F1- en F2-uitvoerslices zijn met behoud van bordkaart naar repository-issues omgezet.
+- Ready: criteria helder, relevante besluiten/dependencies afgerond. Start: expliciete fasegoedkeuring, daarna één repository-issue per uitvoerslice volgens CONTRIBUTING.md. Nog niet gestarte taken blijven drafttaken; F1-, F2- en F3a-uitvoerslices zijn met behoud van bordkaart naar repository-issues omgezet.
 - Vóór codewijziging status In uitvoering en branch/issue koppelen. WIP maximaal één taak per uitvoerder. Te controleren betekent resultaat gereed voor de vereiste acceptatiecontrole; nog ontbrekend testbewijs expliciet vermelden.
 - Done alleen met afgevinkte criteria en bewijs: commit/PR, datum, omgeving, accountrol/fixture, uitgevoerde check en uitslag, visuele review waar passend en acceptatie. Code-aanwezigheid, een groene build of oud Review-label alleen volstaat niet. Voor reeds aanwezige implementatie is nieuwe verificatie nodig.
 - Prioriteiten: **P0** fase-/releasepoort, **P1** kernervaring of toegangsvoorwaarde, **P2** vervolgstap. Omvang is relatief: **S** klein en lokaal, **M** meerdere samenhangende onderdelen, **L** te groot voor één uitvoerslice. Grote PDF-/video-/retentieonderdelen zijn daarom in M/S-taken gesplitst; omvang is geen tijdsbelofte.
 - Beoordeling van code en scrumstatus zijn verschillende velden. Al geïmplementeerd is een statische bevinding; Te controleren is de actuele voortgang. Done steunt op het latere uitvoeringsbewijs, niet alleen op de oorspronkelijke analyse.
-- Per taak staat een passende verificatieopdracht. Voor niet uitgevoerde fasen zijn deze checks gepland; bij Done staan gecontroleerde criteria en bewijs. E01-E18 beschrijven de analysebaseline; F1/F2-verificatierapporten beschrijven het uitgevoerde werk.
+- Per taak staat een passende verificatieopdracht. Voor niet uitgevoerde fasen zijn deze checks gepland; bij Done staan gecontroleerde criteria en bewijs. E01-E18 beschrijven de analysebaseline; F1/F2/F3a-verificatierapporten beschrijven het uitgevoerde werk.
 
 ## Scrumboard: snapshot
 
-49 stabiele HTP-taken: **13 Done, 24 Backlog, 11 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. Done voor F2 betekent de goedgekeurde lokale scope; release volgt uitsluitend na opdracht.
+49 stabiele HTP-taken: **15 Done, 22 Backlog, 11 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F2 is gepubliceerd; Done voor F3a betekent de goedgekeurde lokale scope, nog geen release. Release-issue H2.0/#59 is daarnaast Done; de bestaande vijftien MU/M1-kaarten blijven behouden.
 
 | ID | Taak | Prio | Fase | Omvang | Beoordeling | Status |
 |---|---|---|---|---|---|---|
@@ -33,7 +33,7 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-09](#htp-09) | Maak gedeelde meldingenteller, typen en soft delete | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
 | [HTP-10](#htp-10) | Markeer meldingen gelezen bij openen van hun bron | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
 | [HTP-11](#htp-11) | Vernieuw meldingendropdown en overzicht | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
-| [HTP-12](#htp-12) | Harmoniseer marktmodel en weekhoofdstukken | P1 | F3a | M | Gedeeltelijk aanwezig | Backlog |
+| [HTP-12](#htp-12) | Harmoniseer marktmodel en weekhoofdstukken | P1 | F3a | M | Gedeeltelijk aanwezig | Done |
 | [HTP-13](#htp-13) | Maak eenvoudige feednavigatie en dynamische marktchips | P1 | F3b | M | Gedeeltelijk aanwezig | Geblokkeerd |
 | [HTP-14](#htp-14) | Maak gedeelde redactionele feedkaarten | P1 | F3b | M | Gedeeltelijk aanwezig | Geblokkeerd |
 | [HTP-15](#htp-15) | Geef weekvooruitblik een eigen hoofdblok | P1 | F3b | M | Gedeeltelijk aanwezig | Backlog |
@@ -41,7 +41,7 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-17](#htp-17) | Herstel artikelcontext en genummerde takeaways | P1 | F3b | M | Gedeeltelijk aanwezig | Backlog |
 | [HTP-18](#htp-18) | Gebruik update-thumbnail als videoposter | P1 | F4 | S | Nog uit te voeren | Backlog |
 | [HTP-19](#htp-19) | Onderzoek en reproduceer YouTube-fout 153 | P1 | F1 (diagnose), herstel pas F4 | S | Nader te onderzoeken | Geblokkeerd |
-| [HTP-20](#htp-20) | Controleer mogelijkheden van elke videoprovider | P1 | F3a | S | Nader te onderzoeken | Backlog |
+| [HTP-20](#htp-20) | Controleer mogelijkheden van elke videoprovider | P1 | F3a | S | Nader te onderzoeken | Done |
 | [HTP-21](#htp-21) | Voeg snelheidsvoorkeur en veilige sneltoetsen toe | P2 | F4 | M | Nader te onderzoeken / gedeeltelijk | Backlog |
 | [HTP-22](#htp-22) | Modelleer veilige videopositie en voltooiing | P1 | F4 | M | Gedeeltelijk aanwezig | Geblokkeerd |
 | [HTP-23](#htp-23) | Sla videopositie op en toon hervatten in speler/lijsten | P1 | F4 | M | Nog uit te voeren | Backlog |
@@ -341,7 +341,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 06 p.17-18; 07 p.20.
 - **Prioriteit / fase / omvang:** P1 / F3a / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Gedeeltelijk aanwezig / **Done**.
 - **Resultaat:** Eén verliesvrij marktcontract voor legacy- en structured updates, inclusief zes documentmarkten en marktgekoppelde weekhoofdstukken.
 - **Afhankelijkheden:** HTP-01; gerichte migratiebaseline gekoppeld aan bestaand issue #28.
 - **Besluiten / blokkades:** Bestaand macro/indices/general behouden; onderscheid markt, type en invalshoek vastleggen.
@@ -349,13 +349,13 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Acceptatiecriteria**
 
-- [ ] Crypto/Forex/Aandelen/Goud/Commodities/Trading bestaan; één update kan meerdere markten dragen; bestaande waarden/typen/historiek blijven traceerbaar.
-- [ ] Structured editor/action/filter overschrijft meerdere markten niet met één categorie; compatibiliteitsmapping en migratie zijn expliciet en herhaalbaar.
-- [ ] Weekdatum/periode en hoofdstuk titel+seconden hergebruikt; optionele markt per hoofdstuk toegevoegd/valideerbaar; ongeldige tijd/duur en oude hoofdstukken zonder markt veilig.
+- [x] Crypto/Forex/Aandelen/Goud/Commodities/Trading bestaan; één update kan meerdere markten dragen; bestaande waarden/typen/historiek blijven traceerbaar.
+- [x] Structured editor/action/filter overschrijft meerdere markten niet met één categorie; compatibiliteitsmapping en migratie zijn expliciet en herhaalbaar.
+- [x] Weekdatum/periode en hoofdstuk titel+seconden hergebruikt; optionele markt per hoofdstuk toegevoegd/valideerbaar; ongeldige tijd/duur en oude hoofdstukken zonder markt veilig.
 
 **Verificatie:** Voor/na-fixture van alle legacy/structured types en meerdere markten; SQL constraints/RLS + action-/filtertests; migratie dry-run en rollback/databehoudplan in testomgeving.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, lokale productiebuild 127.0.0.1:3118 / Supabase 64321, synthetische student/free/adminaccounts. Commit 726c615 / #61: zes documentmarkten plus aparte Macro/Indices/Algemeen, meervoudige structured/legacy-save en filters, hergebruik week/period/chapter met optionele markt. 250 tests, SQL-herhaling/checksums en drie echte formulier/action/DB-roundtrips met author/date/history/URL-behoud; lege en ongeldige invoer schrijft niets. [F3a-contract en bewijs](HTP-F3A-VERIFICATIE.md). Geen remote migratie.
 
 
 **Baselinevervolg:** #28 blijft de aparte historische/product-cutoverpoort. De extra F2-betaalsimulatie bevestigt dat main bewust niveau-2-RLS voor updates/live behoudt; geen betaalactivering of RLS-cutover als impliciet onderdeel van F3a. Zie F2-rapport.
@@ -523,21 +523,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 09 p.24; 08 p.22.
 - **Prioriteit / fase / omvang:** P1 / F3a / S.
-- **Beoordeling / status:** Nader te onderzoeken / **Backlog**.
+- **Beoordeling / status:** Nader te onderzoeken / **Done**.
 - **Resultaat:** Een geteste provider-/browsermatrix voor snelheid, pitch, controls, shortcuts, events, poster en seek.
 - **Afhankelijkheden:** HTP-01 vóór runtimecontrole.
-- **Besluiten / blokkades:** Resultaat bepaalt uitvoerbare Mux/Vimeo/YouTube-scope.
+- **Besluiten / blokkades:** Ward bevestigt op 17 oktober 2026: alleen Mux actief, Vimeo/YouTube worden niet meer gebruikt. Die adapters blijven alleen voor legacycompatibiliteit. Geen providervervanging; de bevindingen bepalen latere Mux-scope.
 - **Bestaande implementatie:** E09-E10; providers bestaan, defaultcontrols zijn niet runtime geïnspecteerd.
 
 **Acceptatiecriteria**
 
-- [ ] Mux/Vimeo/YouTube en daadwerkelijk gebruikte accountinstellingen hebben een matrix ondersteunt/beperkt/onbekend met bewijs.
-- [ ] 0,5/0,75 en zichtbare snelheid, pitch, toetsen, fullscreen, timeupdate/ended/seek, mobiele autoplay en toegankelijke controls onderzocht.
-- [ ] Afwijkende providerbeperkingen zijn productmatig besloten vóór HTP-18/21-24; bestaand werk niet vervangen zonder reden.
+- [x] Actieve Mux en daadwerkelijk gebruikte playbackinstellingen hebben een matrix ondersteunt/beperkt/onbekend met bewijs. De oorspronkelijke Vimeo/YouTube-proef is door Wards expliciete providerbesluit vervallen; hun legacybeperkingen blijven gedocumenteerd.
+- [x] 0,5/0,75 en zichtbare snelheid, pitch, toetsen, fullscreen, timeupdate/ended/seek, mobiele autoplay en toegankelijke controls onderzocht.
+- [x] Ward heeft de actieve-providerkeuze expliciet besloten: uitsluitend Mux. Beperkingen zijn vastgelegd als voorwaarden voor HTP-18/21-24; resterende UI-/browserkeuzes en uitvoering vragen bij die taken afzonderlijke fasegoedkeuring. Bestaand werk is niet vervangen.
 
 **Verificatie:** Kleine lokale proef met synthetische/geschikte testmedia, accountvoorwaarden en actuele officiële providerdocs controleren bij uitvoering; geen betaalde calls of nieuwe dependencies in analyse.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, commit 6829c38 / #62; Ward bevestigt uitsluitend Mux actief. Read-only inventaris: vijf gereedstaande public Mux-video-updates. Werkelijke lokale app in Chrome desktop/mobiele emulatie: zes rates/pitchflag, zichtbaarheids-/menubeperking, poster, seek/herhaling/events/ended, toetsen/focus/fullscreen en fresh-context autoplay onderzocht. Matrix ondersteunt/beperkt/onbekend in [F3a-bewijs](HTP-F3A-VERIFICATIE.md). Mobiele knop is nu verborgen en slow rates ontbreken in standaardmenu; latere spelerfase implementeert die. Geen vervanging, providerwrite of universele browserclaim.
 
 <a id="htp-21"></a>
 
@@ -1131,7 +1131,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Gebruik synthetische fixtures; non-admin RLS en directe assetrequests, fout/retry/missingmigration testen. CI-scripts eerst op geschiktheid controleren; geen productieschrijfacties in planningsfase.
 
-**Bewijs van uitvoering:** F1- en F2-deelbewijs geleverd in [F1-verificatie](HTP-F1-VERIFICATIE.md) en [F2-verificatie](HTP-F2-VERIFICATIE.md). Status Backlog voor controles van nog niet goedgekeurde fasen; de integrale F10-criteria blijven open.
+**Bewijs van uitvoering:** F1-, F2- en F3a-deelbewijs geleverd in [F1-verificatie](HTP-F1-VERIFICATIE.md), [F2-verificatie](HTP-F2-VERIFICATIE.md) en [F3a-contract/verificatie](HTP-F3A-VERIFICATIE.md). F2 is gepubliceerd als main 64f3136; F3a alleen lokaal (726c615/6829c38), 250 tests en SQL/browser/AA-bewijs. Status Backlog voor controles van nog niet goedgekeurde fasen; de integrale F10-criteria blijven open.
 
 <a id="htp-48"></a>
 
@@ -1153,7 +1153,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Controleer alle IDs/dependencies/bronnen en borditems; lees na schrijven de statussen/inhoud terug. Bij faseoverdracht snapshot+besluitlog+bewijslocatie bijwerken; huidig opzetten is geen toestemming voor code.
 
-**Bewijs van uitvoering:** huidige F1/F2-overdracht gecontroleerd: 49 unieke IDs, bestaande bordkaarten behouden, 13 Done met bron/criteria/bewijs, volgende fasen niet gestart. Status Ready voor onderhoud bij een volgende goedgekeurde fase; geen definitieve afronding van de doorlopende borging.
+**Bewijs van uitvoering:** huidige F1/F2/F3a-overdracht gecontroleerd: 49 unieke IDs, bestaande bordkaarten behouden, 15 Done met bron/criteria/bewijs; F2 gepubliceerd, F3a alleen lokaal, stop vóór F3b. Status Ready voor onderhoud bij een volgende goedgekeurde fase; geen definitieve afronding van de doorlopende borging.
 
 
 

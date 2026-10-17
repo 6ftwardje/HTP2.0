@@ -124,3 +124,10 @@ Project 3 bevatte 15 items over multi-formatupdates, waaronder MU-7/MU-9 en M1.3
 D4 is expliciet beslist: alleen bel en huidig klikgedrag. F2 heeft de shell, accountzone, meldingenbron/paginering/read/delete/UI en dashboardbasis lokaal uitgevoerd; HTP-06 t/m 11 en 39 zijn aantoonbaar gecontroleerd. Het volledig klikbare bestaande kaartvlak staat als HTP-49 al op main; het resterende F3b-kaartontwerp blijft onuitgevoerd. Bron- en commitbewijs staan in het F2-verificatierapport.
 
 De verse lokale database bevestigt main-migratie 20260922020000_restore_level_two_content_access.sql: private update/live-RLS is bewust nog op niveau 2. De afzonderlijke betaalsimulatie is geen toestemming voor cutover; #28 en het productbesluit blijven leidend. De afwijking van het oude lokale migratieregister is niet door een reset of blind herstel opgelost; F2 gebruikt een aparte lokale database.
+
+
+## Uitvoeringsaanvulling F3a en F2-release
+
+F2 is op Wards expliciete opdracht gereleaset via PR #60, main 64f3136; CI, verse Supabase/chat-integratie en main-CI groen. Geen remote schema-uitrol of betaalactivering. F3a is daarna uitsluitend lokaal goedgekeurd. Het bestaande vier-marktenmodel en de enkelvoudige structured categorie zijn vervangen door één volledige marktprojectie met zes documentmarkten plus afzonderlijke historische Macro/Indices/Algemeen. Bestaande type-, perspective-, week-/periode-/hoofdstukvelden blijven autoriteit; geen automatische omzetting van financiële labels of historie. Mapping, additieve migratie, herhaalbaarheid en bewijs: HTP-F3A-VERIFICATIE.md.
+
+**Expliciet nieuw besluit van Ward:** Vimeo en YouTube worden niet meer gebruikt; alles loopt via Mux en alle nieuwe video-updates gebruiken de gekoppelde Mux-integratie. Read-only inventaris bevestigt vijf gereedstaande Mux-updates met public playback. HTP-20 richt runtimebewijs daarom op Mux; Vimeo/YouTube blijven uitsluitend historische code-inventaris, niet stil vervangen en niet als werkende actuele providers afgevinkt. HTP-19/153 blijft afzonderlijk historisch onderzoek. F3b, F4 en latere fasen zijn niet gestart of goedgekeurd.

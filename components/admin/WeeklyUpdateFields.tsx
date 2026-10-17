@@ -5,13 +5,14 @@ import { adminRemoveChartImage } from "@/app/actions/admin/weekly-updates";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { MarketUpdateStructureFields } from "@/components/admin/MarketUpdateStructureFields";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
+import { formatMarketChapters } from "@/lib/market-chapters";
+import { CATEGORY_OPTIONS, getUpdateMarkets } from "@/lib/market-update-structure";
 import { getUpdateStructure } from "@/lib/market-update-structure";
 import { structureFallbackBody } from "@/lib/market-update-editing";
 import {
   getIsoWeekNumber,
   getMarketAnalysisTypeLabel,
   MARKET_ANALYSIS_TYPE_OPTIONS,
-  MARKET_OPTIONS,
 } from "@/lib/market-analysis";
 import type {
   MarketAnalysisType,
@@ -152,7 +153,7 @@ export function WeeklyUpdateFields({
         <summary className="cursor-pointer text-sm font-semibold">Artikelopmaak (optioneel)</summary>
         <label className="block space-y-1.5"><span className="text-sm font-semibold">Artikelinhoud</span><textarea name="article_html" defaultValue={update?.article_html ?? ""} rows={12} maxLength={250000} className={fieldClass()} /><span className="block text-xs leading-5 text-[var(--muted)]">HTML met alinea’s, koppen, lijsten en afbeeldingen in de gewenste volgorde. Zonder artikelinhoud wordt het bericht met eventuele charts getoond.</span></label>
       </details>
-      {!structured ? <fieldset className="space-y-2"><legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Markten</legend><div className="flex flex-wrap gap-2">{[...MARKET_OPTIONS, { value: "macro" as const, label: "Macro" }].map((option) => <label key={option.value} className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm"><input name="markets" type="checkbox" value={option.value} defaultChecked={update?.markets?.includes(option.value) || update?.market === option.value} />{option.label}</label>)}</div></fieldset> : null}
+      {!structured ? <fieldset className="space-y-2"><legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Markten</legend><input type="hidden" name="markets_present" value="1" /><div className="flex flex-wrap gap-2">{CATEGORY_OPTIONS.map((option) => <label key={option.value} className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm"><input name="markets" type="checkbox" value={option.value} defaultChecked={getUpdateMarkets(update).includes(option.value)} />{option.label}</label>)}</div></fieldset> : null}
       {contentFormat === "chart" ? <div className="space-y-2 rounded-xl border border-[var(--border)] p-3"><label className="block space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Charts (1–4, max. 10 MB)</span><input ref={chartFileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={update?.is_published} className={fieldClass()} /></label>{update?.image_paths.map((path, index) => <div key={path} className="flex items-center gap-3"><img src={`/api/market-updates/${update.id}/images/${index}`} alt={`Chart ${index + 1}`} className="h-20 w-32 rounded object-contain" /><span className="text-xs">Chart {index + 1}</span>{!update.is_published ? <button type="button" className="cb-btn cb-btn-secondary text-xs" onClick={async () => { const result = await adminRemoveChartImage(update.id, path); if (result.success) window.location.reload(); }}>Verwijder</button> : null}</div>)}</div> : null}
       <input type="hidden" name="type" value="market_update" /><input type="hidden" name="access_tier" value={update?.access_tier ?? "subscription"} /><input type="hidden" name="slug" value={update?.slug ?? ""} /><input type="hidden" name="market" value={update?.market ?? ""} /><input type="hidden" name="mentor_student_id" value={update?.mentor_student_id ?? ""} /><input type="hidden" name="actuality_status" value={update?.actuality_status ?? "current"} />{!structured ? <input type="hidden" name="summary" value={update?.summary ?? ""} /> : null}<input type="hidden" name="key_takeaways" value={(update?.key_takeaways ?? []).join("\n")} /><input type="hidden" name="event_context" value={update?.event_context ?? ""} /><input type="hidden" name="period_label" value={update?.period_label ?? ""} /><input type="hidden" name="related_content" value={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} />
       <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5"><input name="is_published" type="checkbox" defaultChecked={update?.is_published ?? false} disabled={!update} /><span className="text-sm font-semibold">{update ? "Gepubliceerd" : "Eerst als concept opslaan; daarna publiceren"}</span></label>
@@ -173,7 +174,7 @@ export function WeeklyUpdateFields({
       </label>
       <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Format <span className="text-red-600">*</span>
+          Format <span className="text-red-600 dark:text-red-400">*</span>
         </span>
         <select
           name="type"
@@ -196,13 +197,14 @@ export function WeeklyUpdateFields({
       {structureOptIn}
       {structured ? <MarketUpdateStructureFields update={update} /> : null}
       {!structured ? <fieldset className="space-y-2">
+        <input type="hidden" name="markets_present" value="1" />
         <legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Markten {analysisType === "market_update" ? <span className="text-red-600">*</span> : null}
+          Markten {analysisType === "market_update" ? <span className="text-red-600 dark:text-red-400">*</span> : null}
         </legend>
         <div className="flex flex-wrap gap-2">
-          {[...MARKET_OPTIONS, { value: "macro" as const, label: "Macro" }].map((option) => (
+          {CATEGORY_OPTIONS.map((option) => (
             <label key={option.value} className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm">
-              <input name="markets" type="checkbox" value={option.value} defaultChecked={update?.markets?.includes(option.value) || update?.market === option.value} />
+              <input name="markets" type="checkbox" value={option.value} defaultChecked={getUpdateMarkets(update).includes(option.value)} />
               <span>{option.label}</span>
             </label>
           ))}
@@ -304,7 +306,7 @@ export function WeeklyUpdateFields({
           className={fieldClass()}
         />
       </label>
-      {contentFormat === "video" ? <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken / timestamps</span><textarea name="chapters" defaultValue={(update?.chapters ?? []).map((chapter) => `${Math.floor(chapter.seconds / 60)}:${String(chapter.seconds % 60).padStart(2, "0")} ${chapter.title}`).join("\n")} rows={4} placeholder="00:00 Introductie" className={fieldClass()} /></label> : null}
+      {contentFormat === "video" ? <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken / timestamps</span><textarea name="chapters" defaultValue={formatMarketChapters(update?.chapters ?? [])} rows={4} placeholder={"00:00 Introductie\n12:40 Forex | forex\n18:10 Goud | gold"} className={fieldClass()} /><span className="block text-xs leading-5 text-[var(--muted)]">Eén regel per hoofdstuk: mm:ss Titel. Voeg eventueel | marktcode toe, zoals forex of gold. Gebruik een geselecteerde markt.</span></label> : null}
       <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Gerelateerde content</span><textarea name="related_content" defaultValue={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} rows={3} placeholder="Les risicobeheer | /lessons/risicobeheer" className={fieldClass()} /></label>
       <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5">
         <input name="is_published" type="checkbox" defaultChecked={update?.is_published ?? false} disabled={!update} className="h-4 w-4" />

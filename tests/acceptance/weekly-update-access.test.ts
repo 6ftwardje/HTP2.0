@@ -9,10 +9,11 @@ import {
   canStudentAccessWeeklyUpdate,
   SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS,
 } from "../../lib/weekly-update-access";
-import { getMondayDate } from "../../lib/market-analysis";
+import { getMondayDate, MARKET_OPTIONS } from "../../lib/market-analysis";
 import * as marketArticle from "../../lib/market-article";
 import * as marketAuthor from "../../lib/market-update-author";
 import * as marketPolicy from "../../lib/market-update-policy";
+import * as marketChapters from "../../lib/market-chapters";
 import * as marketStructure from "../../lib/market-update-structure";
 import * as marketEditing from "../../lib/market-update-editing";
 
@@ -21,6 +22,7 @@ const sharedDependencies: Record<string, unknown> = {
   "@/lib/market-update-author": marketAuthor,
   "@/lib/market-update-policy": marketPolicy,
   "@/lib/market-update-structure": marketStructure,
+  "@/lib/market-chapters": marketChapters,
   "@/lib/market-update-editing": marketEditing,
   "@/lib/supabase/service": {},
 };
@@ -92,7 +94,7 @@ test("admin can save an uploaded video for everyone without changing publication
     "@/lib/transcription/start-policy": {},
     "@/lib/transcription/cost-policy": {},
     "@/lib/weekly-update-access": { SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS },
-    "@/lib/market-analysis": { getMondayDate },
+    "@/lib/market-analysis": { getMondayDate, MARKET_OPTIONS },
   });
   const form = new FormData();
   form.set("title", "Synthetische update");
@@ -285,6 +287,11 @@ for (const paid of [false, true]) {
         const query = {
           select: () => query,
           eq: (key: string, value: unknown) => { filters.push([key, value]); return query; },
+          or: (expression: string) => {
+            assert.equal(expression, "markets.cs.{crypto},market.eq.crypto,update_structure->>category.eq.crypto");
+            filters.push(["market", "crypto"]); // These original authorization fixtures have only scalar tags.
+            return query;
+          },
           order: () => query,
           limit: (value: number) => { limit = value; return query; },
           then(onResult: (result: { data: typeof rows; error: null }) => unknown) {

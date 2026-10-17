@@ -7,6 +7,7 @@ import ts from "typescript";
 import * as marketArticle from "../../lib/market-article";
 import * as marketAuthor from "../../lib/market-update-author";
 import * as marketPolicy from "../../lib/market-update-policy";
+import * as marketChapters from "../../lib/market-chapters";
 import * as marketStructure from "../../lib/market-update-structure";
 import * as marketEditing from "../../lib/market-update-editing";
 import * as marketAnalysis from "../../lib/market-analysis";
@@ -104,6 +105,7 @@ function harness(initial: WeeklyUpdate[] = []) {
     "@/lib/market-update-author": marketAuthor,
     "@/lib/market-update-policy": marketPolicy,
     "@/lib/market-update-structure": marketStructure,
+  "@/lib/market-chapters": marketChapters,
     "@/lib/market-update-editing": marketEditing,
     "@/lib/market-analysis": marketAnalysis,
     "@/lib/weekly-update-access": { SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS },
@@ -165,7 +167,7 @@ test("quick creation maps general and indices without inventing a legacy market 
     assert.equal(result.success, true, result.error);
     const created = testCase.rows.get(result.weeklyUpdateId)!;
     assert.equal(created.market, null);
-    assert.deepEqual(created.markets, category === "general" ? ["macro"] : []);
+    assert.deepEqual(created.markets, category === "general" ? ["macro"] : ["indices"]);
     assert.equal(created.summary, source.summary);
     assert.match(created.body!, /Onderbouwing:/);
     assert.ok(created.body!.includes(source.summary!));
@@ -384,4 +386,84 @@ test("duplication refreshes a generated body after schedule reset and preserves 
     assert.ok(!duplicate.body!.includes("2099-10-16"));
     assert.deepEqual(testCase.rows.get(source.id), source);
   }
+});
+
+test("F3a structured create/edit keeps all explicit markets across every template without changing its meaning", async () => {
+  for (const type of ["setup", "analysis", "news", "education"] as const) {
+    const testCase = harness();
+    const metadata = structure(type);
+    const request = form(row({ update_structure: metadata }));
+    request.set("is_published", "false");
+    request.set("markets_present", "1");
+    for (const market of ["forex", "gold", "trading", "indices", "macro", "general"]) request.append("markets", market);
+    const created = await testCase.actions.adminCreateQuickMarketUpdate(request);
+    assert.equal(created.success, true, created.error);
+    const before = copy(testCase.rows.get(created.weeklyUpdateId)!);
+    assert.deepEqual(before.markets, ["forex", "gold", "trading", "indices", "macro", "general"]);
+    assert.equal(before.update_structure!.type, type);
+    assert.equal(before.update_structure!.category, "forex");
+    const edit = form(before);
+    edit.set("markets_present", "1");
+    for (const market of before.markets!) edit.append("markets", market);
+    assert.equal((await testCase.actions.adminUpdateWeeklyUpdate(before.id, edit)).success, true);
+    const after = testCase.rows.get(before.id)!;
+    assert.deepEqual(after.markets, before.markets);
+    assert.deepEqual(after.update_structure, before.update_structure);
+    for (const key of ["created_at", "published_at", "week_start_date", "slug", "created_by_student_id", "published_by_display_name"] as const) assert.deepEqual(after[key], before[key]);
+  }
+});
+
+test("F3a old form omissions retain multi-market/chapters while explicit empty or unsupported tags fail without a write", async () => {
+  const initial = row({ markets: ["crypto", "gold"], chapters: [{ title: "Goud", seconds: 10, market: "gold" }], video_duration_seconds: 60 });
+  const testCase = harness([initial]);
+  assert.equal((await testCase.actions.adminUpdateWeeklyUpdate(initial.id, form(initial))).success, true);
+  assert.deepEqual(testCase.rows.get(initial.id)!.markets, initial.markets);
+  assert.deepEqual(testCase.rows.get(initial.id)!.chapters, initial.chapters);
+  for (const tag of [null, "unsupported"]) {
+    const before = copy(testCase.rows.get(initial.id)!);
+    const request = form(before); request.set("markets_present", "1");
+    if (tag) request.append("markets", tag);
+    assert.equal((await testCase.actions.adminUpdateWeeklyUpdate(initial.id, request)).success, false);
+    assert.deepEqual(testCase.rows.get(initial.id), before);
+  }
+});
+
+test("F3a validates chapter syntax, duration and selected market in the actual action before persistence", async () => {
+  const initial = row({ content_format: "video", markets: ["crypto", "gold"], video_duration_seconds: 60 });
+  const testCase = harness([initial]);
+  for (const text of ["nonsense", "00:60 Fout", "00:00 Intro\n00:00 Dubbel", "01:00 Einde", "00:10 Forex | forex", "00:10 Goud | GOLD"]) {
+    const request = form(initial); request.set("chapters", text);
+    const result = await testCase.actions.adminUpdateWeeklyUpdate(initial.id, request);
+    assert.equal(result.success, false, text);
+    assert.deepEqual(testCase.rows.get(initial.id), initial);
+  }
+  const request = form(initial); request.set("chapters", "00:00 Intro\n00:10 Goud | gold");
+  assert.equal((await testCase.actions.adminUpdateWeeklyUpdate(initial.id, request)).success, true);
+  assert.deepEqual(testCase.rows.get(initial.id)!.chapters, [{ title: "Intro", seconds: 0 }, { title: "Goud", seconds: 10, market: "gold" }]);
+});
+
+test("F3a explicit replacement without JSON metadata updates the compatibility category and does not resurrect removed tags", async () => {
+  const initial = row({ markets: ["crypto", "forex"] });
+  const testCase = harness([initial]);
+  const request = form(initial); request.delete("update_structure"); request.set("markets_present", "1"); request.append("markets", "gold");
+  assert.equal((await testCase.actions.adminUpdateWeeklyUpdate(initial.id, request)).success, true);
+  const saved = testCase.rows.get(initial.id)!;
+  assert.deepEqual(saved.markets, ["gold"]);
+  assert.equal(saved.update_structure!.category, "gold");
+  assert.deepEqual(marketStructure.getUpdateMarkets(saved), ["gold"]);
+});
+
+test("F3a legacy quick composer keeps its body limits while accepting the expanded tags", async () => {
+  for (const body of ["te kort", "x".repeat(12001)]) {
+    const testCase = harness();const request=new FormData();request.set("body",body);request.append("markets","gold");
+    assert.equal((await testCase.actions.adminCreateQuickMarketUpdate(request)).success,false);
+    assert.equal(testCase.rows.size,0);
+  }
+});
+
+test("F3a explicit empty outlook markets are rejected while an old omitted selection remains lossless", async () => {
+  const initial = row({ type:"weekly_outlook",market:null,markets:["forex","gold"],update_structure:null,content_format:"video" });
+  const testCase=harness([initial]);const request=form(initial);request.set("type","weekly_outlook");request.delete("update_structure");request.set("markets_present","1");
+  const rejected=await testCase.actions.adminUpdateWeeklyUpdate(initial.id,request);assert.equal(rejected.success,false);assert.match(rejected.error,/minimaal één markt/);assert.deepEqual(testCase.rows.get(initial.id),initial);
+  request.delete("markets_present");assert.equal((await testCase.actions.adminUpdateWeeklyUpdate(initial.id,request)).success,true);assert.deepEqual(testCase.rows.get(initial.id)!.markets,initial.markets);
 });

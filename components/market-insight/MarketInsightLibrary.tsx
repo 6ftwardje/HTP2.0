@@ -10,7 +10,7 @@ import { marketUpdateAuthorName } from "@/lib/market-update-author";
 import {
   CATEGORY_OPTIONS, UPDATE_TYPE_OPTIONS, SETUP_STATUS_OPTIONS,
   categoryLabel, updateTypeLabel, setupStatusLabel, getUpdateStructure,
-  getUpdateCategory, isOpenSetup, marketUpdateActivityAt, isPinnedUpdate, isUrgentUpdate,
+  getUpdateMarkets, matchesUpdateMarket, isOpenSetup, marketUpdateActivityAt, isPinnedUpdate, isUrgentUpdate,
   type UpdateCategory, type UpdateType, type SetupStatus,
 } from "@/lib/market-update-structure";
 import styles from "./MarketInsightLibrary.module.css";
@@ -36,15 +36,9 @@ function updateSummary(update: Update) {
   return plainText(getUpdateStructure(update) ? update.summary : update.summary || update.intro || update.body);
 }
 
-function legacyCategories(update: Update) {
-  const values = update.markets?.length ? update.markets : update.market ? [update.market] : [];
-  return values.map((market) => market === "macro" ? "Macro" : categoryLabel(market));
-}
-
 function UpdateRow({ update, pinned, urgent }: { update: Update; pinned: boolean; urgent: boolean }) {
   const structure = getUpdateStructure(update);
   const weekly = update.type === "weekly_outlook";
-  const category = getUpdateCategory(update);
   const publishedAt = update.published_at ?? update.created_at;
   const activityAt = marketUpdateActivityAt(update);
   const updated = Boolean(structure && new Date(activityAt).getTime() > new Date(publishedAt).getTime());
@@ -54,7 +48,7 @@ function UpdateRow({ update, pinned, urgent }: { update: Update; pinned: boolean
   const chart = update.content_format === "chart" && Boolean(update.image_paths?.length);
   const thumbnail = chart ? `/api/market-updates/${update.id}/images/0` : update.thumbnail_url;
   const showThumbnail = video || chart || Boolean(thumbnail);
-  const categories = structure && category ? [categoryLabel(category)] : legacyCategories(update);
+  const categories = getUpdateMarkets(update).map(categoryLabel);
   const reached = structure?.targets.filter((target) => Boolean(target.reached_at)).length ?? 0;
   const setupMeta = structure?.type === "setup"
     ? [structure.fields.instrument, structure.fields.direction === "long" ? "Long" : structure.fields.direction === "short" ? "Short" : structure.fields.direction, structure.fields.timeframe].filter(Boolean)
@@ -137,8 +131,7 @@ export function MarketInsightLibrary({ updates, initialMarket = "all" }: { updat
     if (content === "weekly_outlook" && update.type !== "weekly_outlook") return false;
     if (content === "updates" && update.type === "weekly_outlook") return false;
     if (category !== "all") {
-      const originalMarkets: readonly string[] = update.markets?.length ? update.markets : update.market ? [update.market] : [];
-      const matchesCategory = structure ? structure.category === category : getUpdateCategory(update) === category || originalMarkets.includes(category);
+      const matchesCategory = matchesUpdateMarket(update, category);
       if (!matchesCategory) return false;
     }
     if (type !== "all" && (update.type === "weekly_outlook" || structure?.type !== type)) return false;
@@ -162,7 +155,7 @@ export function MarketInsightLibrary({ updates, initialMarket = "all" }: { updat
     </nav>
     <div className={styles.filters}>
       <label className={styles.search}><span>Zoeken</span><div className={styles.searchControl}><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="m13 13 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Onderwerp of instrument" /></div></label>
-      <label><span>Categorie</span><select value={category} onChange={(event) => setCategory(event.target.value as CategoryFilter)}><option value="all">Alle categorieën</option>{CATEGORY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}{category === "macro" ? <option value="macro">Macro</option> : null}</select></label>
+      <label><span>Categorie</span><select value={category} onChange={(event) => setCategory(event.target.value as CategoryFilter)}><option value="all">Alle categorieën</option>{CATEGORY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
       {view !== "open" ? <label><span>Type</span><select value={type} onChange={(event) => { setType(event.target.value as "all" | UpdateType); setStatus("all"); }}><option value="all">Alle types</option>{UPDATE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label> : null}
       {view !== "open" ? <label><span>Inhoud</span><select value={content} onChange={(event) => setContent(event.target.value as ContentFilter)}><option value="all">Alle inhoud</option><option value="updates">Updates</option><option value="weekly_outlook">Weekvooruitblikken</option></select></label> : null}
       {type === "setup" || view === "open" ? <label><span>Setupstatus</span><select value={status} onChange={(event) => setStatus(event.target.value as "all" | SetupStatus)}><option value="all">Alle statussen</option>{SETUP_STATUS_OPTIONS.filter((option) => view !== "open" || option.value !== "closed").map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label> : null}

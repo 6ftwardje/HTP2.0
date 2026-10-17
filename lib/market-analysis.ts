@@ -4,7 +4,9 @@ export const MARKET_OPTIONS: Array<{ value: Market; label: string }> = [
   { value: "forex", label: "Forex" },
   { value: "crypto", label: "Crypto" },
   { value: "stocks", label: "Aandelen" },
-  { value: "commodities", label: "Grondstoffen" },
+  { value: "gold", label: "Goud" },
+  { value: "commodities", label: "Commodities" },
+  { value: "trading", label: "Trading" },
 ];
 
 export const MARKET_ANALYSIS_TYPE_OPTIONS: Array<{
