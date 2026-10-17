@@ -343,3 +343,33 @@ html, body { background: var(--background); color: var(--foreground); }
 .cb-relative-date:is(:hover, :focus-visible) .cb-date-tooltip,
 a:focus-visible .cb-date-tooltip, button:focus-visible .cb-date-tooltip { opacity: 1; visibility: visible; }
 @media (prefers-reduced-motion: reduce) { .cb-date-tooltip { transition: none; } }
+
+/* F2: header participates in shell layout; content never sits beneath controls. */
+.platform-topbar {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: max(12px, env(safe-area-inset-top)) 24px 12px;
+  background: var(--background);
+}
+.platform-toolbar-control {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: none;
+}
+.platform-toolbar-control:hover { background: var(--surface-hover); }
+.platform-toolbar-control:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 767px) { .platform-topbar { padding-right: 16px; padding-left: 16px; } }
+.platform-topbar { --notification-align-offset: 52px; }

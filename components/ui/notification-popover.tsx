@@ -1,235 +1,41 @@
 "use client";
 
-import { RelativeDate } from "@/components/ui/RelativeDate";
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import {
-  markNotificationsReadResult,
-  markOneNotificationReadResult,
-} from "@/app/actions/mentor-chat";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { NotificationList } from "@/components/notifications/NotificationList";
+import { NavigationIcon } from "@/components/ui/NavigationIcon";
+import { NOTIFICATION_PREVIEW_LIMIT, notificationBadgeLabel, type NotificationItem } from "@/lib/notification-policy";
+import styles from "@/components/notifications/Notifications.module.css";
 
-export type FloatingNotification = {
-  id: string;
-  title: string;
-  description: string;
-  timestamp: string;
-  read: boolean;
-  href: string | null;
-};
+export type FloatingNotification = NotificationItem;
 
-function BellIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M6 9a6 6 0 1 1 12 0c0 6 2 6 2 8H4c0-2 2-2 2-8Z"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.5 20a3 3 0 0 0 5 0"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-export function NotificationPopover({
-  notifications,
-  unreadCount,
-}: {
-  notifications: FloatingNotification[];
-  unreadCount: number;
+export function NotificationPopover({ notifications, unreadCount, loadError }: {
+  notifications: FloatingNotification[]; unreadCount: number; loadError?: string | null;
 }) {
-  const router = useRouter();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const dedupedNotifications = Array.from(
-    new Map(
-      notifications.map((notification) => [notification.id, notification])
-    ).values()
-  );
-  function closePopover() {
-    setIsOpen(false);
-  }
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    function onPointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        closePopover();
-      }
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") closePopover();
-    }
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [isOpen]);
-
-  function markAll() {
-    setError(null);
-    startTransition(async () => {
-      try {
-        const result = await markNotificationsReadResult();
-        if (!result.success) {
-          setError(result.error ?? "Meldingen bijwerken mislukt.");
-          return;
-        }
-        closePopover();
-        router.refresh();
-      } catch {
-        setError("Meldingen bijwerken mislukt.");
-      }
-    });
-  }
-
-  function openNotification(notification: FloatingNotification) {
-    setError(null);
-    setPendingId(notification.id);
-    startTransition(async () => {
-      try {
-        if (!notification.read) {
-          const result = await markOneNotificationReadResult(notification.id);
-          if (!result.success) {
-            setError(result.error ?? "Melding openen mislukt.");
-            return;
-          }
-        }
-        closePopover();
-        if (notification.href) {
-          router.push(notification.href);
-        } else {
-          router.refresh();
-        }
-      } catch {
-        setError("Melding openen mislukt.");
-      } finally {
-        setPendingId(null);
-      }
-    });
-  }
-
-  const cappedUnread = Math.min(unreadCount, 99);
-
-  return (
-    <div
-      ref={rootRef}
-      className="pointer-events-none fixed right-4 top-[calc(4.75rem+env(safe-area-inset-top))] z-40 md:right-6 md:top-20"
-    >
-      <div className="relative pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => (isOpen ? closePopover() : setIsOpen(true))}
-          aria-label={
-            unreadCount > 0
-              ? `${unreadCount} ongelezen meldingen`
-              : "Meldingen openen"
-          }
-          aria-haspopup="dialog"
-          aria-expanded={isOpen}
-          className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_84%,var(--card)_16%)] text-[var(--foreground)] shadow-[0_12px_32px_rgba(0,0,0,0.18)] backdrop-blur-md transition hover:bg-[color-mix(in_oklab,var(--background)_72%,var(--card)_28%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-        >
-          <BellIcon />
-          {unreadCount > 0 && (
-            <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border border-[var(--background)] bg-[var(--foreground)] px-1 text-[0.65rem] font-extrabold leading-none text-[var(--background)]">
-              {cappedUnread}
-            </span>
-          )}
-        </button>
-
-        {isOpen && (
-          <section
-            role="dialog"
-            aria-label="Meldingen"
-            className="absolute right-0 top-14 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_88%,var(--card)_12%)] text-[var(--foreground)] shadow-2xl backdrop-blur-md"
-          >
-            <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-              <div>
-                <h2 className="text-sm font-extrabold">Meldingen</h2>
-                <p className="mt-0.5 text-xs text-[var(--muted)]">
-                  {unreadCount > 0 ? `${unreadCount} ongelezen` : "Alles gelezen"}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={markAll}
-                disabled={isPending || unreadCount === 0}
-                className="rounded-md px-2 py-1 text-xs font-bold text-[var(--muted)] transition hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] disabled:pointer-events-none disabled:opacity-40"
-              >
-                Alles gelezen
-              </button>
-            </div>
-
-            {error && (
-              <p className="border-b border-[var(--border)] px-4 py-2 text-xs font-semibold text-red-500">
-                {error}
-              </p>
-            )}
-
-            {dedupedNotifications.length > 0 ? (
-              <div className="max-h-[min(420px,calc(100dvh-170px))] divide-y divide-[var(--border)] overflow-y-auto">
-                {dedupedNotifications.map((notification) => (
-                  <button
-                    key={notification.id}
-                    type="button"
-                    onClick={() => openNotification(notification)}
-                    disabled={pendingId === notification.id}
-                    className="block w-full px-4 py-3 text-left transition hover:bg-[var(--surface-hover)] disabled:opacity-60"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          {!notification.read && (
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--foreground)]" />
-                          )}
-                          <h3 className="truncate text-sm font-bold text-[var(--foreground)]">
-                            {notification.title}
-                          </h3>
-                        </div>
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--muted)]">
-                          {notification.description || "Nieuwe update"}
-                        </p>
-                      </div>
-                      <RelativeDate value={notification.timestamp} focusable={false} className="shrink-0 text-xs font-medium text-[var(--muted)]" />
-                    </div>
-                    <span className="mt-2 inline-flex text-xs font-bold text-[var(--foreground)]">
-                      {pendingId === notification.id ? "Openen..." : "Openen"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="px-4 py-6 text-sm leading-6 text-[var(--muted)]">
-                Geen meldingen op dit moment.
-              </div>
-            )}
-
-            <div className="border-t border-[var(--border)] px-4 py-3">
-              <Link
-                href="/notifications"
-                onClick={closePopover}
-                className="inline-flex text-sm font-bold text-[var(--foreground)] underline-offset-4 hover:underline"
-              >
-                Alle meldingen
-              </Link>
-            </div>
-          </section>
-        )}
+  const [open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null),trigger=useRef<HTMLButtonElement>(null),heading=useRef<HTMLHeadingElement>(null);
+  const pathname=usePathname(),router=useRouter();
+  useEffect(()=>setOpen(false),[pathname]);
+  useEffect(()=>{
+    if(!open)return;
+    heading.current?.focus();
+    function outside(e: PointerEvent){if(!root.current?.contains(e.target as Node))setOpen(false);}
+    document.addEventListener("pointerdown",outside);return()=>document.removeEventListener("pointerdown",outside);
+  },[open]);
+  return <div ref={root} className={styles.popover} onKeyDown={e=>{if(e.key==="Escape"&&open){e.preventDefault();e.stopPropagation();setOpen(false);trigger.current?.focus();}}}
+    onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget))setOpen(false);}}>
+    <button ref={trigger} type="button" onClick={()=>setOpen(!open)} aria-label={unreadCount>0?unreadCount+" ongelezen meldingen":"Meldingen openen"}
+      aria-haspopup="dialog" aria-expanded={open} className="platform-toolbar-control relative">
+      <NavigationIcon name="notifications"/>
+      {unreadCount>0&&<span className={styles.badge} aria-hidden="true">{notificationBadgeLabel(unreadCount)}</span>}
+    </button>
+    {open&&<section role="dialog" aria-label="Meldingen" className={styles.panel}>
+      <div className={styles.panelHeader}><h2 ref={heading} tabIndex={-1}>Meldingen</h2><span title="Ongelezen meldingen van de laatste 30 dagen">{unreadCount} ongelezen</span></div>
+      <div className={styles.scroll}>
+        {loadError?<div className={styles.empty}><p role="alert">{loadError}</p><button type="button" className={styles.bulk} onClick={()=>router.refresh()}>Opnieuw proberen</button></div>
+          :<NotificationList notifications={notifications.slice(0,NOTIFICATION_PREVIEW_LIMIT)} compact onNavigate={()=>setOpen(false)}/>}
       </div>
-    </div>
-  );
+      <div className={styles.footer}><Link href="/notifications" onClick={()=>setOpen(false)}>Bekijk alle meldingen <span className="ml-1" aria-hidden="true">→</span></Link></div>
+    </section>}
+  </div>;
 }

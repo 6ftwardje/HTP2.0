@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { NavigationIcon } from "@/components/ui/NavigationIcon";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { PlatformTopbar } from "@/components/PlatformTopbar";
 import { BrandLogo } from "@/components/ui/Brand";
 import { useMobileDrawer } from "@/components/useMobileDrawer";
-import { clearChatDrafts } from "@/lib/chat-message-state";
+import type { FloatingNotification } from "@/components/ui/notification-popover";
+import { useNotificationsRealtime } from "@/lib/realtime-hooks";
+import { AccountMenu } from "@/components/AccountMenu";
 
 const adminNav = [
   {
@@ -50,10 +52,14 @@ const adminNav = [
 
 function SidebarContent({
   studentName,
+  studentId,
+  avatarPath,
   isChatMentor,
   onNavigate,
 }: {
   studentName: string | null;
+  studentId?: string | null;
+  avatarPath?: string | null;
   isChatMentor: boolean;
   onNavigate?: () => void;
 }) {
@@ -76,17 +82,6 @@ function SidebarContent({
           Admin
         </span>
       </div>
-
-      {studentName && (
-        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-[0_1px_0_rgba(28,25,23,0.04)] dark:shadow-[0_1px_0_rgba(255,255,255,0.06)]">
-          <div className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
-            Ingelogd als
-          </div>
-          <div className="mt-1 truncate text-sm font-semibold text-[var(--foreground)]">
-            {studentName}
-          </div>
-        </div>
-      )}
 
       <nav
         className="mt-8 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain"
@@ -120,17 +115,7 @@ function SidebarContent({
           </span>
           <span>Naar Academy</span>
         </Link>
-        <form action="/auth/signout" method="post" onSubmit={() => clearChatDrafts()}>
-          <button
-            type="submit"
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
-          >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center">
-              <NavigationIcon name="logout" />
-            </span>
-            <span>Uitloggen</span>
-          </button>
-        </form>
+        <AccountMenu name={studentName} studentId={studentId} avatarPath={avatarPath} accessLevel={3} onNavigate={onNavigate}/>
       </div>
     </div>
   );
@@ -139,14 +124,25 @@ function SidebarContent({
 export function AdminShell({
   children,
   studentName,
+  studentId = null,
+  avatarPath = null,
   isChatMentor = false,
+  floatingNotifications = [],
+  unreadNotificationCount = 0,
+  notificationError = null,
 }: {
   children: React.ReactNode;
   studentName: string | null;
   isChatMentor?: boolean;
+  floatingNotifications?: FloatingNotification[];
+  unreadNotificationCount?: number;
+  notificationError?: string | null;
+  studentId?: string | null;
+  avatarPath?: string | null;
 }) {
   const { mobileOpen, menuTriggerRef, menuCloseRef, menuPanelRef, openMobileMenu, closeMobileMenu } = useMobileDrawer();
   const pathname = usePathname();
+  useNotificationsRealtime(studentId);
   const isWideWorkspace = pathname.startsWith("/admin/videos");
 
   return (
@@ -155,6 +151,8 @@ export function AdminShell({
         <div className="flex h-full min-h-0 flex-col px-5 py-7">
           <SidebarContent
             studentName={studentName}
+            studentId={studentId}
+            avatarPath={avatarPath}
             isChatMentor={isChatMentor}
             onNavigate={() => closeMobileMenu(false)}
           />
@@ -186,6 +184,8 @@ export function AdminShell({
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-6">
               <SidebarContent
                 studentName={studentName}
+                studentId={studentId}
+                avatarPath={avatarPath}
                 isChatMentor={isChatMentor}
                 onNavigate={() => closeMobileMenu(false)}
               />
@@ -195,30 +195,8 @@ export function AdminShell({
       )}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="pointer-events-none fixed right-6 top-5 z-30 hidden md:block">
-          <ThemeToggle className="pointer-events-auto" />
-        </div>
-
-        <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_82%,var(--card)_18%)] px-4 py-3 backdrop-blur-md md:hidden">
-          <button
-            ref={menuTriggerRef}
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
-            onClick={openMobileMenu}
-            aria-expanded={mobileOpen}
-            aria-controls="admin-mobile-nav"
-          >
-            <NavigationIcon name="menu" />
-            Menu
-          </button>
-          <Link href="/admin" className="inline-flex items-center">
-            <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
-              Admin
-            </span>
-          </Link>
-          <ThemeToggle />
-        </div>
-
+        <PlatformTopbar menuTriggerRef={menuTriggerRef} mobileOpen={mobileOpen} openMobileMenu={openMobileMenu}
+          menuId="admin-mobile-nav" admin floatingNotifications={floatingNotifications} unreadNotificationCount={unreadNotificationCount} notificationError={notificationError}/>
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div
             className={
