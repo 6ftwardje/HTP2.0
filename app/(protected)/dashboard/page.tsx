@@ -1,6 +1,8 @@
+import { projectMarketFeedUpdates } from "@/lib/market-feed";
 import Link from "next/link";
 import { QuickMarketUpdateComposer } from "@/components/admin/QuickMarketUpdateComposer";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
+import { getMarketFeedAuthors } from "@/lib/market-feed-authors";
 import { RecentMarketUpdatesFeed } from "@/components/dashboard/RecentMarketUpdatesFeed";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { listDashboardDraftsAdmin } from "@/lib/admin/weekly-updates";
@@ -112,7 +114,7 @@ async function AdminDashboard() {
         <div><h2 id="admin-live-title" className="cb-section-title">Volgende live marktsessie</h2><p className="mt-1 text-sm text-[var(--muted)]">{nextLiveSession.title+" · "+sessionDate(nextLiveSession.starts_at)}</p></div>
         <Link href="/admin/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold underline-offset-4 hover:underline">Beheer sessies →</Link>
       </section>}
-      <RecentMarketUpdatesFeed updates={recentUpdates} title="Recent gepubliceerd" description="Deze marktupdates zijn zichtbaar voor studenten met toegang."/>
+      <RecentMarketUpdatesFeed updates={projectMarketFeedUpdates(recentUpdates)} authors={await getMarketFeedAuthors(recentUpdates)} title="Recent gepubliceerd" description="Deze marktupdates zijn zichtbaar voor studenten met toegang."/>
     </div>
   </div>;
 }
@@ -273,7 +275,7 @@ async function StudentDashboard({
           )}
         </section>
 
-        {hasSubscriberAccess && <RecentMarketUpdatesFeed updates={recentUpdates} />}
+        {hasSubscriberAccess && <RecentMarketUpdatesFeed updates={projectMarketFeedUpdates(recentUpdates)} authors={await getMarketFeedAuthors(recentUpdates)} />}
 
         {hasSubscriberAccess && nextLiveSession && (
           <section aria-labelledby="student-live-title" className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between">

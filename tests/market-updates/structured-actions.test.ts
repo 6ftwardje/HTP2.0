@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import * as marketEditorial from "../../lib/market-editorial";
 import * as marketArticle from "../../lib/market-article";
 import * as marketAuthor from "../../lib/market-update-author";
 import * as marketPolicy from "../../lib/market-update-policy";
@@ -101,7 +102,8 @@ function harness(initial: WeeklyUpdate[] = []) {
       return { copy: async (source: string, target: string) => { calls.chartCopies.push([source, target]); return { data: {}, error: null }; } };
     } } }) },
     "@/lib/admin/weekly-update-notifications": { notifyWeeklyUpdatePublished: async ({ weeklyUpdate }: { weeklyUpdate: WeeklyUpdate }) => { calls.notifications.push(weeklyUpdate.id); return { error: null, notified: 1 }; } },
-    "@/lib/market-article": marketArticle,
+    "@/lib/market-editorial": marketEditorial,
+  "@/lib/market-article": marketArticle,
     "@/lib/market-update-author": marketAuthor,
     "@/lib/market-update-policy": marketPolicy,
     "@/lib/market-update-structure": marketStructure,
@@ -467,3 +469,16 @@ test("F3a explicit empty outlook markets are rejected while an old omitted selec
   const rejected=await testCase.actions.adminUpdateWeeklyUpdate(initial.id,request);assert.equal(rejected.success,false);assert.match(rejected.error,/minimaal één markt/);assert.deepEqual(testCase.rows.get(initial.id),initial);
   request.delete("markets_present");assert.equal((await testCase.actions.adminUpdateWeeklyUpdate(initial.id,request)).success,true);assert.deepEqual(testCase.rows.get(initial.id)!.markets,initial.markets);
 });
+
+test('F3b saving editorial context normalizes new takeaway prefixes without modifying article content or publication metadata',async()=>{
+ const original=row({update_structure:null,summary:null,event_context:'CPI Rentebesluit',key_takeaways:['1. Oud inzicht.'],body:'Een volledig bestaand bericht met prijs 1.5% en historische inhoud.'});
+ const testCase=harness([original]);const request=form(original);request.delete('update_structure');request.set('body',original.body!);request.set('event_context',original.event_context!);request.set('key_takeaways','1. Oud inzicht.\n2) Nieuw inzicht.\n1.5% blijft een waarde.');
+ const result=await testCase.actions.adminUpdateWeeklyUpdate(original.id,request);assert.equal(result.success,true,result.error);const saved=testCase.rows.get(original.id)!;
+ assert.deepEqual(saved.key_takeaways,['Oud inzicht.','Nieuw inzicht.','1.5% blijft een waarde.']);assert.equal(saved.body,original.body);assert.equal(saved.summary,null);assert.equal(saved.event_context,original.event_context);assert.equal(saved.slug,original.slug);assert.equal(saved.published_at,original.published_at);
+});
+
+ test("F3b saving context preserves the first market despite checkbox DOM order and still removes deselected tags",async()=>{
+  const original=row({update_structure:null,markets:["gold","forex"],market:"gold"});const h=harness([original]);const request=form(original);request.delete("update_structure");request.set("markets_present","1");request.delete("markets");request.append("markets","forex");request.append("markets","gold");
+  assert.equal((await h.actions.adminUpdateWeeklyUpdate(original.id,request)).success,true);assert.deepEqual(h.rows.get(original.id)!.markets,["gold","forex"]);
+  request.delete("markets");request.append("markets","forex");assert.equal((await h.actions.adminUpdateWeeklyUpdate(original.id,request)).success,true);assert.deepEqual(h.rows.get(original.id)!.markets,["forex"]);
+ });

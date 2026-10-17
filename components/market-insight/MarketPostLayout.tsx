@@ -3,8 +3,9 @@ import { RelativeDate } from "@/components/ui/RelativeDate";
 import { Avatar } from "@/components/ui/Avatar";
 import { UsefulReaction } from "@/components/market-insight/UsefulReaction";
 
-export function MarketPostLayout({ title, author, publishedAt, tags, duration, intro, postId, reaction, children }: {
+export function MarketPostLayout({ title, author, publishedAt, tags, duration, intro, postId, reaction, contextLabels = [], following, children }: {
   title: string; author: { name: string; object_path: string | null; student_id?: string }; publishedAt: string;
+  contextLabels?: string[]; following?: React.ReactNode;
   tags: string[]; duration: string | null; intro?: string | null; postId: number;
   reaction: { total: number; active: boolean } | null; children: React.ReactNode;
 }) {
@@ -22,10 +23,12 @@ export function MarketPostLayout({ title, author, publishedAt, tags, duration, i
           {tags.length ? <ul className="market-post-tags" aria-label="Markten">{tags.map((tag) => <li key={tag}>{tag}</li>)}</ul> : null}
         </div>
       </header>
+      {contextLabels.length ? <ul className="market-post-context" aria-label="Artikelcontext">{contextLabels.map((label) => <li key={label}>{label}</li>)}</ul> : null}
       {intro?.trim() ? <p className="market-post-intro">{intro}</p> : null}
       <div className="market-post-content">{children}</div>
       <footer className="market-post-footer">
         <UsefulReaction key={postId} postId={postId} initial={reaction} />
+        {following}
         <p className="market-post-disclaimer">Deze analyse is educatief en geen financieel advies.</p>
       </footer>
     </article>

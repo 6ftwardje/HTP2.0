@@ -2,6 +2,8 @@
 
 Peildatum: 17 oktober 2026 (Europe/Brussels). Bron: `HTP-Platform-Feedback.pdf`, 38 PDF-pagina's, datum 17 oktober 2026. In dit dossier betekent **p.** de PDF-pagina, inclusief omslag; het gedrukte paginanummer is vanaf PDF-pagina 2 één lager. Alle tekst is uitgelezen; alle pagina's zijn gerenderd en de acht ingesloten referentiebeelden zijn visueel bekeken. Het genoemde losse `HTP-prompts.md` is niet aangeleverd en is niet nodig om deze PDF te verwerken.
 
+**Actueel: F3a main 0fd99e2; F3b lokaal geverifieerd, stop vóór F4. Zie de actuele overdracht onderaan.**
+
 Historische analyse van vóór uitvoering; de actuele F1-uitvoering staat in [HTP-F1-VERIFICATIE.md](HTP-F1-VERIFICATIE.md). F2 staat in [HTP-F2-VERIFICATIE.md](HTP-F2-VERIFICATIE.md); F1/49 staan op main en F2 is alleen lokaal afgerond. Dit oorspronkelijke onderzoek betrof analyse en planning. De uitvoerprompts in de PDF zijn bronmateriaal, geen toestemming om ze uit te voeren. F3a en volgende fasen wachten op afzonderlijke goedkeuring. Aanbevelingen en werktitels blijven voorstellen totdat een besluit is vastgelegd.
 
 Centraal bord: [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Taken en criteria: [HTP-BACKLOG.md](HTP-BACKLOG.md). Uitvoeringsvolgorde: [HTP-FASENPLAN.md](HTP-FASENPLAN.md).
@@ -126,8 +128,17 @@ D4 is expliciet beslist: alleen bel en huidig klikgedrag. F2 heeft de shell, acc
 De verse lokale database bevestigt main-migratie 20260922020000_restore_level_two_content_access.sql: private update/live-RLS is bewust nog op niveau 2. De afzonderlijke betaalsimulatie is geen toestemming voor cutover; #28 en het productbesluit blijven leidend. De afwijking van het oude lokale migratieregister is niet door een reset of blind herstel opgelost; F2 gebruikt een aparte lokale database.
 
 
-## Uitvoeringsaanvulling F3a en F2-release
+## Historische uitvoeringsaanvulling F3a en F2-release
 
 F2 is op Wards expliciete opdracht gereleaset via PR #60, main 64f3136; CI, verse Supabase/chat-integratie en main-CI groen. Geen remote schema-uitrol of betaalactivering. F3a is daarna uitsluitend lokaal goedgekeurd. Het bestaande vier-marktenmodel en de enkelvoudige structured categorie zijn vervangen door één volledige marktprojectie met zes documentmarkten plus afzonderlijke historische Macro/Indices/Algemeen. Bestaande type-, perspective-, week-/periode-/hoofdstukvelden blijven autoriteit; geen automatische omzetting van financiële labels of historie. Mapping, additieve migratie, herhaalbaarheid en bewijs: HTP-F3A-VERIFICATIE.md.
 
-**Expliciet nieuw besluit van Ward:** Vimeo en YouTube worden niet meer gebruikt; alles loopt via Mux en alle nieuwe video-updates gebruiken de gekoppelde Mux-integratie. Read-only inventaris bevestigt vijf gereedstaande Mux-updates met public playback. HTP-20 richt runtimebewijs daarom op Mux; Vimeo/YouTube blijven uitsluitend historische code-inventaris, niet stil vervangen en niet als werkende actuele providers afgevinkt. HTP-19/153 blijft afzonderlijk historisch onderzoek. F3b, F4 en latere fasen zijn niet gestart of goedgekeurd.
+**Expliciet nieuw besluit van Ward:** Vimeo en YouTube worden niet meer gebruikt; alles loopt via Mux en alle nieuwe video-updates gebruiken de gekoppelde Mux-integratie. Read-only inventaris bevestigt vijf gereedstaande Mux-updates met public playback. HTP-20 richt runtimebewijs daarom op Mux; Vimeo/YouTube blijven uitsluitend historische code-inventaris, niet stil vervangen en niet als werkende actuele providers afgevinkt. HTP-19/153 blijft afzonderlijk historisch onderzoek. Ten tijde van die F3a-overdracht waren F3b en volgende fasen nog niet gestart. De actuele aanvulling hieronder vervangt die fasepoort.
+
+
+## Actuele overdracht: F3a gepubliceerd, F3b lokaal
+
+F3a staat na expliciete opdracht op main **0fd99e2** via [PR #64](https://github.com/6ftwardje/HTP2.0/pull/64). Zowel PR-CI/verse database-/chatintegratie als main-CI zijn groen; geen remote database-uitrol of betaalcutover.
+
+Ward keurde F3b lokaal goed en antwoordde bij de twee vooraf getoonde composities: “Doe wat volgens jou het meest logisch is.” **D2/D3 zijn hiermee gedelegeerd en uitgewerkt:** A met grote afbeelding links voor de feed, compacte compositie voor dashboard/vervolg; Actueel/Open setups/Archief tot F6, één inhoudsfilter Alles/Tekst & charts/Video, dynamische marktchips vanaf twee toegankelijke markten met drempel 0, één kaartlink met Open update. PDF wacht op F5. [Ontwerpbesluit](HTP-F3B-ONTWERP.md).
+
+HTP-13/14/15/16/17/24 zijn lokaal uitgevoerd en gecontroleerd; [bewijs](HTP-F3B-VERIFICATIE.md). Artikeltypografie en publicatie-inhoud blijven behouden. Een gevonden checkboxvolgordeprobleem is hersteld zodat een editor-save het eerste marktaccent niet verandert. De conservatieve zinconventie is redactionele presentatie, geen grammaticale AI-beslissing. Mux is de actieve provider; bestaande legacycompatibiliteit is geen nieuwe provideracceptatie. **F3b niet gepusht; stop vóór F4.**

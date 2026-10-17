@@ -1,8 +1,12 @@
+import { MarketFollowing } from "@/components/market-insight/MarketFollowing";
+import { getMarketFeedAuthors } from "@/lib/market-feed-authors";
+import { followingMarketUpdates } from "@/lib/market-feed";
+import { editorialContext } from "@/lib/market-editorial";
 import { getUpdateMarkets, categoryLabel as updateMarketLabel } from "@/lib/market-update-structure";
 import { readableMarketChapters } from "@/lib/market-chapters";
 import { SourceNotificationRead } from "@/components/SourceNotificationRead";
 import { notFound } from "next/navigation";
-import { getPublishedEnrichmentForWeeklyUpdate, getPublishedWeeklyUpdateBySlug } from "@/lib/weekly-updates";
+import { listMarketUpdateRubricUpdates, getPublishedEnrichmentForWeeklyUpdate, getPublishedWeeklyUpdateBySlug } from "@/lib/weekly-updates";
 import { ensureCurrentStudent } from "@/lib/students";
 import { canAccessSubscriberContent, getBillingOverview, paidProductsEnabled } from "@/lib/billing";
 import { SubscriptionPaywall } from "@/components/billing/SubscriptionPaywall";
@@ -15,9 +19,9 @@ import { MarketPostLayout } from "@/components/market-insight/MarketPostLayout";
 import { MarketPostContents } from "@/components/market-insight/MarketPostContents";
 import { getUpdateStructure, PERSPECTIVE_OPTIONS, updateTypeLabel } from "@/lib/market-update-structure";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<{ t?: string | string[] }> };
 
-export default async function MarketAnalysisDetailPage({ params }: Props) {
+export default async function MarketAnalysisDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const { student } = await ensureCurrentStudent();
   if (!student) return null;
@@ -32,11 +36,16 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
     return <SubscriptionPaywall overview={billingOverview} title="Ontgrendel deze analyse" />;
   }
   if (!update) notFound();
+  const query = searchParams ? await searchParams : {};
+  const timestamp = Array.isArray(query.t) ? query.t[0] : query.t;
   const article = isMarketArticle(update);
-  const [enrichment, meta] = await Promise.all([
+  const [enrichment, meta, candidates] = await Promise.all([
     article ? Promise.resolve(null) : getPublishedEnrichmentForWeeklyUpdate(update.id),
     getMarketPostDetailMeta(update.id),
+    listMarketUpdateRubricUpdates({ freeOnly: !hasSubscriberAccess }),
   ]);
+  const following = followingMarketUpdates(update, candidates.filter((item) => canStudentAccessWeeklyUpdate(item.access_tier, student, hasSubscriberAccess)));
+  const followingAuthors = await getMarketFeedAuthors(following);
   const muxTokens = article ? null : getMuxPlaybackTokens({
     playbackId: update.mux_playback_id,
     playbackPolicy: update.mux_playback_policy,
@@ -56,9 +65,11 @@ export default async function MarketAnalysisDetailPage({ params }: Props) {
   return <MarketPostLayout title={update.title}
     author={author}
     publishedAt={update.published_at ?? update.created_at} tags={tags} duration={duration}
+    contextLabels={structure ? [] : editorialContext(enrichment?.summary ?? update.summary, update.event_context).labels}
+    following={<MarketFollowing updates={following} authors={followingAuthors} />}
     intro={structure ? null : update.intro} postId={update.id} reaction={meta.reaction}>
     <SourceNotificationRead targets={[{ table: "weekly_updates", id: String(update.id) }]}/>
-    <MarketPostContents update={update} summary={enrichment?.summary ?? update.summary}
+    <MarketPostContents update={update} timestamp={timestamp} summary={enrichment?.summary ?? update.summary}
       takeaways={enrichment?.keyTakeaways ?? update.key_takeaways} chapters={readableMarketChapters(enrichment?.chapters ?? update.chapters, update.video_duration_seconds)} muxTokens={muxTokens} />
   </MarketPostLayout>;
 }

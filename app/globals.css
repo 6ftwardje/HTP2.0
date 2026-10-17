@@ -287,9 +287,9 @@ html, body { background: var(--background); color: var(--foreground); }
 .market-article-body p { margin: 0 0 1.2em; }
 .market-article-body h2, .market-post-text-section h2 { margin: 1.5em 0 .5em; font-size: 1.45rem; font-weight: 700; letter-spacing: -.015em; line-height: 1.3; }
 .market-article-body h3 { margin: 1.5em 0 .5em; font-size: 1.2rem; font-weight: 650; }
-.market-article-body ul, .market-article-body ol, .market-post-text-section ul { padding-left: 1.4em; margin: 1em 0; }
+.market-article-body ul, .market-article-body ol, .market-post-text-section ul, .market-post-text-section ol { padding-left: 1.4em; margin: 1em 0; }
 .market-article-body ul, .market-post-text-section ul { list-style: disc; }
-.market-article-body ol { list-style: decimal; }
+.market-article-body ol, .market-post-text-section ol { list-style: decimal; }
 .market-article-body li, .market-post-text-section li { margin: .5em 0; }
 .market-article-body blockquote { border-left: 1px solid var(--border); padding-left: 1.2em; color: var(--muted); margin: 1.5em 0; }
 .market-article-body a { color: var(--foreground); text-decoration: underline; text-underline-offset: 4px; }
@@ -373,3 +373,8 @@ a:focus-visible .cb-date-tooltip, button:focus-visible .cb-date-tooltip { opacit
 .platform-toolbar-control:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 767px) { .platform-topbar { padding-right: 16px; padding-left: 16px; } }
 .platform-topbar { --notification-align-offset: 52px; }
+
+.market-post-context { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0 0 24px; max-width: 70ch; }
+.market-post-context li { max-width: 100%; overflow-wrap: anywhere; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--foreground); font-size: .85rem; }
+
+@media (min-width: 1280px) { .market-post:has([data-chapter-layout="rail"]) { max-width: 1280px; } }

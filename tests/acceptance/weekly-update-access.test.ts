@@ -10,6 +10,8 @@ import {
   SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS,
 } from "../../lib/weekly-update-access";
 import { getMondayDate, MARKET_OPTIONS } from "../../lib/market-analysis";
+import * as marketFeed from "../../lib/market-feed";
+import * as marketEditorial from "../../lib/market-editorial";
 import * as marketArticle from "../../lib/market-article";
 import * as marketAuthor from "../../lib/market-update-author";
 import * as marketPolicy from "../../lib/market-update-policy";
@@ -18,6 +20,10 @@ import * as marketStructure from "../../lib/market-update-structure";
 import * as marketEditing from "../../lib/market-update-editing";
 
 const sharedDependencies: Record<string, unknown> = {
+  "@/lib/market-editorial": marketEditorial,
+  "@/lib/market-feed": marketFeed,
+  "@/lib/market-feed-authors": { getMarketFeedAuthors: async () => ({}) },
+  "@/components/market-insight/MarketFollowing": { MarketFollowing: () => null },
   "@/lib/market-article": marketArticle,
   "@/lib/market-update-author": marketAuthor,
   "@/lib/market-update-policy": marketPolicy,
@@ -146,7 +152,7 @@ function detailPage(path: string, {
   student = freeStudent as typeof freeStudent | null,
   update = videoFixture() as ReturnType<typeof videoFixture> | null,
 } = {}) {
-  const calls = { tokens: 0, enrichment: 0, reads: 0 };
+  const calls = { tokens: 0, enrichment: 0, reads: 0, following: 0 };
   const page = loadModule(path, {
     "next/link": { default: () => null },
     "next/navigation": { notFound: () => { throw NOT_FOUND; } },
@@ -163,6 +169,7 @@ function detailPage(path: string, {
       getMarketLabel: () => "Crypto",
     },
     "@/lib/weekly-updates": {
+      listMarketUpdateRubricUpdates: async () => { calls.following++; return []; },
       getPublishedWeeklyUpdateBySlug: async () => { calls.reads++; return update; },
       getPublishedEnrichmentForWeeklyUpdate: async () => { calls.enrichment++; return null; },
     },
@@ -204,6 +211,7 @@ for (const path of [
       else await assert.rejects(render, (error) => error === NOT_FOUND);
       assert.equal(calls.tokens, 0);
       assert.equal(calls.enrichment, 0);
+      assert.equal(calls.following, 0);
     });
   }
 

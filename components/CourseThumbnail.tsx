@@ -14,6 +14,8 @@ type CourseThumbnailProps = {
   showTitleOverlay?: boolean;
   priority?: boolean;
   sizes?: string;
+  unoptimized?: boolean;
+  showImageShade?: boolean;
 };
 
 export function CourseThumbnail({
@@ -27,10 +29,13 @@ export function CourseThumbnail({
   showTitleOverlay = false,
   priority = false,
   sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
+  unoptimized = false,
+  showImageShade = true,
 }: CourseThumbnailProps) {
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const initial = title.trim().charAt(0).toUpperCase() || "C";
-  const hasImage = Boolean(src);
+  const hasImage = Boolean(src) && src !== failedSrc;
   const imageLoaded = hasImage && loadedSrc === src;
   const shouldShowModuleOverlay = moduleNumber !== undefined && moduleNumber !== null;
 
@@ -51,7 +56,9 @@ export function CourseThumbnail({
             alt=""
             fill
             priority={priority}
+            unoptimized={unoptimized}
             onLoad={() => setLoadedSrc(src ?? null)}
+            onError={() => setFailedSrc(src ?? null)}
             className={[
               "object-cover transition-[opacity,filter,transform] duration-700 ease-out",
               imageLoaded ? "opacity-100" : "opacity-0",
@@ -74,7 +81,7 @@ export function CourseThumbnail({
         </div>
       )}
 
-      {hasImage && imageLoaded ? (
+      {hasImage && imageLoaded && showImageShade ? (
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-stone-950/72 via-stone-950/12 to-stone-950/8 opacity-90 transition-opacity duration-500 group-hover/thumbnail:opacity-100" />
       ) : null}
 
