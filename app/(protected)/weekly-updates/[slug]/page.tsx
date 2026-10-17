@@ -1,10 +1,8 @@
 import { redirect } from "next/navigation";
-
-type Props = {
-  params: Promise<{ slug: string }>;
-};
-
-export default async function WeeklyUpdateDetailPage({ params }: Props) {
+import { withLegacyMarketQuery, type LegacyMarketSearchParams } from "@/lib/legacy-market-redirect";
+export default async function WeeklyUpdateDetailPage({ params, searchParams }: {
+  params: Promise<{ slug: string }>; searchParams?: Promise<LegacyMarketSearchParams>;
+}) {
   const { slug } = await params;
-  redirect(`/market-analysis/${slug}`);
+  redirect(withLegacyMarketQuery("/market-analysis/" + encodeURIComponent(slug), searchParams ? await searchParams : {}));
 }

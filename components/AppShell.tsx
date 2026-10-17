@@ -5,184 +5,55 @@ import { usePathname } from "next/navigation";
 import { SidebarNavItem } from "@/components/SidebarNavItem";
 import { NavigationIcon } from "@/components/ui/NavigationIcon";
 import { PageLoadOverlay } from "@/components/PageLoadOverlay";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { BRAND, BrandLogo } from "@/components/ui/Brand";
+import { PlatformTopbar } from "@/components/PlatformTopbar";
+import { BrandLogo } from "@/components/ui/Brand";
 import {
-  NotificationPopover,
   type FloatingNotification,
 } from "@/components/ui/notification-popover";
-import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
+
 import { useNotificationsRealtime } from "@/lib/realtime-hooks";
 import { useMobileDrawer } from "@/components/useMobileDrawer";
-import { clearChatDrafts } from "@/lib/chat-message-state";
+import { AccountMenu } from "@/components/AccountMenu";
 
 const coreNav = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: <NavigationIcon name="dashboard" />,
-  },
-  {
-    href: "/modules",
-    label: "Academy",
-    icon: <NavigationIcon name="academy" />,
-  },
-  {
-    href: "/mentor",
-    label: "Mentor",
-    icon: <NavigationIcon name="mentor" />,
-  },
-  {
-    href: "/notifications",
-    label: "Meldingen",
-    icon: <NavigationIcon name="notifications" />,
-  },
-  {
-    href: "/account",
-    label: "Profiel",
-    icon: <NavigationIcon name="profile" />,
-  },
-] as const;
-
-const updatesNav = [
-  {
-    href: "/market-analysis",
-    label: "Marktinzicht",
-    icon: <NavigationIcon name="market" />,
-  },
-  {
-    href: "/live-sessions",
-    label: "Live marktsessies",
-    icon: <NavigationIcon name="live" />,
-  },
-] as const;
-
-const adminNavItem = {
-  href: "/admin",
-  label: "Admin",
-  icon: <NavigationIcon name="admin" />,
-} as const;
-
-function SidebarContent({
-  studentName,
-  accessLevel,
-  unreadNotificationCount,
-  isChatMentor,
-  unreadChatCount,
-  onNavigate,
-}: {
-  studentName: string | null;
-  accessLevel: number | null;
-  unreadNotificationCount: number;
-  isChatMentor: boolean;
-  unreadChatCount: number;
-  onNavigate?: () => void;
+  { href: "/dashboard", label: "Dashboard", icon: <NavigationIcon name="dashboard" /> },
+  { href: "/modules", label: "Academy", icon: <NavigationIcon name="academy" /> },
+  { href: "/mentor", label: "Mentorchat", icon: <NavigationIcon name="mentor" /> },
+];
+const marketNav = [
+  { href: "/market-analysis", label: "Marktinzicht", icon: <NavigationIcon name="market" /> },
+  { href: "/live-sessions", label: "Live marktsessies", icon: <NavigationIcon name="live" /> },
+];
+function SidebarContent({ studentName, studentId, avatarPath, accessLevel, hasSubscriberAccess, isChatMentor, unreadChatCount, onNavigate }: {
+  studentName: string | null; studentId?: string | null; avatarPath?: string | null;
+  accessLevel: number | null; hasSubscriberAccess: boolean; isChatMentor: boolean; unreadChatCount: number; onNavigate?: () => void;
 }) {
-  const pathname = usePathname();
-  const nav =
-    accessLevel === ADMIN_ACCESS_LEVEL
-      ? [...coreNav.slice(0, -1), adminNavItem, coreNav[coreNav.length - 1]]
-      : coreNav;
-
-  function isNavItemActive(href: string) {
-    if (href === "/market-analysis") {
-      return pathname.startsWith("/market-analysis") || pathname.startsWith("/updates");
-    }
-    return (
-      pathname === href ||
-      (href === "/dashboard"
-        ? pathname === "/dashboard"
-        : pathname.startsWith(`${href}/`))
-    );
+  const pathname=usePathname();
+  function render(item: typeof coreNav[number]) {
+    const href=item.href==="/mentor"&&isChatMentor?"/mentor-inbox":item.href;
+    const active=pathname===href || pathname.startsWith(href+"/") || (href==="/market-analysis"&&pathname.startsWith("/updates"));
+    const label=item.href==="/mentor" ? (isChatMentor?"Studentvragen":"Mentorchat")+(unreadChatCount>0?" ("+Math.min(unreadChatCount,99)+")":"") : item.label;
+    return <SidebarNavItem key={href} href={href} label={label} icon={item.icon} active={active} onNavigate={onNavigate}/>;
   }
-
-  function renderNavItem(item: (typeof nav)[number] | (typeof updatesNav)[number]) {
-    return (
-      <SidebarNavItem
-        key={item.href}
-        href={item.href === "/mentor" && isChatMentor ? "/mentor-inbox" : item.href}
-        label={
-          item.href === "/mentor"
-            ? `${isChatMentor ? "Studentvragen" : "Mentorchat"}${unreadChatCount > 0 ? ` (${Math.min(unreadChatCount, 99)})` : ""}`
-            : item.href === "/notifications" && unreadNotificationCount > 0
-            ? `${item.label} (${Math.min(unreadNotificationCount, 99)})`
-            : item.label
-        }
-        active={isNavItemActive(item.href === "/mentor" && isChatMentor ? "/mentor-inbox" : item.href)}
-        icon={item.icon}
-        onNavigate={onNavigate}
-      />
-    );
-  }
-
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="px-1">
-        <Link
-          href="/dashboard"
-          onClick={onNavigate}
-          className="inline-flex items-center gap-2 rounded-md outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--foreground)_25%,transparent)]"
-        >
-          <BrandLogo logoClassName="h-auto w-[176px]" />
-        </Link>
-      </div>
-
-      <nav
-        className="mt-9 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain"
-        aria-label="Hoofdnavigatie"
-      >
-        {nav.slice(0, 3).map(renderNavItem)}
-
-        {accessLevel !== null ? (
-          <>
-            <div className="mb-1 mt-6 px-3 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
-              Updates
-            </div>
-            {updatesNav
-              .filter((item) => item.href === "/market-analysis" || accessLevel >= 2)
-              .map(renderNavItem)}
-          </>
-        ) : null}
-
-        <div className="mt-5 flex flex-col gap-1">
-          {nav.slice(3).map(renderNavItem)}
-        </div>
-      </nav>
-
-      <div className="mt-auto border-t-[0.5px] border-[var(--border)] pt-5">
-        <div className="flex flex-col gap-1">
-          <a
-            href={`mailto:${BRAND.supportEmail}`}
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
-          >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center">
-              <NavigationIcon name="help" />
-            </span>
-            <span>Hulp nodig?</span>
-          </a>
-          <form action="/auth/signout" method="post" onSubmit={() => clearChatDrafts()}>
-            <button
-              type="submit"
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold tracking-tight text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center">
-                <NavigationIcon name="logout" />
-              </span>
-              <span>Afmelden</span>
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="flex h-full min-h-0 flex-col">
+    <Link href="/dashboard" onClick={onNavigate} className="mx-1 inline-flex self-start rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent)]"><BrandLogo logoClassName="h-auto w-[176px]"/></Link>
+    <nav aria-label="Hoofdnavigatie" className="mb-6 mt-9 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain">
+      {coreNav.map(render)}
+      {accessLevel!==null && <><div className="mb-1 mt-6 px-3 text-xs font-semibold text-[var(--muted)]">Markt</div>{marketNav.filter(item=>item.href==="/market-analysis"||hasSubscriberAccess).map(render)}</>}
+    </nav>
+    <AccountMenu name={studentName} studentId={studentId} avatarPath={avatarPath} accessLevel={accessLevel} onNavigate={onNavigate}/>
+  </div>;
 }
 
 export function AppShell({
   children,
   studentName,
   accessLevel,
+  avatarPath = null,
+  hasSubscriberAccess = accessLevel !== null && accessLevel >= 2,
   currentStudentId = null,
   unreadNotificationCount = 0,
+  notificationError = null,
   floatingNotifications = [],
   isChatMentor = false,
   unreadChatCount = 0,
@@ -191,7 +62,10 @@ export function AppShell({
   studentName: string | null;
   accessLevel: number | null;
   currentStudentId?: string | null;
+  avatarPath?: string | null;
+  hasSubscriberAccess?: boolean;
   unreadNotificationCount?: number;
+  notificationError?: string | null;
   floatingNotifications?: FloatingNotification[];
   isChatMentor?: boolean;
   unreadChatCount?: number;
@@ -199,7 +73,6 @@ export function AppShell({
   const { mobileOpen, menuTriggerRef, menuCloseRef, menuPanelRef, openMobileMenu, closeMobileMenu } = useMobileDrawer();
   const pathname = usePathname();
   const isChatWorkspace = pathname === "/mentor" || pathname === "/mentor-inbox";
-  const showFloatingNotifications = pathname !== "/notifications" && !isChatWorkspace;
 
   useNotificationsRealtime(currentStudentId);
 
@@ -210,8 +83,10 @@ export function AppShell({
         <div className="flex h-full min-h-0 flex-col px-5 py-8">
           <SidebarContent
             studentName={studentName}
+            studentId={currentStudentId}
+            avatarPath={avatarPath}
             accessLevel={accessLevel}
-            unreadNotificationCount={unreadNotificationCount}
+            hasSubscriberAccess={hasSubscriberAccess}
             isChatMentor={isChatMentor}
             unreadChatCount={unreadChatCount}
             onNavigate={() => closeMobileMenu(false)}
@@ -245,8 +120,10 @@ export function AppShell({
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-6">
               <SidebarContent
                 studentName={studentName}
+                studentId={currentStudentId}
+                avatarPath={avatarPath}
                 accessLevel={accessLevel}
-                unreadNotificationCount={unreadNotificationCount}
+                hasSubscriberAccess={hasSubscriberAccess}
                 isChatMentor={isChatMentor}
                 unreadChatCount={unreadChatCount}
                 onNavigate={() => closeMobileMenu(false)}
@@ -257,30 +134,8 @@ export function AppShell({
       )}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="pointer-events-none fixed right-6 top-5 z-30 hidden md:block">
-          <ThemeToggle className="pointer-events-auto" />
-        </div>
-
-        <div className="sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_82%,var(--card)_18%)] px-4 py-3 backdrop-blur-md md:hidden">
-          <button
-            ref={menuTriggerRef}
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] shadow-sm"
-            onClick={openMobileMenu}
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-nav"
-          >
-            <NavigationIcon name="menu" />
-            Menu
-          </button>
-          <Link href="/dashboard" className="inline-flex items-center">
-            <BrandLogo
-              logoClassName="h-auto w-[150px] min-[390px]:w-[166px]"
-            />
-          </Link>
-          <ThemeToggle />
-        </div>
-
+        <PlatformTopbar menuTriggerRef={menuTriggerRef} mobileOpen={mobileOpen} openMobileMenu={openMobileMenu}
+          menuId="mobile-nav" floatingNotifications={floatingNotifications} unreadNotificationCount={unreadNotificationCount} notificationError={notificationError}/>
         <main className={isChatWorkspace ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-y-auto overscroll-contain"}>
           <div className={isChatWorkspace ? "h-full min-h-0 w-full" : "mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"}>
             <PageLoadOverlay>{children}</PageLoadOverlay>
@@ -288,12 +143,7 @@ export function AppShell({
         </main>
       </div>
 
-      {showFloatingNotifications && (
-        <NotificationPopover
-          notifications={floatingNotifications}
-          unreadCount={unreadNotificationCount}
-        />
-      )}
+
     </div>
   );
 }

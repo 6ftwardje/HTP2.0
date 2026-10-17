@@ -65,147 +65,56 @@ export default async function DashboardPage({ searchParams }: Props) {
 }
 
 async function AdminDashboard() {
-  const [
-    { rows: unreadThreads, missingMigration },
-    drafts,
-    upcomingSessions,
-    recentUpdates,
-    chatAccess,
-  ] = await Promise.all([
-    listAdminMentorThreads({ status: "unread", limit: 3 }),
-    listDashboardDraftsAdmin(),
-    listUpcomingLiveSessions(1),
-    listPublishedWeeklyUpdates(6),
-    getChatAccess(),
+  const [{ rows: unreadThreads, missingMigration }, drafts, upcomingSessions, recentUpdates, chatAccess] = await Promise.all([
+    listAdminMentorThreads({ status: "unread", limit: 3 }), listDashboardDraftsAdmin(),
+    listUpcomingLiveSessions(1), listPublishedWeeklyUpdates(6), getChatAccess(),
   ]);
-  const nextLiveSession = upcomingSessions[0] ?? null;
-
-  return (
-    <div>
-      <PageHeader
-        title="Werkoverzicht"
-        description="Deel marktinzichten en volg op wat aandacht nodig heeft."
-      />
-
-      <div className="space-y-10">
-        <QuickMarketUpdateComposer />
-
-        <section aria-labelledby="admin-follow-up-title">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 id="admin-follow-up-title" className="cb-section-title">
-                Op te volgen
-              </h2>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                Vragen van studenten en updates die nog niet gepubliceerd zijn.
-              </p>
-            </div>
-            {chatAccess.isMentor && <Link href="/mentor-inbox" className="text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
-              Open mentor inbox →
-            </Link>}
-          </div>
-
-          <div className={`grid gap-4 ${chatAccess.isMentor ? "lg:grid-cols-2" : ""}`}>
-            {chatAccess.isMentor && <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="cb-item-title">Ongelezen studentvragen</h3>
-                <Link href="/mentor-inbox?status=unread" className="text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
-                  Bekijk alles
-                </Link>
-              </div>
-              {missingMigration ? (
-                <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
-                  De mentor inbox is nog niet beschikbaar. Controleer de inrichting in het beheer.
-                </p>
-              ) : unreadThreads.length > 0 ? (
-                <ul className="mt-4 space-y-1">
-                  {unreadThreads.map((thread) => (
-                    <li key={thread.id}>
-                      <Link
-                        href={`/mentor-inbox?status=unread&thread=${thread.id}`}
-                        className="group block rounded-md py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
-                      >
-                        <span className="block text-sm font-semibold text-[var(--foreground)] group-hover:underline">
-                          {thread.student?.name || "Student"}
-                        </span>
-                        <span className="mt-1 block line-clamp-1 text-sm text-[var(--muted)]">
-                          {thread.lastMessage?.body || thread.subject || "Open het gesprek"}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
-                  Geen ongelezen vragen. Nieuwe berichten verschijnen hier.
-                </p>
-              )}
-            </div>}
-
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="cb-item-title">Conceptupdates</h3>
-                <Link href="/admin/market-analysis" className="text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
-                  Beheer updates
-                </Link>
-              </div>
-              {drafts.length > 0 ? (
-                <ul className="mt-4 space-y-1">
-                  {drafts.map((draft) => (
-                    <li key={draft.id}>
-                      <Link
-                        href={`/admin/market-analysis?update=${draft.id}`}
-                        className="group flex items-center justify-between gap-3 rounded-md py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
-                      >
-                        <span className="min-w-0 truncate text-sm font-semibold text-[var(--foreground)] group-hover:underline">
-                          {draft.title || "Naamloos concept"}
-                        </span>
-                        <span className="shrink-0 text-xs text-[var(--muted)]">
-                          {draft.content_format === "video" ? "Video" : draft.content_format === "chart" ? "Chart" : "Bericht"}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
-                  Geen concepten. Bewaar een update als concept om ze later af te werken.
-                </p>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between" aria-labelledby="admin-live-title">
-          <div>
-            <h2 id="admin-live-title" className="cb-section-title">
-              {nextLiveSession ? "Volgende live marktsessie" : "Live marktsessies"}
-            </h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">
-              {nextLiveSession
-                ? `${nextLiveSession.title} · ${sessionDate(nextLiveSession.starts_at)}`
-                : "Er staat nog geen gepubliceerde sessie gepland."}
-            </p>
-          </div>
-          <Link href="/admin/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline focus-visible:underline">
-            {nextLiveSession ? "Beheer sessies" : "Plan een sessie"} →
-          </Link>
-        </section>
-
-        <RecentMarketUpdatesFeed
-          updates={recentUpdates}
-          title="Recent gepubliceerd"
-          description="Deze marktupdates zijn zichtbaar voor studenten met toegang."
-        />
-
-        <nav aria-label="Meer beheertaken" className="flex flex-wrap gap-x-6 gap-y-2 border-t border-[var(--border)] pt-6 text-sm font-semibold">
-          <Link href="/admin/market-analysis" className="text-[var(--foreground)] underline-offset-4 hover:underline">Marktinzicht beheren →</Link>
-          <Link href="/admin/students" className="text-[var(--foreground)] underline-offset-4 hover:underline">Studenten beheren →</Link>
-          <Link href="/admin" className="text-[var(--foreground)] underline-offset-4 hover:underline">Alle beheertools →</Link>
-        </nav>
-      </div>
+  const nextLiveSession=upcomingSessions[0]??null;
+  const questions=chatAccess.isMentor&&unreadThreads.length>0;
+  const showFollowUp=questions||drafts.length>0;
+  return <div>
+    <PageHeader title="Werkoverzicht" description="Deel marktinzichten en volg op wat aandacht nodig heeft."/>
+    <nav aria-label="Meer beheertaken" className="mb-8 flex flex-wrap gap-2">
+      <Link href="/admin/market-analysis" className="cb-btn cb-btn-secondary px-4 py-2 text-sm">Marktinzicht beheren</Link>
+      <Link href="/admin/students" className="cb-btn cb-btn-secondary px-4 py-2 text-sm">Studenten beheren</Link>
+      <Link href="/admin" className="cb-btn cb-btn-secondary px-4 py-2 text-sm">Alle beheertools</Link>
+    </nav>
+    <div className="space-y-8">
+      <QuickMarketUpdateComposer/>
+      {chatAccess.isMentor&&missingMigration&&<p role="alert" className="text-sm leading-6 text-[var(--muted)]">Studentvragen zijn tijdelijk niet beschikbaar. Je kunt de inrichting in het beheer controleren.</p>}
+      {showFollowUp&&<section aria-labelledby="admin-follow-up-title">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <h2 id="admin-follow-up-title" className="cb-section-title">Op te volgen</h2>
+          {chatAccess.isMentor&&<Link href="/mentor-inbox" className="text-sm font-semibold underline-offset-4 hover:underline">Open mentor inbox →</Link>}
+        </div>
+        <div className={"grid gap-4 "+(questions&&drafts.length>0?"lg:grid-cols-2":"")}>
+          {questions&&<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3"><h3 className="cb-item-title">Ongelezen studentvragen</h3><Link href="/mentor-inbox?status=unread" className="text-sm font-semibold underline-offset-4 hover:underline">Bekijk alles</Link></div>
+            <ul className="mt-4 space-y-1">{unreadThreads.map(thread=><li key={thread.id}>
+              <Link href={"/mentor-inbox?status=unread&thread="+thread.id} className="group block rounded-md py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]">
+                <span className="block text-sm font-semibold group-hover:underline">{thread.student?.name||"Student"}</span>
+                <span className="mt-1 block line-clamp-1 text-sm text-[var(--muted)]">{thread.lastMessage?.body||thread.subject||"Open het gesprek"}</span>
+              </Link>
+            </li>)}</ul>
+          </div>}
+          {drafts.length>0&&<div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-3"><h3 className="cb-item-title">Conceptupdates</h3><Link href="/admin/market-analysis" className="text-sm font-semibold underline-offset-4 hover:underline">Beheer updates</Link></div>
+            <ul className="mt-4 space-y-1">{drafts.map(draft=><li key={draft.id}>
+              <Link href={"/admin/market-analysis?update="+draft.id} className="group flex items-center justify-between gap-3 rounded-md py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]">
+                <span className="min-w-0 truncate text-sm font-semibold group-hover:underline">{draft.title||"Naamloos concept"}</span>
+                <span className="shrink-0 text-xs text-[var(--muted)]">{draft.content_format==="video"?"Video":draft.content_format==="chart"?"Chart":"Bericht"}</span>
+              </Link>
+            </li>)}</ul>
+          </div>}
+        </div>
+      </section>}
+      {nextLiveSession&&<section className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between" aria-labelledby="admin-live-title">
+        <div><h2 id="admin-live-title" className="cb-section-title">Volgende live marktsessie</h2><p className="mt-1 text-sm text-[var(--muted)]">{nextLiveSession.title+" · "+sessionDate(nextLiveSession.starts_at)}</p></div>
+        <Link href="/admin/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold underline-offset-4 hover:underline">Beheer sessies →</Link>
+      </section>}
+      <RecentMarketUpdatesFeed updates={recentUpdates} title="Recent gepubliceerd" description="Deze marktupdates zijn zichtbaar voor studenten met toegang."/>
     </div>
-  );
+  </div>;
 }
 
 async function StudentDashboard({

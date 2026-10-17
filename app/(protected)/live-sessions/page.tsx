@@ -1,3 +1,4 @@
+import { SourceNotificationRead } from "@/components/SourceNotificationRead";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -55,6 +56,7 @@ export default async function LiveSessionsPage() {
 
   return (
     <div>
+      <SourceNotificationRead targets={[...upcoming, ...past].map((session) => ({ table: "live_sessions", id: session.id }))}/>
       <PageHeader
         eyebrow="Weekly Outlook"
         title="Live sessies"

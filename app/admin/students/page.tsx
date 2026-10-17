@@ -142,6 +142,7 @@ export default async function AdminStudentsPage({
             href={buildHref({ page: page > 1 ? String(page - 1) : undefined })}
             className={`cb-btn cb-btn-secondary text-sm ${page <= 1 ? "pointer-events-none opacity-40" : ""}`}
             aria-disabled={page <= 1}
+            tabIndex={page <= 1 ? -1 : undefined}
           >
             Vorige
           </Link>
@@ -149,6 +150,7 @@ export default async function AdminStudentsPage({
             href={hasNextPage ? buildHref({ page: String(page + 1) }) : "#"}
             className={`cb-btn cb-btn-secondary text-sm ${!hasNextPage ? "pointer-events-none opacity-40" : ""}`}
             aria-disabled={!hasNextPage}
+            tabIndex={!hasNextPage ? -1 : undefined}
           >
             Volgende
           </Link>

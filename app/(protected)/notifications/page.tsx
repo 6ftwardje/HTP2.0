@@ -1,112 +1,37 @@
 import Link from "next/link";
-import { RelativeDate } from "@/components/ui/RelativeDate";
-import {
-  markNotificationsRead,
-  markOneNotificationRead,
-} from "@/app/actions/mentor-chat";
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { NotificationList, MarkAllNotificationsRead } from "@/components/notifications/NotificationList";
 import { listMyNotifications } from "@/lib/notifications";
+import { NOTIFICATION_PAGE_SIZE } from "@/lib/notification-policy";
 
-export default async function NotificationsPage() {
-  const { notifications, missingMigration } = await listMyNotifications();
-  const unreadCount = notifications.filter((n) => !n.read_at).length;
-
-  return (
-    <div>
-      <PageHeader
-        eyebrow="Meldingen"
-        title="Meldingen"
-        description="Antwoorden van je mentor en belangrijke berichten op één plek."
-        actions={
-          unreadCount > 0 ? (
-            <form action={markNotificationsRead}>
-              <button className="cb-btn cb-btn-secondary px-4 py-2 text-sm" type="submit">
-                Markeer alles als gelezen
-              </button>
-            </form>
-          ) : null
-        }
-      />
-
-      {missingMigration ? (
-        <section className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-6">
-          <h2 className="text-lg font-extrabold text-[var(--foreground)]">
-            Meldingen tijdelijk niet beschikbaar
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            We kunnen je meldingen nu niet laden. Probeer het later opnieuw.
-            Je kunt je mentorberichten rechtstreeks in de chat bekijken.
-          </p>
-          <Link href="/mentor" className="mt-4 inline-flex text-sm font-semibold text-[var(--foreground)] underline-offset-4 hover:underline">
-            Open mentorchat →
-          </Link>
-        </section>
-      ) : notifications.length === 0 ? (
-        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6">
-          <h2 className="text-lg font-extrabold text-[var(--foreground)]">
-            Geen meldingen
-          </h2>
-          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            Zodra Rousso antwoordt of er nieuwe platformupdates zijn, zie je ze hier.
-          </p>
-        </section>
-      ) : (
-        <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
-          <ul className="divide-y divide-[var(--border)]">
-            {notifications.map((notification) => {
-              const event = notification.event;
-              const unread = !notification.read_at;
-              return (
-                <li
-                  key={notification.id}
-                  className={`p-5 ${unread ? "bg-[color-mix(in_oklab,var(--accent)_8%,transparent)]" : ""}`}
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {unread && (
-                          <span className="h-2 w-2 rounded-full bg-[var(--accent)]" aria-label="Ongelezen" />
-                        )}
-                        <h2 className="font-bold text-[var(--foreground)]">
-                          {event?.title ?? "Melding"}
-                        </h2>
-                      </div>
-                      {event?.body && (
-                        <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--muted)]">
-                          {event.body}
-                        </p>
-                      )}
-                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.13em] text-[var(--muted)]">
-                        <RelativeDate value={notification.created_at} />
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      {event?.href && (
-                        <Link
-                          href={event.href}
-                          className="cb-btn cb-btn-primary px-4 py-2 text-sm"
-                        >
-                          Open
-                        </Link>
-                      )}
-                      {unread && (
-                        <form action={markOneNotificationRead.bind(null, notification.id)}>
-                          <button
-                            type="submit"
-                            className="cb-btn cb-btn-secondary px-4 py-2 text-sm"
-                          >
-                            Gelezen
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-    </div>
-  );
+export default async function NotificationsPage({ searchParams }: {
+  searchParams?: Promise<{ page?: string }>;
+}) {
+  const params=searchParams?await searchParams:{};
+  const parsed=Number(params.page??1);
+  const page=Number.isInteger(parsed)?Math.min(40001,Math.max(1,parsed)):1;
+  const result=await listMyNotifications({offset:(page-1)*NOTIFICATION_PAGE_SIZE});
+  const pages=Math.max(1,Math.ceil(result.totalCount/NOTIFICATION_PAGE_SIZE));
+  if(!result.error&&page>pages)redirect("/notifications"+(pages>1?"?page="+pages:""));
+  const notifications=result.notifications.map(n=>({
+    id:n.id,title:n.event?.title??"Melding",description:n.event?.body??"",timestamp:n.created_at,
+    read:Boolean(n.read_at),href:n.event?.href??null,type:n.event?.type??"system",
+  }));
+  return <div>
+    <PageHeader title="Meldingen" description="Alles wat nieuw is op het platform. Klik op een melding om er meteen naartoe te springen."
+      actions={!result.error?<MarkAllNotificationsRead unreadTotal={result.unreadTotal}/>:undefined}/>
+    <p className="mb-6 max-w-[70ch] text-sm leading-6 text-[var(--muted)]">Ongelezen meldingen staan bovenaan. De badge telt alleen meldingen van de laatste 30 dagen; oudere berichten blijven hier beschikbaar.</p>
+    {result.error?<section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6">
+      <h2 className="cb-item-title">Meldingen tijdelijk niet beschikbaar</h2><p role="alert" className="mt-2 text-sm text-[var(--muted)]">{result.error}</p>
+      <Link href={"/notifications?page="+page} className="mt-4 inline-flex min-h-11 items-center font-semibold underline underline-offset-4">Opnieuw proberen</Link>
+    </section>:<>
+      <NotificationList notifications={notifications}/>
+      {pages>1&&<nav aria-label="Meldingenpagina’s" className="mt-6 flex flex-wrap items-center justify-between gap-4 text-sm">
+        {page>1?<Link href={"/notifications?page="+(page-1)} className="cb-btn cb-btn-secondary" aria-label="Vorige pagina meldingen">Vorige</Link>:<span/>}
+        <span className="text-[var(--muted)]">Pagina {page} van {pages} · {result.totalCount} meldingen</span>
+        {page<pages?<Link href={"/notifications?page="+(page+1)} className="cb-btn cb-btn-secondary" aria-label="Volgende pagina meldingen">Volgende</Link>:<span/>}
+      </nav>}
+    </>}
+  </div>;
 }

@@ -4,33 +4,35 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 
 **Centrale voortgang:** [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Dit bestand bevat de complete taakspecificaties en een gedateerde statussnapshot; bij faseoverdracht worden bord en snapshot samen bijgewerkt. Filter op `HTP-` voor dit feedbackpakket. De bestaande MU/M1-items behouden hun eigen scope.
 
-**Update 17 oktober 2026: F1 is door Ward goedgekeurd, lokaal geïmplementeerd en technisch gecontroleerd. Crypto is amber. F1 plus HTP-49 zijn goedgekeurd voor main. F2 is lokaal goedgekeurd: alleen het belletje, met klikgedrag. Stop vóór F3a; latere fasen zijn niet goedgekeurd.** Ready betekent inhoudelijk voorbereid, geen uitvoertoestemming. Documentprompts en aanbevelingen geven geen opdracht om code uit te voeren. [Analyse en codebewijs](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan en besluitpoorten](HTP-FASENPLAN.md).
+**Update 17 oktober 2026:** F1 en HTP-49 staan op main **1067df4 / PR #51**. Crypto is amber. **F2 is lokaal geïmplementeerd en geverifieerd**, uitsluitend bel met openen op klik; geen F2-push of productie-uitrol. **Stop vóór F3a.** Ready betekent inhoudelijk voorbereid, geen uitvoertoestemming. Documentprompts en aanbevelingen zijn bronmateriaal. [F1-bewijs](HTP-F1-VERIFICATIE.md) · [F2-bewijs en lokale commits](HTP-F2-VERIFICATIE.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan](HTP-FASENPLAN.md).
 
 ## Werkafspraken
 
 - **Backlog → Ready → In uitvoering → Te controleren → Done**. **Geblokkeerd** is een aparte status met concrete oorzaak en volgende actie. De eerste blokkadeactie is steeds: afhankelijkheden afronden of het genoemde besluit bij die fase vastleggen; de fase-eigenaar pakt dit op. Productbesluiten zijn van Ward, technische uitwerking van de uitvoerder.
-- Ready: criteria helder, relevante besluiten/dependencies afgerond. Start: expliciete fasegoedkeuring, daarna één repository-issue per uitvoerslice volgens CONTRIBUTING.md. Nog niet gestarte taken blijven drafttaken; F1-uitvoerslices zijn met behoud van bordkaart naar repository-issues omgezet.
+- Ready: criteria helder, relevante besluiten/dependencies afgerond. Start: expliciete fasegoedkeuring, daarna één repository-issue per uitvoerslice volgens CONTRIBUTING.md. Nog niet gestarte taken blijven drafttaken; F1- en F2-uitvoerslices zijn met behoud van bordkaart naar repository-issues omgezet.
 - Vóór codewijziging status In uitvoering en branch/issue koppelen. WIP maximaal één taak per uitvoerder. Te controleren betekent resultaat gereed voor de vereiste acceptatiecontrole; nog ontbrekend testbewijs expliciet vermelden.
 - Done alleen met afgevinkte criteria en bewijs: commit/PR, datum, omgeving, accountrol/fixture, uitgevoerde check en uitslag, visuele review waar passend en acceptatie. Code-aanwezigheid, een groene build of oud Review-label alleen volstaat niet. Voor reeds aanwezige implementatie is nieuwe verificatie nodig.
 - Prioriteiten: **P0** fase-/releasepoort, **P1** kernervaring of toegangsvoorwaarde, **P2** vervolgstap. Omvang is relatief: **S** klein en lokaal, **M** meerdere samenhangende onderdelen, **L** te groot voor één uitvoerslice. Grote PDF-/video-/retentieonderdelen zijn daarom in M/S-taken gesplitst; omvang is geen tijdsbelofte.
-- Beoordeling van code en scrumstatus zijn verschillende velden. Al geïmplementeerd is een statische bevinding; Te controleren is de actuele voortgang. Geen taak is op grond van deze analyse Done.
-- Per taak staat een passende verificatieopdracht. Die checks zijn **gepland**, niet uitgevoerd. Het bewijsregister E01-E18 in de analyse linkt naar de concrete bestaande bronbestanden.
+- Beoordeling van code en scrumstatus zijn verschillende velden. Al geïmplementeerd is een statische bevinding; Te controleren is de actuele voortgang. Done steunt op het latere uitvoeringsbewijs, niet alleen op de oorspronkelijke analyse.
+- Per taak staat een passende verificatieopdracht. Voor niet uitgevoerde fasen zijn deze checks gepland; bij Done staan gecontroleerde criteria en bewijs. E01-E18 beschrijven de analysebaseline; F1/F2-verificatierapporten beschrijven het uitgevoerde werk.
 
 ## Scrumboard: snapshot
 
+49 stabiele HTP-taken: **13 Done, 24 Backlog, 11 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. Done voor F2 betekent de goedgekeurde lokale scope; release volgt uitsluitend na opdracht.
+
 | ID | Taak | Prio | Fase | Omvang | Beoordeling | Status |
 |---|---|---|---|---|---|---|
-| [HTP-01](#htp-01) | Bewaar werkende onderdelen en leg de fasebaseline vast | P0 | F1 | S | Al geïmplementeerd | Te controleren |
-| [HTP-02](#htp-02) | Verfijn centrale thema- en oppervlaktetokens | P1 | F1 | M | Al geïmplementeerd | Te controleren |
-| [HTP-03](#htp-03) | Maak gedeelde markttokens en MarketTag | P1 | F1 | M | Al geïmplementeerd | Te controleren |
-| [HTP-04](#htp-04) | Orden typografie, ritme en relatieve datums | P1 | F1 | M | Al geïmplementeerd | Te controleren |
-| [HTP-05](#htp-05) | Toon donker logo zonder licht tegeltje | P1 | F1 | S | Al geïmplementeerd | Te controleren |
-| [HTP-06](#htp-06) | Verifieer bestaande navigatie en legacy-URL’s | P1 | F2 | S | Al geïmplementeerd (begrensd) | Te controleren |
-| [HTP-07](#htp-07) | Verplaats account- en beheeracties naar avatarmenu | P1 | F2 | M | Gedeeltelijk aanwezig | Backlog |
-| [HTP-08](#htp-08) | Bundel bel en themaknop in echte bovenbalk | P1 | F2 | M | Gedeeltelijk aanwezig | Backlog |
-| [HTP-09](#htp-09) | Maak gedeelde meldingenteller, typen en soft delete | P1 | F2 | M | Gedeeltelijk aanwezig | Backlog |
-| [HTP-10](#htp-10) | Markeer meldingen gelezen bij openen van hun bron | P1 | F2 | M | Gedeeltelijk aanwezig | Backlog |
-| [HTP-11](#htp-11) | Vernieuw meldingendropdown en overzicht | P1 | F2 | M | Gedeeltelijk aanwezig | Geblokkeerd |
+| [HTP-01](#htp-01) | Bewaar werkende onderdelen en leg de fasebaseline vast | P0 | F1 | S | Al geïmplementeerd | Done |
+| [HTP-02](#htp-02) | Verfijn centrale thema- en oppervlaktetokens | P1 | F1 | M | Al geïmplementeerd | Done |
+| [HTP-03](#htp-03) | Maak gedeelde markttokens en MarketTag | P1 | F1 | M | Al geïmplementeerd | Done |
+| [HTP-04](#htp-04) | Orden typografie, ritme en relatieve datums | P1 | F1 | M | Al geïmplementeerd | Done |
+| [HTP-05](#htp-05) | Toon donker logo zonder licht tegeltje | P1 | F1 | S | Al geïmplementeerd | Done |
+| [HTP-06](#htp-06) | Verifieer bestaande navigatie en legacy-URL’s | P1 | F2 | S | Al geïmplementeerd (begrensd) | Done |
+| [HTP-07](#htp-07) | Verplaats account- en beheeracties naar avatarmenu | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
+| [HTP-08](#htp-08) | Bundel bel en themaknop in echte bovenbalk | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
+| [HTP-09](#htp-09) | Maak gedeelde meldingenteller, typen en soft delete | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
+| [HTP-10](#htp-10) | Markeer meldingen gelezen bij openen van hun bron | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
+| [HTP-11](#htp-11) | Vernieuw meldingendropdown en overzicht | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
 | [HTP-12](#htp-12) | Harmoniseer marktmodel en weekhoofdstukken | P1 | F3a | M | Gedeeltelijk aanwezig | Backlog |
 | [HTP-13](#htp-13) | Maak eenvoudige feednavigatie en dynamische marktchips | P1 | F3b | M | Gedeeltelijk aanwezig | Geblokkeerd |
 | [HTP-14](#htp-14) | Maak gedeelde redactionele feedkaarten | P1 | F3b | M | Gedeeltelijk aanwezig | Geblokkeerd |
@@ -58,7 +60,7 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-36](#htp-36) | Behoud archief via zoeken, beheer en directe links | P2 | F6 | S | Gedeeltelijk aanwezig | Backlog |
 | [HTP-37](#htp-37) | Voeg loop-video toe aan login/registratiepaneel | P2 | F7 | M | Gedeeltelijk aanwezig | Geblokkeerd |
 | [HTP-38](#htp-38) | Toon welkomstvideo éénmalig aan nieuwe accounts | P2 | F7 | M | Nog uit te voeren | Geblokkeerd |
-| [HTP-39](#htp-39) | Ruim dashboardbasis op voor admin en lid | P1 | F2 | M | Gedeeltelijk aanwezig | Backlog |
+| [HTP-39](#htp-39) | Ruim dashboardbasis op voor admin en lid | P1 | F2 | M | Gedeeltelijk aanwezig | Done |
 | [HTP-40](#htp-40) | Leg vorige-bezoeksnapshot en geopende items vast | P2 | F8 | M | Nog uit te voeren | Backlog |
 | [HTP-41](#htp-41) | Toon nieuwregel en verdwijnende Nieuw-labels | P2 | F8 | M | Nog uit te voeren | Backlog |
 | [HTP-42](#htp-42) | Voeg volgende-modulekaart en rubriekafsluiting toe | P2 | F8 | M | Gedeeltelijk aanwezig | Backlog |
@@ -68,10 +70,11 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-46](#htp-46) | Voeg beperkte reactie-inzichten voor beheer toe | P2 | F9 | S | Nog uit te voeren | Backlog |
 | [HTP-47](#htp-47) | Maak fasebewijs en integrale regressie aantoonbaar | P0 | F10 + iedere fase | M | Gedeeltelijk aanwezig | Backlog |
 | [HTP-48](#htp-48) | Houd backlog, fasepoorten en bewijslast centraal bij | P0 | F1 + iedere fase | S | Gedeeltelijk aanwezig | Ready |
+| [HTP-49](#htp-49) | Maak bestaande Marktinzicht-updatekaart volledig klikbaar | P1 | F1-aanvulling | S | Geïmplementeerd en geverifieerd | Done |
 
-Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Done**; geen taak In uitvoering. HTP-01 t/m 05 wachten op lokale visuele acceptatie; HTP-19 wacht op reproductiemateriaal. F2 is niet gestart.
+Snapshot na F2: **13/49 Done, 24 Backlog, 11 Geblokkeerd, 1 Ready**, geen werk In uitvoering of Te controleren. F1/49 staan op main; F2 is alleen lokaal afgerond. HTP-19 wacht op reproductiemateriaal. F3a is niet gestart.
 
-**Controle van deze planningsoplevering:** het bord is na inrichting teruggelezen: 48 unieke HTP-taken, alle bronverwijzingen/criteria/inhoudsvelden en Status/HTP-fase/Prioriteit/Omvang komen overeen met deze snapshot. De 15 bestaande items zijn behouden; alleen de kolomnamen In Progress/Review zijn vertaald naar In uitvoering/Te controleren, met behoud van optie-ID's. Geblokkeerd is toegevoegd. Alle lokale documentlinks en taakafhankelijkheden zijn gecontroleerd. Dit oorspronkelijke controlebewijs betrof de backloginrichting; nieuw F1-applicatiebewijs staat in [HTP-F1-VERIFICATIE.md](HTP-F1-VERIFICATIE.md).
+**Controle van de overdracht:** 49 unieke HTP-codes met bronnen/criteria/velden; de bestaande bordkaarten en 15 MU/M1-items zijn behouden. Status/HTP-fase/Prioriteit/Omvang en inhoud zijn met deze snapshot gesynchroniseerd en teruggelezen. De analysebaseline beschrijft het startpunt; het latere uitvoeringsbewijs en de actuele status bepalen wat nu af is. [F1-bewijs](HTP-F1-VERIFICATIE.md) · [F2-bewijs](HTP-F2-VERIFICATIE.md).
 
 ## Volledige taakspecificaties
 
@@ -81,7 +84,7 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 - **Bron:** rubriek 00-01 p.4-6; 15 p.37-38.
 - **Prioriteit / fase / omvang:** P0 / F1 / S.
-- **Beoordeling / status:** Al geïmplementeerd / **Te controleren**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done**.
 - **Resultaat:** Een herhaalbare baseline voor student, mentor en admin, met behoud van leergroep/marktgroep, artikeltypografie, intro, byline/avatar, disclaimer, zoeken, Actueel, setupconcept, thumbnails en reacties zonder comments.
 - **Afhankelijkheden:** Geen.
 - **Besluiten / blokkades:** F1 expliciet goedgekeurd door Ward op 17 oktober 2026.
@@ -97,13 +100,16 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Bewijs van uitvoering:** lokaal geïmplementeerd en technisch gecontroleerd op 17 oktober 2026, branch `codex/htp-f1-visual-basis`. Zie [F1-bewijsrapport](HTP-F1-VERIFICATIE.md) voor bestanden, 78 routegevallen, 283 tests, contrast-/browserbewijs en beperkingen. Wacht op visuele acceptatie/integratie; daarom nog niet Done.
 
+
+Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 oktober 2026.
+
 <a id="htp-02"></a>
 
 ### HTP-02 — Verfijn centrale thema- en oppervlaktetokens
 
 - **Bron:** rubriek 00 p.5; 02 p.7-9; 14 p.36.
 - **Prioriteit / fase / omvang:** P1 / F1 / M.
-- **Beoordeling / status:** Al geïmplementeerd / **Te controleren**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done**.
 - **Resultaat:** Eén beheersbaar tokenstelsel voor donker als nieuwe fallback en gelijkwaardig licht; bestaande opgeslagen themakeuze blijft gelden.
 - **Afhankelijkheden:** HTP-01.
 - **Besluiten / blokkades:** D11: AA gaat als meetbare eis vóór onbruikbare tokencombinaties; geen open productkeuze nodig.
@@ -119,13 +125,16 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Bewijs van uitvoering:** lokaal geïmplementeerd en technisch gecontroleerd op 17 oktober 2026, branch `codex/htp-f1-visual-basis`. Zie [F1-bewijsrapport](HTP-F1-VERIFICATIE.md) voor bestanden, 78 routegevallen, 283 tests, contrast-/browserbewijs en beperkingen. Wacht op visuele acceptatie/integratie; daarom nog niet Done.
 
+
+Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 oktober 2026.
+
 <a id="htp-03"></a>
 
 ### HTP-03 — Maak gedeelde markttokens en MarketTag
 
 - **Bron:** rubriek 00 p.5; 02 p.8-9; 06 p.18.
 - **Prioriteit / fase / omvang:** P1 / F1 / M.
-- **Beoordeling / status:** Al geïmplementeerd / **Te controleren**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done**.
 - **Resultaat:** Een gedeelde MarketTag met zes marktkleuren, los van het paarse actieaccent; nieuwe tags later hergebruiken op alle feedbacksurfaces.
 - **Afhankelijkheden:** HTP-01, HTP-02.
 - **Besluiten / blokkades:** D1 besloten door Ward: Crypto amber #E39B4B.
@@ -141,13 +150,16 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Bewijs van uitvoering:** lokaal geïmplementeerd en technisch gecontroleerd op 17 oktober 2026, branch `codex/htp-f1-visual-basis`. Zie [F1-bewijsrapport](HTP-F1-VERIFICATIE.md) voor bestanden, 78 routegevallen, 283 tests, contrast-/browserbewijs en beperkingen. Wacht op visuele acceptatie/integratie; daarom nog niet Done.
 
+
+Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 oktober 2026.
+
 <a id="htp-04"></a>
 
 ### HTP-04 — Orden typografie, ritme en relatieve datums
 
 - **Bron:** rubriek 00 p.5; 02 p.8-9; 14 p.36.
 - **Prioriteit / fase / omvang:** P1 / F1 / M.
-- **Beoordeling / status:** Al geïmplementeerd / **Te controleren**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done**.
 - **Resultaat:** Drie herkenbare UI-kopniveaus en een gedeelde Nederlandse relatieve-datumweergave voor publicatie/meta, zonder de beschermde artikeltypografie te veranderen.
 - **Afhankelijkheden:** HTP-01, HTP-02.
 - **Besluiten / blokkades:** D11: toekomstige agendatijden behouden als functionele uitzondering.
@@ -163,13 +175,16 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Bewijs van uitvoering:** lokaal geïmplementeerd en technisch gecontroleerd op 17 oktober 2026, branch `codex/htp-f1-visual-basis`. Zie [F1-bewijsrapport](HTP-F1-VERIFICATIE.md) voor bestanden, 78 routegevallen, 283 tests, contrast-/browserbewijs en beperkingen. Wacht op visuele acceptatie/integratie; daarom nog niet Done.
 
+
+Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 oktober 2026.
+
 <a id="htp-05"></a>
 
 ### HTP-05 — Toon donker logo zonder licht tegeltje
 
 - **Bron:** rubriek 00 p.5; 02 p.7,9.
 - **Prioriteit / fase / omvang:** P1 / F1 / S.
-- **Beoordeling / status:** Al geïmplementeerd / **Te controleren**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done**.
 - **Resultaat:** Herkenbare merkweergave in shell/login zonder opvallend licht tegelvlak in donker.
 - **Afhankelijkheden:** HTP-01, HTP-02.
 - **Besluiten / blokkades:** Geen blokkerend asset: voorstel bestaand transparant icoon + themagekleurde merknaam; officiële full-variant later vervangbaar.
@@ -185,13 +200,16 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Bewijs van uitvoering:** lokaal geïmplementeerd en technisch gecontroleerd op 17 oktober 2026, branch `codex/htp-f1-visual-basis`. Zie [F1-bewijsrapport](HTP-F1-VERIFICATIE.md) voor bestanden, 78 routegevallen, 283 tests, contrast-/browserbewijs en beperkingen. Wacht op visuele acceptatie/integratie; daarom nog niet Done.
 
+
+Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 oktober 2026.
+
 <a id="htp-06"></a>
 
 ### HTP-06 — Verifieer bestaande navigatie en legacy-URL’s
 
 - **Bron:** rubriek 01 p.6; 03 p.10-11.
 - **Prioriteit / fase / omvang:** P1 / F2 / S.
-- **Beoordeling / status:** Al geïmplementeerd (begrensd) / **Te controleren**.
+- **Beoordeling / status:** Al geïmplementeerd (begrensd) / **Done**.
 - **Resultaat:** Bewijs dat het losse Updates-menu al ontbreekt en dat bestaande links na opschoning bruikbaar blijven.
 - **Afhankelijkheden:** HTP-01.
 - **Besluiten / blokkades:** Updates-groepskop niet verwarren met een los dubbel menu-item.
@@ -199,13 +217,13 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Acceptatiecriteria**
 
-- [ ] Geen tweede klikbare Updates-ingang naast Marktinzicht; leergroep blijft boven marktgroep.
-- [ ] /updates en /weekly-updates openen Marktinzicht; detailaliases en /updates/[market] blijven juiste content/gates tonen.
-- [ ] Een route-/querymatrix vermeldt oude slug, marktfilter en tijdstempelgedrag; benodigde ontbrekende querycompatibiliteit wordt als resterend werk geregistreerd vóór acceptatie.
+- [x] Geen tweede klikbare Updates-ingang naast Marktinzicht; leergroep blijft boven marktgroep.
+- [x] /updates en /weekly-updates openen Marktinzicht; detailaliases en /updates/[market] blijven juiste content/gates tonen.
+- [x] Een route-/querymatrix vermeldt oude slug, marktfilter en tijdstempelgedrag; benodigde ontbrekende querycompatibiliteit wordt als resterend werk geregistreerd vóór acceptatie.
 
 **Verificatie:** Browserroutecheck met direct URL openen/terug/vooruit, gratis/subscriber/admin; oude links incl. query/hash proberen. Code-aanwezigheid alleen is onvoldoende.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, uitsluitend lokale productiebuild 127.0.0.1:3118 en afzonderlijke Supabase 64321 met synthetische accounts. 695eb8c / #58. 18 browsergevallen gratis/Academy/admin: /updates, /weekly-updates, detailaliases, crypto-collectie en gates; marktfilter, herhaalde querywaarden, tijdparameter en hash behouden. Zie route-matrix.csv; behoud van t= belooft geen providerseek. [Volledig F2-bewijs](HTP-F2-VERIFICATIE.md).
 
 <a id="htp-07"></a>
 
@@ -213,21 +231,21 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 - **Bron:** rubriek 03 p.10-11; 12 p.31-32.
 - **Prioriteit / fase / omvang:** P1 / F2 / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Gedeeltelijk aanwezig / **Done**.
 - **Resultaat:** Een opgeruimde zijbalk met leren/markt en een accountzone onderaan.
 - **Afhankelijkheden:** HTP-01, HTP-02, HTP-06.
-- **Besluiten / blokkades:** D4 bepaalt of meldingen in hoofdnav blijven.
+- **Besluiten / blokkades:** D4 besloten: uitsluitend bel, openen op klik behouden.
 - **Bestaande implementatie:** E03; geen avatarmenu, Profiel/Admin staan nog bij nav. Bestaande studentName-prop is geen zichtbare accountzone.
 
 **Acceptatiecriteria**
 
-- [ ] Avatar+naam opent klein menu met Profiel, alleen voor bevoegde admins Admin, en Uitloggen; hulp bereikbaar.
-- [ ] Profiel/Admin verdwijnen uit inhoudsgroep; mentorrollen en chatbestemming blijven juist; actieve bestemming en focus zijn zichtbaar.
-- [ ] Mobiele en desktopnavigatie hebben dezelfde bereikbare acties; menu werkt met toetsenbord, Escape, buitenklik en focusherstel.
+- [x] Avatar+naam opent klein menu met Profiel, alleen voor bevoegde admins Admin, en Uitloggen; hulp bereikbaar.
+- [x] Profiel/Admin verdwijnen uit inhoudsgroep; mentorrollen en chatbestemming blijven juist; actieve bestemming en focus zijn zichtbaar.
+- [x] Mobiele en desktopnavigatie hebben dezelfde bereikbare acties; menu werkt met toetsenbord, Escape, buitenklik en focusherstel.
 
 **Verificatie:** Rollenmatrix gratis/Academy/subscriber/mentor/admin; signout met bestaande draftschoonmaak; toetsenbord- en schermbreedtecontrole.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, uitsluitend lokale productiebuild 127.0.0.1:3118 en afzonderlijke Supabase 64321 met synthetische accounts. e74b2b4 / #53. Acht desktop-/mobielgevallen met vier huidige rollen plus vijf afzonderlijke rollen in lokale betaalsimulatie: accountmenu, Admin alleen niveau 3, chatbestemming, Escape/arrow/focusherstel en hulp/logoutstructuur. Bestaande draftschoonmaak is behouden. De bewuste betaal-RLS-activatiepoort staat afzonderlijk in het rapport. [Volledig F2-bewijs](HTP-F2-VERIFICATIE.md).
 
 <a id="htp-08"></a>
 
@@ -235,21 +253,21 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 - **Bron:** rubriek 03 p.11; 12 p.32.
 - **Prioriteit / fase / omvang:** P1 / F2 / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Gedeeltelijk aanwezig / **Done**.
 - **Resultaat:** Eén bovenbalk met gelijke vierkante controls en mobiel hamburgermenu, zonder overlap met inhoud.
 - **Afhankelijkheden:** HTP-01, HTP-02, HTP-07.
-- **Besluiten / blokkades:** D4/HTP-11 voor beltoegang op chat- en overzichtsroutes.
+- **Besluiten / blokkades:** D4 besloten: bel ook bereikbaar op chat- en overzichtsroutes.
 - **Bestaande implementatie:** E03, E13; mobiel header/drawer al aanwezig, desktopcontrols los en bel op chat/overzicht verborgen.
 
 **Acceptatiecriteria**
 
-- [ ] Desktop en mobiel tonen bel/themaknop naast elkaar in de balk, pagina-achtergrond zonder schaduw; zwevende versies verwijderd.
-- [ ] Mobiele drawer behoudt focusbeheer, sluiting en scroll; main/topbar/safe area overlappen niet.
-- [ ] Chatworkspace, adminshell, meldingenoverzicht en lange titels hebben bewust geteste plaatsing; geen verdwenen meldingeningang door oude route-excepties.
+- [x] Desktop en mobiel tonen bel/themaknop naast elkaar in de balk, pagina-achtergrond zonder schaduw; zwevende versies verwijderd.
+- [x] Mobiele drawer behoudt focusbeheer, sluiting en scroll; main/topbar/safe area overlappen niet.
+- [x] Chatworkspace, adminshell, meldingenoverzicht en lange titels hebben bewust geteste plaatsing; geen verdwenen meldingeningang door oude route-excepties.
 
 **Verificatie:** Viewport/safe-area/zoom 200%, keyboard en lange content testen; check Mux/fullscreen en chat-scrolling; screenshots beide thema’s.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, uitsluitend lokale productiebuild 127.0.0.1:3118 en afzonderlijke Supabase 64321 met synthetische accounts. e74b2b4 / #54. Tien gerichte headergevallen plus 66 beeldcombinaties: bel/thema 44×44, echte header, chat/admin/overzicht bereikbaar, geen overlap. Drawerfocus/scroll, native fullscreen-probe en 200%-equivalent gecontroleerd. Mobiele tabeloverflow hersteld en in zes gevallen bevestigd. [Volledig F2-bewijs](HTP-F2-VERIFICATIE.md).
 
 <a id="htp-09"></a>
 
@@ -257,7 +275,7 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 - **Bron:** rubriek 12 p.30-32.
 - **Prioriteit / fase / omvang:** P1 / F2 / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Gedeeltelijk aanwezig / **Done**.
 - **Resultaat:** Betrouwbare gedeelde meldingenbron voor preview, badge en overzicht.
 - **Afhankelijkheden:** HTP-01.
 - **Besluiten / blokkades:** Eventtypen mappen op vraag/technisch/update/module/live/systeem zonder staffinformatie vrij te geven.
@@ -265,13 +283,13 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Acceptatiecriteria**
 
-- [ ] Badge telt alleen eigen zichtbare ongelezen niet-verwijderde meldingen tot 30 dagen oud; oudere meldingen blijven in gepagineerd overzicht bereikbaar.
-- [ ] Bestaand archived_at hergebruiken indien semantisch passend; verwijderen is per ontvanger en verwijdert nooit event/andermans melding.
-- [ ] RPC/fallback/realtime gebruiken dezelfde tellerregel en leveren type voor iconen; nieuwe typen alleen na passende RLS-/rolmapping.
+- [x] Badge telt alleen eigen zichtbare ongelezen niet-verwijderde meldingen tot 30 dagen oud; oudere meldingen blijven in gepagineerd overzicht bereikbaar.
+- [x] Bestaand archived_at hergebruiken indien semantisch passend; verwijderen is per ontvanger en verwijdert nooit event/andermans melding.
+- [x] RPC/fallback/realtime gebruiken dezelfde tellerregel en leveren type voor iconen; nieuwe typen alleen na passende RLS-/rolmapping.
 
 **Verificatie:** SQL/integratietests met 0/1/9/10, >50 items, 29/30/31 dagen, verwijderd/gelezen en rolwissel; non-admin en ontbrekende-migratiefallback testen.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, uitsluitend lokale productiebuild 127.0.0.1:3118 en afzonderlijke Supabase 64321 met synthetische accounts. ebcf8d5 / #52. SQL/independent-RLS/API en browser: 65 items, 0/1/9/10, exact 29/30/31 dagen met tijdzone, soft delete per ontvanger, type/role visibility, volledig gepagineerde historie. Legacy/missing-RPC-fallback, twee tabs, dubbele events en reconnect gecontroleerd. [Volledig F2-bewijs](HTP-F2-VERIFICATIE.md).
 
 <a id="htp-10"></a>
 
@@ -279,7 +297,7 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 - **Bron:** rubriek 12 p.32.
 - **Prioriteit / fase / omvang:** P1 / F2 / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Gedeeltelijk aanwezig / **Done**.
 - **Resultaat:** Klikken op melding of openen van corresponderende content synchroniseert gelezenstatus.
 - **Afhankelijkheden:** HTP-09.
 - **Besluiten / blokkades:** Geen.
@@ -287,13 +305,13 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Acceptatiecriteria**
 
-- [ ] Klik opent bron en markeert eigen melding gelezen; hetzelfde gebeurt bij directe contentnavigatie via feed/Academy/live/chat waar de bronrelatie bestaat.
-- [ ] Geen read-effect bij alleen preview openen; alles-gelezen werkt voor de volledige eigen set; idempotent gedrag bij refresh/dubbele events.
-- [ ] Ontbrekende/verwijderde/ontoegankelijke bron en null-href geven nette feedback; geen ongeautoriseerde data of fouten verborgen als succes.
+- [x] Klik opent bron en markeert eigen melding gelezen; hetzelfde gebeurt bij directe contentnavigatie via feed/Academy/live/chat waar de bronrelatie bestaat.
+- [x] Geen read-effect bij alleen preview openen; alles-gelezen werkt voor de volledige eigen set; idempotent gedrag bij refresh/dubbele events.
+- [x] Ontbrekende/verwijderde/ontoegankelijke bron en null-href geven nette feedback; geen ongeautoriseerde data of fouten verborgen als succes.
 
 **Verificatie:** End-to-end via dropdown én directe contentlink; twee tabbladen/reconnect en fout/retry simuleren; rol-/recipient-RLS testen.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, uitsluitend lokale productiebuild 127.0.0.1:3118 en afzonderlijke Supabase 64321 met synthetische accounts. 602ec4e / #55. Clientmount na toegangscontrole voor update/live/module/les; bestaande chat-sequence gelezen; geen read bij prefetch/preview. Idempotent refresh, volledige bulk, source-fallback, transportfout+retry, null-href en ontbrekende/ontoegankelijke bronnen getest. Nederlandse feedback/teruglink bevestigd. [Volledig F2-bewijs](HTP-F2-VERIFICATIE.md).
 
 <a id="htp-11"></a>
 
@@ -301,21 +319,21 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 - **Bron:** rubriek 12 p.30-32; 03 p.11.
 - **Prioriteit / fase / omvang:** P1 / F2 / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Geblokkeerd**.
+- **Beoordeling / status:** Gedeeltelijk aanwezig / **Done**.
 - **Resultaat:** Consistente badge/dropdown/overzicht met één duidelijke klikactie per melding.
 - **Afhankelijkheden:** HTP-08, HTP-09, HTP-10, HTP-04.
-- **Besluiten / blokkades:** D4: alleen bel of tevens zijbalk; klik versus eerdere auto-openwens.
+- **Besluiten / blokkades:** D4 besloten: uitsluitend bel, openen op klik behouden. Geen auto-open.
 - **Bestaande implementatie:** E13: dropdown is aanwezig maar verkeerde badgecap/kleuren/previewgrootte; overzicht heeft losse acties. Geen browsertest.
 
 **Acceptatiecriteria**
 
-- [ ] Rode badge met wit getal, vanaf 10 toont 9+, bij nul verborgen; optionele sidebarbadge komt exact uit dezelfde bron.
-- [ ] Dropdown circa 400px (mobiel passend), 5 recentste items, typeicoon/kleur, titelafkapping, rood ongelezenpuntje, relatieve datum en verwijderkruis dat niet navigeert; Escape/buitenklik sluiten.
-- [ ] Overzicht met uitleg, ongelezen eerst en per groep datum aflopend; gelezen gearceerd/gedimd én AA-leesbaar; geen losse Gelezen/Openen-knoppen; alles-gelezen en leegstaat Je bent helemaal mee. /notifications behouden of compatibele /meldingen-alias.
+- [x] Rode badge met wit getal, vanaf 10 toont 9+, bij nul verborgen; geen Meldingen-item in de zijbalk (D4).
+- [x] Dropdown circa 400px (mobiel passend), 5 recentste items, typeicoon/kleur, titelafkapping, rood ongelezenpuntje, relatieve datum en verwijderkruis dat niet navigeert; Escape/buitenklik sluiten.
+- [x] Overzicht met uitleg, ongelezen eerst en per groep datum aflopend; gelezen gearceerd/gedimd én AA-leesbaar; geen losse Gelezen/Openen-knoppen; alles-gelezen en leegstaat Je bent helemaal mee. /notifications behouden of compatibele /meldingen-alias.
 
 **Verificatie:** Vergelijk referenties 5-8; test 0/1/9/10/>50 meldingen, softdelete, direct bronopen, foutafhandeling en keyboard; realtime zonder volledige reload.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, uitsluitend lokale productiebuild 127.0.0.1:3118 en afzonderlijke Supabase 64321 met synthetische accounts. e74b2b4 / #56. Alleen bel, click-only, badge 0/1/9/9+, vijf recente items, type-iconen, afkapping, rode punt, datum en apart verwijderkruis zonder navigatie. Volledig overzicht ongelezen/datum-geordend, read-hatching met AA, paginering, bulk, leegstaat, Escape/outside en fout/retry gecontroleerd. [Volledig F2-bewijs](HTP-F2-VERIFICATIE.md).
 
 <a id="htp-12"></a>
 
@@ -338,6 +356,9 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 **Verificatie:** Voor/na-fixture van alle legacy/structured types en meerdere markten; SQL constraints/RLS + action-/filtertests; migratie dry-run en rollback/databehoudplan in testomgeving.
 
 **Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+
+
+**Baselinevervolg:** #28 blijft de aparte historische/product-cutoverpoort. De extra F2-betaalsimulatie bevestigt dat main bewust niveau-2-RLS voor updates/live behoudt; geen betaalactivering of RLS-cutover als impliciet onderdeel van F3a. Zie F2-rapport.
 
 <a id="htp-13"></a>
 
@@ -382,6 +403,9 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 **Verificatie:** 1/5/30 items, lange/ontbrekende tekst, geen thumbnail, meerdere tags; desktop/tablet/mobiel screenshots en link/focus-audit; regressie #30/#32/#33 vergelijken.
 
 **Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+
+
+**Afgebakend deelbewijs:** het bestaande kaartvlak is via HTP-49 / main 1067df4 volledig klikbaar. Deze taak blijft Backlog voor het overige F3b-feedontwerp; verwijderen van de zichtbare Open-update-tekst is niet impliciet goedgekeurd.
 
 <a id="htp-15"></a>
 
@@ -917,7 +941,7 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 - **Bron:** rubriek 05 p.14-15.
 - **Prioriteit / fase / omvang:** P1 / F2 / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Backlog**.
+- **Beoordeling / status:** Gedeeltelijk aanwezig / **Done**.
 - **Resultaat:** Inhoud krijgt voorrang boven lege beheercards; rolgerichte structuur blijft bestaan.
 - **Afhankelijkheden:** HTP-01, HTP-02, HTP-04, HTP-08.
 - **Besluiten / blokkades:** D12: alleen concrete basis; ruimer redesign later.
@@ -925,13 +949,13 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Acceptatiecriteria**
 
-- [ ] Geen grote lege vraag/concept/sessiekaarten boven inhoud; compact samenvatten of verbergen, relevante content omhoog.
-- [ ] Drie beheerlinks bovenaan als secundaire knoppen en alleen voor bevoegde admins; composer/mentorvragen blijven bereikbaar.
-- [ ] Carrousel toont hele kaarten of bewuste eindfade, met pijlen/swipe/toetsenbord; geen dubbele leer-CTA of toegangsgat.
+- [x] Geen grote lege vraag/concept/sessiekaarten boven inhoud; compact samenvatten of verbergen, relevante content omhoog.
+- [x] Drie beheerlinks bovenaan als secundaire knoppen en alleen voor bevoegde admins; composer/mentorvragen blijven bereikbaar.
+- [x] Carrousel toont hele kaarten of bewuste eindfade, met pijlen/swipe/toetsenbord; geen dubbele leer-CTA of toegangsgat.
 
 **Verificatie:** Nul/veel vragen/concepten/sessies, admin/mentor/lid; drie breedtes en beide thema’s; bestaande #34/#31 acceptance als vergelijkingscontext, nieuw bewijs vastleggen.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** 17 oktober 2026, uitsluitend lokale productiebuild 127.0.0.1:3118 en afzonderlijke Supabase 64321 met synthetische accounts. a0d3734 / #57. Nul versus vier vragen/vier concepten/drie sessies; bounded lijst van drie, geen lege blokken, drie beheerlinks bovenaan, composer en bestaande leeractie behouden. Hele kaarten op drie breedtes, pijlen/keyboard en native touchswipe gecontroleerd; beide thema’s en herstelde lege/gevulde fixturetoestand. [Volledig F2-bewijs](HTP-F2-VERIFICATIE.md).
 
 <a id="htp-40"></a>
 
@@ -1107,7 +1131,7 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Verificatie:** Gebruik synthetische fixtures; non-admin RLS en directe assetrequests, fout/retry/missingmigration testen. CI-scripts eerst op geschiktheid controleren; geen productieschrijfacties in planningsfase.
 
-**Bewijs van uitvoering:** F1-bewijs geleverd in [F1-verificatie](HTP-F1-VERIFICATIE.md). Status Backlog voor controles van nog niet goedgekeurde fasen; de integrale F10-criteria blijven open.
+**Bewijs van uitvoering:** F1- en F2-deelbewijs geleverd in [F1-verificatie](HTP-F1-VERIFICATIE.md) en [F2-verificatie](HTP-F2-VERIFICATIE.md). Status Backlog voor controles van nog niet goedgekeurde fasen; de integrale F10-criteria blijven open.
 
 <a id="htp-48"></a>
 
@@ -1123,13 +1147,13 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 **Acceptatiecriteria**
 
-- [ ] Elke HTP-taak heeft bron/resultaat/prioriteit/fase/S-M-L/afhankelijkheden/besluiten/criteria/verificatie/status; uitvoering start alleen na fasegoedkeuring en gekoppeld uitvoerissue.
-- [ ] Bordstatus is voortgangsbron; document bevat gedateerde snapshot en details/links. Backlog → Ready → In uitvoering → Te controleren → Done, Geblokkeerd apart met reden/eigenaar-volgende-actie.
-- [ ] In uitvoering vóór codewijziging, WIP 1 per uitvoerder; Te controleren zodra resultaat klaar is; Done pas na aantoonbare criteriacontrole en acceptatie. Geen automatische synchronisatie of nieuwe app.
+- [x] Elke HTP-taak heeft bron/resultaat/prioriteit/fase/S-M-L/afhankelijkheden/besluiten/criteria/verificatie/status; uitvoering start alleen na fasegoedkeuring en gekoppeld uitvoerissue.
+- [x] Bordstatus is voortgangsbron; document bevat gedateerde snapshot en details/links. Backlog → Ready → In uitvoering → Te controleren → Done, Geblokkeerd apart met reden/eigenaar-volgende-actie.
+- [x] In uitvoering vóór codewijziging, WIP 1 per uitvoerder; Te controleren zodra resultaat klaar is; Done pas na aantoonbare criteriacontrole en acceptatie. Geen automatische synchronisatie of nieuwe app.
 
 **Verificatie:** Controleer alle IDs/dependencies/bronnen en borditems; lees na schrijven de statussen/inhoud terug. Bij faseoverdracht snapshot+besluitlog+bewijslocatie bijwerken; huidig opzetten is geen toestemming voor code.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** huidige F1/F2-overdracht gecontroleerd: 49 unieke IDs, bestaande bordkaarten behouden, 13 Done met bron/criteria/bewijs, volgende fasen niet gestart. Status Ready voor onderhoud bij een volgende goedgekeurde fase; geen definitieve afronding van de doorlopende borging.
 
 
 
@@ -1138,7 +1162,7 @@ Snapshot na F1: 29 Backlog, 12 Geblokkeerd, 1 Ready, 6 Te controleren. **0/48 Do
 
 - **Bron:** rubriek 06 p.16-19, afgebakende aanvulling op HTP-14; expliciet verzoek Ward 17 oktober 2026.
 - **Prioriteit / fase / omvang:** P1 / F1-aanvulling / S.
-- **Status:** Te controleren (release naar main goedgekeurd; CI/merge volgen).
+- **Status:** Done. Main 1067df4, PR #51, CI inclusief chatintegratie groen.
 - **Resultaat:** Het hele bestaande kaartvlak opent dezelfde update met één focusstop.
 - **Afhankelijkheden / besluiten:** bestaande kaart/F1; geen open besluit. Rest HTP-14 blijft F3b.
 - **Issue:** https://github.com/6ftwardje/HTP2.0/issues/50 (repositorycode H1.49, alias HTP-49).

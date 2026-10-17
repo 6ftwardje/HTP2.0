@@ -1,3 +1,4 @@
+import { SourceNotificationRead } from "@/components/SourceNotificationRead";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
@@ -455,6 +456,7 @@ export default async function LessonPage({ params }: Props) {
 
   return (
     <div>
+      <SourceNotificationRead targets={[{ table: "lessons", id: String(lesson.id) }, { table: "modules", id: String(moduleData.id) }]}/>
       <PageHeader
         breadcrumbs={[
           { label: "Academy", href: "/modules" },

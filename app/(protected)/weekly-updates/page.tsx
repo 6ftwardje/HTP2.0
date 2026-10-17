@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-
-export default async function WeeklyUpdatesPage() {
-  redirect("/market-analysis");
+import { withLegacyMarketQuery, type LegacyMarketSearchParams } from "@/lib/legacy-market-redirect";
+export default async function WeeklyUpdatesPage({ searchParams }: { searchParams?: Promise<LegacyMarketSearchParams> }) {
+  redirect(withLegacyMarketQuery("/market-analysis", searchParams ? await searchParams : {}));
 }

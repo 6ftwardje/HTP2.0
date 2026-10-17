@@ -1,0 +1,5 @@
+.section { min-width: 0; container-type: inline-size; }
+.rail { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; align-items: start; gap: 16px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding-bottom: 16px; scrollbar-color: var(--border) transparent; scrollbar-width: thin; }
+.card { min-width: 0; scroll-snap-align: start; }
+@container (min-width: 600px) { .rail { grid-auto-columns: calc((100% - 16px) / 2); } }
+@container (min-width: 980px) { .rail { grid-auto-columns: calc((100% - 32px) / 3); } }

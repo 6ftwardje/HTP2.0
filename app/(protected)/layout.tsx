@@ -1,13 +1,10 @@
 import { redirect } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
 import { AppShell } from "@/components/AppShell";
-import {
-  getNotificationShellReadModel,
-  getUnreadNotificationCount,
-  listMyNotifications,
-} from "@/lib/notifications";
-import { ADMIN_ACCESS_LEVEL } from "@/lib/admin/constants";
+import { getNotificationChrome } from "@/lib/notifications";
 import { getChatAccess } from "@/lib/mentor-chat";
+import { getOwnAvatar } from "@/lib/market-post-detail";
+import { canAccessSubscriberContent, getBillingOverview } from "@/lib/billing";
 import { ChatPresenceProvider } from "@/lib/chat-presence";
 
 export default async function ProtectedLayout({
@@ -34,45 +31,20 @@ export default async function ProtectedLayout({
     redirect("/?redirectedFrom=" + encodeURIComponent("/dashboard"));
   }
 
-  const chatAccess = await getChatAccess();
-
-  const notificationShell =
-    chatAccess.available || (
-      process.env.PROJECT_SPEED_NOTIFICATION_SHELL === "1" &&
-      student.access_level === ADMIN_ACCESS_LEVEL
-    )
-      ? await getNotificationShellReadModel(student.id)
-      : null;
-  const [unreadNotificationCount, notificationResult] = notificationShell
-    ? [
-        notificationShell.unreadCount,
-        { notifications: notificationShell.notifications },
-      ]
-    : await Promise.all([
-        getUnreadNotificationCount(),
-        listMyNotifications(),
-      ]);
-
-  const floatingNotifications = notificationResult.notifications
-    .slice(0, 8)
-    .map((notification) => ({
-      id: notification.id,
-      title: notification.event?.title ?? "Melding",
-      description: notification.event?.body ?? "",
-      timestamp: notification.created_at,
-      read: Boolean(notification.read_at),
-      href: notification.event?.href ?? null,
-    }));
+  const [chatAccess, avatarPath, notificationChrome, billingOverview] = await Promise.all([
+    getChatAccess(), getOwnAvatar(student.id), getNotificationChrome(student.id), getBillingOverview(student.id),
+  ]);
 
   return (
     <ChatPresenceProvider currentStudentId={student.id}><AppShell
       studentName={student.name ?? null}
+      avatarPath={avatarPath}
       accessLevel={student.access_level}
+      hasSubscriberAccess={canAccessSubscriberContent(student, billingOverview)}
       currentStudentId={student.id}
       isChatMentor={chatAccess.isMentor}
       unreadChatCount={chatAccess.unreadCount}
-      unreadNotificationCount={unreadNotificationCount}
-      floatingNotifications={floatingNotifications}
+      {...notificationChrome}
     >
       {children}
     </AppShell></ChatPresenceProvider>

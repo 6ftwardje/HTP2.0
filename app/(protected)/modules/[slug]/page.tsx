@@ -1,3 +1,4 @@
+import { SourceNotificationRead } from "@/components/SourceNotificationRead";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
@@ -453,7 +454,8 @@ export default async function ModuleDetailPage({ params }: Props) {
     <div className="space-y-10">
       <header className="grid gap-8 border-b border-[var(--border)] pb-9 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] lg:items-end">
         <div>
-          <nav className="cb-caption" aria-label="Breadcrumb">
+          <SourceNotificationRead targets={[{ table: "modules", id: String(moduleData.id) }]}/>
+      <nav className="cb-caption" aria-label="Breadcrumb">
             <Link
               href="/modules"
               className="transition-colors hover:text-[var(--foreground)]"
