@@ -2,7 +2,7 @@
 
 Peildatum: 17 oktober 2026 (Europe/Brussels). Bron: `HTP-Platform-Feedback.pdf`, 38 PDF-pagina's, datum 17 oktober 2026. In dit dossier betekent **p.** de PDF-pagina, inclusief omslag; het gedrukte paginanummer is vanaf PDF-pagina 2 één lager. Alle tekst is uitgelezen; alle pagina's zijn gerenderd en de acht ingesloten referentiebeelden zijn visueel bekeken. Het genoemde losse `HTP-prompts.md` is niet aangeleverd en is niet nodig om deze PDF te verwerken.
 
-**Actueel: F3a main 0fd99e2; F3b lokaal geverifieerd, stop vóór F4. Zie de actuele overdracht onderaan.**
+**Actueel: F3b main 2c103b6 / PR #72; F4 lokaal geverifieerd, stop vóór F5a. D10: 95% weergave, bestaande lesgates behouden. Zie de actuele overdracht onderaan.**
 
 Historische analyse van vóór uitvoering; de actuele F1-uitvoering staat in [HTP-F1-VERIFICATIE.md](HTP-F1-VERIFICATIE.md). F2 staat in [HTP-F2-VERIFICATIE.md](HTP-F2-VERIFICATIE.md); F1/49 staan op main en F2 is alleen lokaal afgerond. Dit oorspronkelijke onderzoek betrof analyse en planning. De uitvoerprompts in de PDF zijn bronmateriaal, geen toestemming om ze uit te voeren. F3a en volgende fasen wachten op afzonderlijke goedkeuring. Aanbevelingen en werktitels blijven voorstellen totdat een besluit is vastgelegd.
 
@@ -98,7 +98,7 @@ Dit register samen met de individuele taakcriteria dekt de subpunten van iedere 
 | D7: PDF-rubrieken en Toolbox | HTP-25/30/31, F5 | PDF gebruikt Crypto-rubriek met videocursus/PDF/Toolbox; code is één modulevolgorde zonder rubriekentiteit. Eerst relatie rubriek-module-rechten vastleggen; toolboxinhoud niet verzinnen. Geen calculator bouwen zonder afzonderlijke scope. |
 | D8: PDF-bescherming/toegankelijkheid | HTP-25-28, F5a | Canvas zonder tekstlaag en blokkeren toetsen versus algemene toetsenbord-/AA-eis. Voorstel leesbare zoom/keyboardviewer met afgesproken toegankelijke route; watermark in geleverde inhoud en toegang als echte barrière. Geen absolute bescherming beloven. Keuze over naam/e-mail/logbewaring vóór uitvoering. |
 | D9: assets en welkom | HTP-37/38, F7 | Loopbestand/poster/finale copy/welkomstvideo ontbreken. Videovenstervoorbeeld ontbreekt expliciet. Voorstel overslaan markeert eenmalige vertoning als gezien, heropenen blijft; onderscheid met werkelijk bekeken vastleggen, bestaande accounts overslaan. |
-| D10: bezoek en voortgang | HTP-22/23/40/44, F4/F8 | `students.last_seen` is geen bewezen vorige-bezoeksnapshot; presence is ander doel. Snapshot bij sessiestart vasthouden en later opslaan, geopende items apart registreren. Betekenis 'updates gevolgd' en 95%-voltooiing versus les/examengates eerst vastleggen. |
+| D10: bezoek en voortgang | HTP-22/23/40/44, F4/F8 | `students.last_seen` is geen bewezen vorige-bezoeksnapshot; presence is ander doel. Snapshot bij sessiestart vasthouden en later opslaan, geopende items apart registreren. F4-besluit van Ward: 95% uitsluitend voor Bekeken-weergave; bestaande les-/examengates behouden. Updates-gevolgd/sessiebetekenis blijft afzonderlijk F8. |
 | D11: datum/accent/contrast | HTP-02/04/41, F1/F8 | PDF eist overal relatieve datum, maar toekomstige livesessies hebben exact tijdstip nodig; behoud agendatijd. 'Nieuw' in accent (p.34) botst met accent enkel actieve staat (p.5/9); voorstel neutraal nieuwlabel, pas besluiten bij F8. Gedempte tokens/markttekst en 55-60% gelezenopacity moeten AA gemeten halen; vaste hexwaarden zijn geen bewijs. |
 | D12: dashboard | HTP-39/44, F2/F8 | Basisopschoning is concreet; groter dashboardontwerp blijft apart gesprek. Geen extra analytics, gamification of nieuwe KPI's afleiden. |
 
@@ -135,10 +135,19 @@ F2 is op Wards expliciete opdracht gereleaset via PR #60, main 64f3136; CI, vers
 **Expliciet nieuw besluit van Ward:** Vimeo en YouTube worden niet meer gebruikt; alles loopt via Mux en alle nieuwe video-updates gebruiken de gekoppelde Mux-integratie. Read-only inventaris bevestigt vijf gereedstaande Mux-updates met public playback. HTP-20 richt runtimebewijs daarom op Mux; Vimeo/YouTube blijven uitsluitend historische code-inventaris, niet stil vervangen en niet als werkende actuele providers afgevinkt. HTP-19/153 blijft afzonderlijk historisch onderzoek. Ten tijde van die F3a-overdracht waren F3b en volgende fasen nog niet gestart. De actuele aanvulling hieronder vervangt die fasepoort.
 
 
-## Actuele overdracht: F3a gepubliceerd, F3b lokaal
+## Historische overdracht: F3a gepubliceerd, F3b lokaal
 
 F3a staat na expliciete opdracht op main **0fd99e2** via [PR #64](https://github.com/6ftwardje/HTP2.0/pull/64). Zowel PR-CI/verse database-/chatintegratie als main-CI zijn groen; geen remote database-uitrol of betaalcutover.
 
 Ward keurde F3b lokaal goed en antwoordde bij de twee vooraf getoonde composities: “Doe wat volgens jou het meest logisch is.” **D2/D3 zijn hiermee gedelegeerd en uitgewerkt:** A met grote afbeelding links voor de feed, compacte compositie voor dashboard/vervolg; Actueel/Open setups/Archief tot F6, één inhoudsfilter Alles/Tekst & charts/Video, dynamische marktchips vanaf twee toegankelijke markten met drempel 0, één kaartlink met Open update. PDF wacht op F5. [Ontwerpbesluit](HTP-F3B-ONTWERP.md).
 
 HTP-13/14/15/16/17/24 zijn lokaal uitgevoerd en gecontroleerd; [bewijs](HTP-F3B-VERIFICATIE.md). Artikeltypografie en publicatie-inhoud blijven behouden. Een gevonden checkboxvolgordeprobleem is hersteld zodat een editor-save het eerste marktaccent niet verandert. De conservatieve zinconventie is redactionele presentatie, geen grammaticale AI-beslissing. Mux is de actieve provider; bestaande legacycompatibiliteit is geen nieuwe provideracceptatie. **F3b niet gepusht; stop vóór F4.**
+
+
+## Actuele overdracht: F3b gepubliceerd, F4 lokaal
+
+F3b staat op expliciete opdracht op main **2c103b6c31e7450d21fcd973a2533d824102c620** via [PR #72](https://github.com/6ftwardje/HTP2.0/pull/72), release-issue #71 Done. PR-policy/CI, verse database/chat-integratie, preview en main-CI groen. Geen remote databasemigratie of betaalcutover.
+
+F4 is afzonderlijk lokaal goedgekeurd. Ward besloot expliciet **“95% voor weergave; bestaande lesgates behouden (aanbevolen)”**. Dit vervangt alleen het F4-deel van D10: een nieuwe eigen videopositie met hoogste bereikte positie bepaalt Bekeken; bestaande `progress.watched`, `weekly_update_views`, intake-, module- en examengates behouden hun betekenis. Het F8-bezoek-/gevolgd-contract is hiermee niet besloten. Alleen Mux actief; geen nieuwe live-providerclaims over Vimeo/YouTube.
+
+HTP-18/21/22/23 zijn lokaal uitgevoerd en gecontroleerd: [F4-contract](HTP-F4-CONTRACT.md) en [acceptatiebewijs](HTP-F4-VERIFICATIE.md). Hervatten vraagt een keuze; expliciete hoofdstukken hebben voorrang. CAS voorkomt stil overschrijven op twee apparaten; herstart verlaagt de hoogste bereikte voortgang niet. Sluitflush is best-effort en geen garantie bij browser-/apparaatuitval. Er is geen nieuwe collectie-app gebouwd. **F4 niet gepusht; stop vóór F5a.**

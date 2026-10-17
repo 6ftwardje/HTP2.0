@@ -4,21 +4,21 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 
 **Centrale voortgang:** [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Dit bestand bevat de complete taakspecificaties en een gedateerde statussnapshot; bij faseoverdracht worden bord en snapshot samen bijgewerkt. Filter op `HTP-` voor dit feedbackpakket. De bestaande MU/M1-items behouden hun eigen scope.
 
-**Update 17 oktober 2026:** F1/HTP-49 staan op main via PR #51; F2 via **64f3136 / [PR #60](https://github.com/6ftwardje/HTP2.0/pull/60)**. F3a is op expliciete opdracht gepubliceerd als **0fd99e2 / [PR #64](https://github.com/6ftwardje/HTP2.0/pull/64)**; PR- en main-CI zijn groen. Ward keurde daarna F3b lokaal goed en delegeerde de keuze tussen de voorgelegde feedvarianten. Variant A is uitgevoerd: bestaande tabs behouden tot F6, één inhoudsfilter, dynamische marktchips, Open update binnen één kaartlink. **F3b lokaal geverifieerd; stop vóór F4.** Crypto blijft amber; meldingen uitsluitend een bel met bestaand klikgedrag. Geen remote databasewijzigingen, Mux-writes of betaalcutover. Ready betekent inhoudelijk voorbereid, geen uitvoertoestemming. [F1](HTP-F1-VERIFICATIE.md) · [F2](HTP-F2-VERIFICATIE.md) · [F3a](HTP-F3A-VERIFICATIE.md) · [F3b-bewijs](HTP-F3B-VERIFICATIE.md) · [Ontwerpbesluiten](HTP-F3B-ONTWERP.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan](HTP-FASENPLAN.md).
+**Update 17 oktober 2026:** F1/HTP-49, F2 en F3a staan op main. F3b is op expliciete opdracht gepubliceerd als **2c103b6 / [PR #72](https://github.com/6ftwardje/HTP2.0/pull/72)**; PR- en main-CI zijn groen. Daarna is F4 lokaal uitgevoerd en geverifieerd op branch `codex/htp-f4-local`. **D10 besloten door Ward: 95% voor weergave; bestaande lesgates behouden. Stop vóór F5a. F4 is niet gepusht.** Actieve provider Mux, Crypto amber en uitsluitend het belletje met bestaand klikgedrag behouden. Geen remote migratie, providerwrites of betaalcutover. Done voor F4 betreft de goedgekeurde lokale scope. Ready betekent voorbereid, geen uitvoertoestemming. [F1](HTP-F1-VERIFICATIE.md) · [F2](HTP-F2-VERIFICATIE.md) · [F3a](HTP-F3A-VERIFICATIE.md) · [F3b](HTP-F3B-VERIFICATIE.md) · [F4-bewijs](HTP-F4-VERIFICATIE.md) · [F4-contract](HTP-F4-CONTRACT.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan](HTP-FASENPLAN.md).
 
 ## Werkafspraken
 
 - **Backlog → Ready → In uitvoering → Te controleren → Done**. **Geblokkeerd** is een aparte status met concrete oorzaak en volgende actie. De eerste blokkadeactie is steeds: afhankelijkheden afronden of het genoemde besluit bij die fase vastleggen; de fase-eigenaar pakt dit op. Productbesluiten zijn van Ward, technische uitwerking van de uitvoerder.
-- Ready: criteria helder, relevante besluiten/dependencies afgerond. Start: expliciete fasegoedkeuring, daarna één repository-issue per uitvoerslice volgens CONTRIBUTING.md. Nog niet gestarte taken blijven drafttaken; F1-, F2-, F3a- en F3b-uitvoerslices zijn met behoud van bordkaart naar repository-issues omgezet.
+- Ready: criteria helder, relevante besluiten/dependencies afgerond. Start: expliciete fasegoedkeuring, daarna één repository-issue per uitvoerslice volgens CONTRIBUTING.md. Nog niet gestarte taken blijven drafttaken; F1-, F2-, F3a-, F3b- en F4-uitvoerslices zijn met behoud van bordkaart naar repository-issues omgezet.
 - Vóór codewijziging status In uitvoering en branch/issue koppelen. WIP maximaal één taak per uitvoerder. Te controleren betekent resultaat gereed voor de vereiste acceptatiecontrole; nog ontbrekend testbewijs expliciet vermelden.
 - Done alleen met afgevinkte criteria en bewijs: commit/PR, datum, omgeving, accountrol/fixture, uitgevoerde check en uitslag, visuele review waar passend en acceptatie. Code-aanwezigheid, een groene build of oud Review-label alleen volstaat niet. Voor reeds aanwezige implementatie is nieuwe verificatie nodig.
 - Prioriteiten: **P0** fase-/releasepoort, **P1** kernervaring of toegangsvoorwaarde, **P2** vervolgstap. Omvang is relatief: **S** klein en lokaal, **M** meerdere samenhangende onderdelen, **L** te groot voor één uitvoerslice. Grote PDF-/video-/retentieonderdelen zijn daarom in M/S-taken gesplitst; omvang is geen tijdsbelofte.
 - Beoordeling van code en scrumstatus zijn verschillende velden. Al geïmplementeerd is een statische bevinding; Te controleren is de actuele voortgang. Done steunt op het latere uitvoeringsbewijs, niet alleen op de oorspronkelijke analyse.
-- Per taak staat een passende verificatieopdracht. Voor niet uitgevoerde fasen zijn deze checks gepland; bij Done staan gecontroleerde criteria en bewijs. E01-E18 beschrijven de analysebaseline; F1/F2/F3a/F3b-verificatierapporten beschrijven het uitgevoerde werk.
+- Per taak staat een passende verificatieopdracht. Voor niet uitgevoerde fasen zijn deze checks gepland; bij Done staan gecontroleerde criteria en bewijs. E01-E18 beschrijven de analysebaseline; F1/F2/F3a/F3b/F4-verificatierapporten beschrijven het uitgevoerde werk.
 
 ## Scrumboard: snapshot
 
-49 stabiele HTP-taken: **21 Done, 18 Backlog, 9 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F3a is gepubliceerd; Done voor F3b betekent de goedgekeurde lokale scope, geen release. Release-issues H2.0/#59 en H3.0/#63 zijn daarnaast Done; de vijftien bestaande MU/M1-kaarten blijven behouden.
+49 stabiele HTP-taken: **25 Done, 15 Backlog, 8 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F3b is gepubliceerd; F4 Done betekent gecontroleerde lokale scope. Release-issues H2.0/#59, H3.0/#63 en H3.1/#71 zijn daarnaast Done; de vijftien MU/M1-kaarten blijven behouden. Totaal 67 bordkaarten.
 
 | ID | Taak | Prio | Fase | Omvang | Beoordeling | Status |
 |---|---|---|---|---|---|---|
@@ -39,12 +39,12 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-15](#htp-15) | Geef weekvooruitblik een eigen hoofdblok | P1 | F3b | M | Al geïmplementeerd | Done |
 | [HTP-16](#htp-16) | Voeg precies twee relevante vervolgkaarten toe | P1 | F3b | M | Al geïmplementeerd | Done |
 | [HTP-17](#htp-17) | Herstel artikelcontext en genummerde takeaways | P1 | F3b | M | Al geïmplementeerd | Done |
-| [HTP-18](#htp-18) | Gebruik update-thumbnail als videoposter | P1 | F4 | S | Nog uit te voeren | Backlog |
+| [HTP-18](#htp-18) | Gebruik update-thumbnail als videoposter | P1 | F4 | S | Al geïmplementeerd | Done |
 | [HTP-19](#htp-19) | Onderzoek en reproduceer YouTube-fout 153 | P1 | F1 (diagnose), herstel pas F4 | S | Nader te onderzoeken | Geblokkeerd |
 | [HTP-20](#htp-20) | Controleer mogelijkheden van elke videoprovider | P1 | F3a | S | Nader te onderzoeken | Done |
-| [HTP-21](#htp-21) | Voeg snelheidsvoorkeur en veilige sneltoetsen toe | P2 | F4 | M | Nader te onderzoeken / gedeeltelijk | Backlog |
-| [HTP-22](#htp-22) | Modelleer veilige videopositie en voltooiing | P1 | F4 | M | Gedeeltelijk aanwezig | Geblokkeerd |
-| [HTP-23](#htp-23) | Sla videopositie op en toon hervatten in speler/lijsten | P1 | F4 | M | Nog uit te voeren | Backlog |
+| [HTP-21](#htp-21) | Voeg snelheidsvoorkeur en veilige sneltoetsen toe | P2 | F4 | M | Al geïmplementeerd | Done |
+| [HTP-22](#htp-22) | Modelleer veilige videopositie en voltooiing | P1 | F4 | M | Al geïmplementeerd | Done |
+| [HTP-23](#htp-23) | Sla videopositie op en toon hervatten in speler/lijsten | P1 | F4 | M | Al geïmplementeerd | Done |
 | [HTP-24](#htp-24) | Maak hoofdstukken sticky, actief en via marktlinks bereikbaar | P1 | F3b | M | Al geïmplementeerd | Done |
 | [HTP-25](#htp-25) | Beslis PDF-contract, rubrieken en beschermingsniveau | P1 | F5a | M | Nader te onderzoeken | Geblokkeerd |
 | [HTP-26](#htp-26) | Maak private PDF-opslag en geautoriseerde uitlevering | P1 | F5a | M | Nog uit te voeren | Backlog |
@@ -72,7 +72,7 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-48](#htp-48) | Houd backlog, fasepoorten en bewijslast centraal bij | P0 | F1 + iedere fase | S | Gedeeltelijk aanwezig | Ready |
 | [HTP-49](#htp-49) | Maak bestaande Marktinzicht-updatekaart volledig klikbaar | P1 | F1-aanvulling | S | Geïmplementeerd en geverifieerd | Done |
 
-Snapshot na F2: **13/49 Done, 24 Backlog, 11 Geblokkeerd, 1 Ready**, geen werk In uitvoering of Te controleren. F1/49 staan op main; F2 is alleen lokaal afgerond. HTP-19 wacht op reproductiemateriaal. F3a is niet gestart.
+Historische F2-snapshot en uitvoering staan in [F2-bewijs](HTP-F2-VERIFICATIE.md). De actuele fasepoort en aantallen staan hierboven.
 
 **Controle van de overdracht:** 49 unieke HTP-codes met bronnen/criteria/velden; de bestaande bordkaarten en 15 MU/M1-items zijn behouden. Status/HTP-fase/Prioriteit/Omvang en inhoud zijn met deze snapshot gesynchroniseerd en teruggelezen. De analysebaseline beschrijft het startpunt; het latere uitvoeringsbewijs en de actuele status bepalen wat nu af is. [F1-bewijs](HTP-F1-VERIFICATIE.md) · [F2-bewijs](HTP-F2-VERIFICATIE.md).
 
@@ -479,21 +479,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 08 p.22; 14 p.35-36.
 - **Prioriteit / fase / omvang:** P1 / F4 / S.
-- **Beoordeling / status:** Nog uit te voeren / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F4-scope).
 - **Resultaat:** Feed en player tonen dezelfde herkenbare update-thumbnail waar provider dit ondersteunt.
 - **Afhankelijkheden:** HTP-20.
-- **Besluiten / blokkades:** Provider-specifieke posterbeperkingen uit HTP-20.
+- **Besluiten / blokkades:** F4 lokaal goedgekeurd; alleen Mux actief. D10 door Ward: 95% uitsluitend weergave, bestaande les-/examengates behouden. Apparaatconflict vraagt expliciete overname; geen automatische overschrijving.
 - **Bestaande implementatie:** E08-E09: MarketPostContents geeft geen thumbnailprop door aan video.
 
 **Acceptatiecriteria**
 
-- [ ] Thumbnail gaat door wrappers naar ondersteunde spelers als poster; geen TradingView-default bij aanwezige geldige thumbnail.
-- [ ] Geen/kapotte thumbnail heeft nette fallback en signed-video toegang blijft intact.
-- [ ] Providerbeperking expliciet gedocumenteerd en beoordeeld; geen overlay die keyboard/play afvangt of autoplay afdwingt.
+- [x] Thumbnail gaat door wrappers naar ondersteunde spelers als poster; geen TradingView-default bij aanwezige geldige thumbnail.
+- [x] Geen/kapotte thumbnail heeft nette fallback en signed-video toegang blijft intact.
+- [x] Providerbeperking expliciet gedocumenteerd en beoordeeld; geen overlay die keyboard/play afvangt of autoplay afdwingt.
 
 **Verificatie:** Test Mux/Vimeo/YouTube daadwerkelijk waar gebruikt, incl. signed/ready/error, light/dark en mobiel; vergelijk poster met lijst.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #74](https://github.com/6ftwardje/HTP2.0/issues/74), 17 oktober 2026, lokale productiebuild, synthetische free-/Academy-accounts en lokale Supabase. `MarketPostContents`, les-/updatewrappers en `MuxLessonPlayer`: custom poster vóór eerste render, Image-errorfallback naar Mux, geen klikoverlay. Werkelijke Mux-poster, ontbrekende/kapotte thumbnail en signed fail-closed lokaal gecontroleerd; React-renderproef bewaakt alle drie tokens. [Checks, commits, herstelplan en beperkingen](HTP-F4-VERIFICATIE.md). Geen F4-publicatie.
 
 <a id="htp-19"></a>
 
@@ -545,21 +545,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 09 p.23-24.
 - **Prioriteit / fase / omvang:** P2 / F4 / M.
-- **Beoordeling / status:** Nader te onderzoeken / gedeeltelijk / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F4-scope).
 - **Resultaat:** Langzamer afspelen en voorspelbare bediening over video’s heen.
 - **Afhankelijkheden:** HTP-20.
-- **Besluiten / blokkades:** Geen garanties vóór capabilitymatrix; eventuele providerafwijking expliciet besluiten.
+- **Besluiten / blokkades:** F4 lokaal goedgekeurd; alleen Mux actief. D10 door Ward: 95% uitsluitend weergave, bestaande les-/examengates behouden. Apparaatconflict vraagt expliciete overname; geen automatische overschrijving.
 - **Bestaande implementatie:** E09; bestaande externe controls mogelijk deels voldoende, voorkeur/centrale afhandeling niet aangetroffen.
 
 **Acceptatiecriteria**
 
-- [ ] 0,5/0,75/1/1,25/1,5/2 en huidige snelheid zichtbaar; voorkeur per gebruiker of veilige localStoragefallback toegepast bij volgende video.
-- [ ] Pitchcorrectie aan waar mogelijk; providerbeperking met testbewijs i.p.v. aanname.
-- [ ] Spatie, links/rechts ±10s, M en F werken alleen bij juiste focus, nooit tijdens typen of dubbele providerafhandeling; sprongoverlay en reduced-motion.
+- [x] 0,5/0,75/1/1,25/1,5/2 en huidige snelheid zichtbaar; voorkeur per gebruiker of veilige localStoragefallback toegepast bij volgende video.
+- [x] Pitchcorrectie aan waar mogelijk; providerbeperking met testbewijs i.p.v. aanname.
+- [x] Spatie, links/rechts ±10s, M en F werken alleen bij juiste focus, nooit tijdens typen of dubbele providerafhandeling; sprongoverlay en reduced-motion.
 
 **Verificatie:** Werkelijke video/audio in desktopbrowser en mobiel, opslagweigering, wisselen video/account, inputfocus en iframefocus; hoorbare pitchtest en keyboardcontrole.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #75](https://github.com/6ftwardje/HTP2.0/issues/75), 17 oktober 2026, lokale productiebuild, synthetische free-/Academy-accounts en lokale Supabase. `MuxLessonPlayer` en `lib/video-position.ts`: zes zichtbare snelheden, eigen gebruikersvoorkeur, opslagweigering, accountwisseling, focusgebonden toetsen, één seek en statische feedback. Werkelijk Mux-playback op desktop/mobiele Chrome-emulatie; 440Hz-proef op zes snelheden plus negatieve 220Hz-control bevestigt pitchbehoud in deze browser. [Checks, commits, herstelplan en beperkingen](HTP-F4-VERIFICATIE.md). Geen F4-publicatie.
 
 <a id="htp-22"></a>
 
@@ -567,21 +567,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 09 p.24; 13 p.34.
 - **Prioriteit / fase / omvang:** P1 / F4 / M.
-- **Beoordeling / status:** Gedeeltelijk aanwezig / **Geblokkeerd**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F4-scope).
 - **Resultaat:** Serverpositie per gebruiker en les/update, zonder bestaande leerrechten of voltooid-historie te verliezen.
 - **Afhankelijkheden:** HTP-20; gerichte migratiebaseline.
-- **Besluiten / blokkades:** D10: 95% bekeken versus examen-/lesgates; updates gevolgd definiëren.
+- **Besluiten / blokkades:** F4 lokaal goedgekeurd; alleen Mux actief. D10 door Ward: 95% uitsluitend weergave, bestaande les-/examengates behouden. Apparaatconflict vraagt expliciete overname; geen automatische overschrijving.
 - **Bestaande implementatie:** E10; uitsluitend watched-status, geen hervatpositieveld. E15 bevat examengates.
 
 **Acceptatiecriteria**
 
-- [ ] Positie/duur/update-identiteit per eigenaar en videoversie, unieke sleutel en RLS; bestaande watched/watched_at blijft behouden.
-- [ ] Opslag valideert grenzen/ownership/toegang; updates op gedeeltelijke positie markeren niet stil volledig bekeken; 95%-regel expliciet gemapt op bestaande completion/gating.
-- [ ] Concurrerende apparaten, retries, vervangen video en verlopen rechten hebben voorspelbare afspraken; metadata bevat geen afspeeltokens.
+- [x] Positie/duur/update-identiteit per eigenaar en videoversie, unieke sleutel en RLS; bestaande watched/watched_at blijft behouden.
+- [x] Opslag valideert grenzen/ownership/toegang; updates op gedeeltelijke positie markeren niet stil volledig bekeken; 95%-regel expliciet gemapt op bestaande completion/gating.
+- [x] Concurrerende apparaten, retries, vervangen video en verlopen rechten hebben voorspelbare afspraken; metadata bevat geen afspeeltokens.
 
 **Verificatie:** SQL-/actiontests als non-admin met vreemde gebruiker/video, invalid duration/position en herhaalde requests; migratie-fixtures en rollbackplan.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #73](https://github.com/6ftwardje/HTP2.0/issues/73), 17 oktober 2026, lokale productiebuild, synthetische free-/Academy-accounts en lokale Supabase. Additieve `20261017140000_htp_f4_video_positions.sql`, `lib/video-position.ts` en `/api/video-position`: eigenaars-RLS, actuele toegang/versie, unieke les/update, bounds, CAS/retry-idempotentie en gescheiden hoogste positie. Rollback-SQL en echte browserrequests controleren rechten, concurrentie, vervanging en behoud van watched-historie; 95% wijzigt geen les-/examengate. [Checks, commits, herstelplan en beperkingen](HTP-F4-VERIFICATIE.md). Geen F4-publicatie.
 
 <a id="htp-23"></a>
 
@@ -589,21 +589,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 09 p.24.
 - **Prioriteit / fase / omvang:** P1 / F4 / M.
-- **Beoordeling / status:** Nog uit te voeren / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd / **Done** (lokale F4-scope).
 - **Resultaat:** Betrouwbaar hervatten met beperkte gegevensverliezen en zichtbare voortgang.
 - **Afhankelijkheden:** HTP-21, HTP-22.
-- **Besluiten / blokkades:** D10 bij meerdere apparaten; sluiten browser is best-effort.
+- **Besluiten / blokkades:** F4 lokaal goedgekeurd; alleen Mux actief. D10 door Ward: 95% uitsluitend weergave, bestaande les-/examengates behouden. Apparaatconflict vraagt expliciete overname; geen automatische overschrijving.
 - **Bestaande implementatie:** E10; ended-updates zijn geen periodieke resume-opslag. Geen runtimebewijs.
 
 **Acceptatiecriteria**
 
-- [ ] Positie circa elke 10s en bij pauze opslaan; sluiten/pagehide best-effort; fout/offline/retry geeft geen ongecontroleerde write-lus.
-- [ ] Nieuwe sessie/toestel biedt Verder kijken vanaf mm:ss of melding met Opnieuw beginnen; niet over voltooiingsgrens heen gokken.
-- [ ] Thumbnailbalk voor gedeeltelijk bekeken en Bekeken voor voltooid, inclusief feed/Academy/collecties waar video voorkomt; 95% conform HTP-22.
+- [x] Positie circa elke 10s en bij pauze opslaan; sluiten/pagehide best-effort; fout/offline/retry geeft geen ongecontroleerde write-lus.
+- [x] Nieuwe sessie/toestel biedt Verder kijken vanaf mm:ss of melding met Opnieuw beginnen; niet over voltooiingsgrens heen gokken.
+- [x] Thumbnailbalk voor gedeeltelijk bekeken en Bekeken voor voltooid, inclusief feed/Academy/collecties waar video voorkomt; 95% conform HTP-22.
 
 **Verificatie:** Twee browsers/apparaten met dezelfde gebruiker, pauze/reload/tabsluit/netwerkfout en snelle videowissel; controleer positie binnen afgesproken 10s-tolerantie na laatste geslaagde write; les/examenregressie.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #76](https://github.com/6ftwardje/HTP2.0/issues/76), 17 oktober 2026, lokale productiebuild, synthetische free-/Academy-accounts en lokale Supabase. `use-video-position`, `VideoProgressProvider` en gedeelde thumbnails: periodieke/pauzeopslag, laatste sample na lopende write, bounded retry en expliciete apparaatovername. Hervatten/restart, URL-voorrang, tabsluiten en 95%-balken voor bestaande feed/Academy gecontroleerd. Circa 10s, op 2× 5s; sluiten blijft best-effort. Collecties bestaan nog niet en blijven F8. [Checks, commits, herstelplan en beperkingen](HTP-F4-VERIFICATIE.md). Geen F4-publicatie.
 
 <a id="htp-24"></a>
 
@@ -1131,7 +1131,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Gebruik synthetische fixtures; non-admin RLS en directe assetrequests, fout/retry/missingmigration testen. CI-scripts eerst op geschiktheid controleren; geen productieschrijfacties in planningsfase.
 
-**Bewijs van uitvoering:** F1/F2/F3a-deelbewijs en releases vastgelegd; F3a main 0fd99e2 met groene CI. F3b uitsluitend lokaal geverifieerd; [volledig dossier](HTP-F3B-VERIFICATIE.md). Status Backlog voor controles van nog niet goedgekeurde fasen; de integrale F10-criteria blijven open.
+**Bewijs van uitvoering:** F1/F2/F3a/F3b-releases en lokaal F4-deelbewijs vastgelegd; [F4-dossier](HTP-F4-VERIFICATIE.md). Status Backlog voor integrale F10-acceptatie en nog niet goedgekeurde fasen. Geen afsluiting op alleen code of build.
 
 <a id="htp-48"></a>
 
@@ -1153,7 +1153,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Controleer alle IDs/dependencies/bronnen en borditems; lees na schrijven de statussen/inhoud terug. Bij faseoverdracht snapshot+besluitlog+bewijslocatie bijwerken; huidig opzetten is geen toestemming voor code.
 
-**Bewijs van uitvoering:** F3a-release en lokale F3b-overdracht gecontroleerd: 49 unieke IDs; 21 Done, 18 Backlog, 9 Geblokkeerd en 1 Ready; bestaande MU/M1- en releasekaarten behouden. Bord en dossier na synchronisatie teruggelezen. Stop vóór F4; F3b niet gepusht. Status Ready voor doorlopend onderhoud, geen definitieve afronding.
+**Bewijs van uitvoering:** F3b-release en lokale F4-overdracht gecontroleerd: 49 unieke HTP-IDs; 25 Done, 15 Backlog, 8 Geblokkeerd en 1 Ready; alle 67 bordkaarten behouden. Stop vóór F5a; F4 niet gepusht. Status Ready voor doorlopend onderhoud.
 
 
 
