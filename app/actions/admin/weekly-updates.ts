@@ -1,5 +1,6 @@
 "use server";
 
+import { parseTakeaways } from "@/lib/market-editorial";
 import { sanitizeArticle } from "@/lib/market-article";
 
 import { revalidatePath } from "next/cache";
@@ -220,10 +221,16 @@ function readWeeklyUpdateInput(
   const legacyMarket = asString(formData.get("market"));
   if (legacyMarket && !isUpdateMarket(legacyMarket)) return { error: "Kies een geldige markt." as const };
   // Missing checkbox keys in an older form are not permission to discard stored tags.
-  const markets = [...new Set(explicitMarkets ? rawMarkets.filter(isUpdateMarket)
+  let markets = [...new Set(explicitMarkets ? rawMarkets.filter(isUpdateMarket)
     : current ? getUpdateMarkets(current)
     : structure ? [structure.category === "general" ? "macro" as const : structure.category]
     : isUpdateMarket(legacyMarket) ? [legacyMarket] : [])];
+  // Checkbox DOM order is not an editorial decision to change the first-market accent.
+  // Keep retained tags in stored order, then append genuinely new selections.
+  if (current && explicitMarkets) {
+    const retained = getUpdateMarkets(current).filter((value) => markets.includes(value));
+    markets = [...retained, ...markets.filter((value) => !retained.includes(value))];
+  }
   if (!markets.length && (type === "market_update" || explicitMarkets)) return { error: "Kies minimaal één markt." as const };
   if (structure && explicitMarkets) structure = { ...structure, category: markets[0] };
   const market = markets.find((value): value is Market => MARKETS.includes(value as Market)) ?? null;
@@ -276,7 +283,7 @@ function readWeeklyUpdateInput(
       body: contentFormat === "video" ? null : body,
       slug,
       summary,
-      key_takeaways: asLineList(formData.get("key_takeaways")),
+      key_takeaways: parseTakeaways(formData.get("key_takeaways")),
       type,
       market: type === "market_update" ? market : null,
       markets,

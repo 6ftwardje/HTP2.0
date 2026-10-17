@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentStudent } from "@/lib/students";
 import { canAccessSubscriberContent, getBillingOverview } from "@/lib/billing";
+import { canStudentAccessWeeklyUpdate } from "@/lib/weekly-update-access";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +19,13 @@ export async function GET(
   const { student } = await getCurrentStudent();
   if (!student) return new NextResponse(null, { status: 401 });
   const overview = await getBillingOverview(student.id);
-  if (!canAccessSubscriberContent(student, overview)) return new NextResponse(null, { status: 403 });
 
   const service = createServiceClient();
   const { data: update } = await service.from("weekly_updates")
-    .select("image_paths,is_published,content_format")
+    .select("image_paths,is_published,content_format,access_tier")
     .eq("id", id).eq("content_format", "chart").maybeSingle();
   if (!update || (!update.is_published && student.access_level !== 3)) return new NextResponse(null, { status: 404 });
+  if (!canStudentAccessWeeklyUpdate(update.access_tier, student, canAccessSubscriberContent(student, overview))) return new NextResponse(null, { status: 403 });
   const path = (update.image_paths as string[])[index];
   if (!path?.startsWith(`weekly-updates/${id}/`)) return new NextResponse(null, { status: 404 });
   const { data: image, error } = await service.storage.from("market-update-charts").download(path);

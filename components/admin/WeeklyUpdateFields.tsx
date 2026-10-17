@@ -35,6 +35,14 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function EditorialFields({ update, summary, event }: { update?: AdminWeeklyUpdateRow; summary: boolean; event: boolean }) {
+  return <>
+    {summary ? <label className="block space-y-1.5"><span className="text-sm font-semibold">Samenvatting (optioneel)</span><textarea name="summary" defaultValue={update?.summary ?? ""} rows={3} className={fieldClass()} /><span className="block text-xs leading-5 text-[var(--muted)]">Een volledige zin met eindleesteken verschijnt als sectie; korte context als label onder de titel.</span></label> : null}
+    {event ? <label className="block space-y-1.5"><span className="text-sm font-semibold">Wat is er gebeurd? (optioneel)</span><textarea name="event_context" defaultValue={update?.event_context ?? ""} rows={3} className={fieldClass()} /><span className="block text-xs leading-5 text-[var(--muted)]">Laat leeg als deze context niet nodig is. Korte trefwoorden verschijnen als label.</span></label> : <input type="hidden" name="event_context" value={update?.event_context ?? ""} />}
+    <label className="block space-y-1.5"><span className="text-sm font-semibold">Key takeaways (optioneel)</span><textarea name="key_takeaways" defaultValue={(update?.key_takeaways ?? []).join("\n")} rows={5} placeholder="Eén aandachtspunt per regel, zonder voorloopnummer" className={fieldClass()} /></label>
+  </>;
+}
+
 function ThumbnailField({
   update,
   onFileChange,
@@ -153,9 +161,10 @@ export function WeeklyUpdateFields({
         <summary className="cursor-pointer text-sm font-semibold">Artikelopmaak (optioneel)</summary>
         <label className="block space-y-1.5"><span className="text-sm font-semibold">Artikelinhoud</span><textarea name="article_html" defaultValue={update?.article_html ?? ""} rows={12} maxLength={250000} className={fieldClass()} /><span className="block text-xs leading-5 text-[var(--muted)]">HTML met alinea’s, koppen, lijsten en afbeeldingen in de gewenste volgorde. Zonder artikelinhoud wordt het bericht met eventuele charts getoond.</span></label>
       </details>
+      <EditorialFields update={update} summary={!structured} event={!structured} />
       {!structured ? <fieldset className="space-y-2"><legend className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Markten</legend><input type="hidden" name="markets_present" value="1" /><div className="flex flex-wrap gap-2">{CATEGORY_OPTIONS.map((option) => <label key={option.value} className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm"><input name="markets" type="checkbox" value={option.value} defaultChecked={getUpdateMarkets(update).includes(option.value)} />{option.label}</label>)}</div></fieldset> : null}
       {contentFormat === "chart" ? <div className="space-y-2 rounded-xl border border-[var(--border)] p-3"><label className="block space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Charts (1–4, max. 10 MB)</span><input ref={chartFileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={update?.is_published} className={fieldClass()} /></label>{update?.image_paths.map((path, index) => <div key={path} className="flex items-center gap-3"><img src={`/api/market-updates/${update.id}/images/${index}`} alt={`Chart ${index + 1}`} className="h-20 w-32 rounded object-contain" /><span className="text-xs">Chart {index + 1}</span>{!update.is_published ? <button type="button" className="cb-btn cb-btn-secondary text-xs" onClick={async () => { const result = await adminRemoveChartImage(update.id, path); if (result.success) window.location.reload(); }}>Verwijder</button> : null}</div>)}</div> : null}
-      <input type="hidden" name="type" value="market_update" /><input type="hidden" name="access_tier" value={update?.access_tier ?? "subscription"} /><input type="hidden" name="slug" value={update?.slug ?? ""} /><input type="hidden" name="market" value={update?.market ?? ""} /><input type="hidden" name="mentor_student_id" value={update?.mentor_student_id ?? ""} /><input type="hidden" name="actuality_status" value={update?.actuality_status ?? "current"} />{!structured ? <input type="hidden" name="summary" value={update?.summary ?? ""} /> : null}<input type="hidden" name="key_takeaways" value={(update?.key_takeaways ?? []).join("\n")} /><input type="hidden" name="event_context" value={update?.event_context ?? ""} /><input type="hidden" name="period_label" value={update?.period_label ?? ""} /><input type="hidden" name="related_content" value={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} />
+      <input type="hidden" name="type" value="market_update" /><input type="hidden" name="access_tier" value={update?.access_tier ?? "subscription"} /><input type="hidden" name="slug" value={update?.slug ?? ""} /><input type="hidden" name="market" value={update?.market ?? ""} /><input type="hidden" name="mentor_student_id" value={update?.mentor_student_id ?? ""} /><input type="hidden" name="actuality_status" value={update?.actuality_status ?? "current"} /><input type="hidden" name="period_label" value={update?.period_label ?? ""} /><input type="hidden" name="related_content" value={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} />
       <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5"><input name="is_published" type="checkbox" defaultChecked={update?.is_published ?? false} disabled={!update} /><span className="text-sm font-semibold">{update ? "Gepubliceerd" : "Eerst als concept opslaan; daarna publiceren"}</span></label>
     </div>;
   }
@@ -210,14 +219,6 @@ export function WeeklyUpdateFields({
           ))}
         </div>
       </fieldset> : null}
-      {analysisType === "market_update" ? (
-        <label className="space-y-1.5">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-            Event of aanleiding
-          </span>
-          <input name="event_context" defaultValue={update?.event_context ?? ""} placeholder="Bijv. rentebesluit ECB" className={fieldClass()} />
-        </label>
-      ) : <input type="hidden" name="event_context" value={update?.event_context ?? ""} />}
       <input type="hidden" name="market" value={update?.market ?? ""} />
       {analysisType === "weekly_outlook" ? (
         <div className="grid gap-3 rounded-lg border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_72%,var(--background)_28%)] px-3 py-2.5">
@@ -282,30 +283,14 @@ export function WeeklyUpdateFields({
           </span>
         </label>
       </div>
-      {!structured ? <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Korte omschrijving / samenvatting
-        </span>
-        <textarea name="summary" defaultValue={update?.summary ?? ""} rows={4} className={fieldClass()} />
-      </label> : null}
+
       {!structured ? <label className="space-y-1.5">
         <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Actualiteitsstatus</span>
         <select name="actuality_status" defaultValue={update?.actuality_status ?? "current"} className={fieldClass()}>
           <option value="current">Actueel</option><option value="still_relevant">Nog relevant</option><option value="archive">Archief</option>
         </select>
       </label> : <input type="hidden" name="actuality_status" value={update?.actuality_status ?? "current"} />}
-      <label className="space-y-1.5">
-        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-          Belangrijke scenario&apos;s of aandachtspunten
-        </span>
-        <textarea
-          name="key_takeaways"
-          defaultValue={(update?.key_takeaways ?? []).join("\n")}
-          rows={5}
-          placeholder="Eén aandachtspunt per regel"
-          className={fieldClass()}
-        />
-      </label>
+      <EditorialFields update={update} summary={!structured} event={!structured && analysisType === "market_update"} />
       {contentFormat === "video" ? <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Hoofdstukken / timestamps</span><textarea name="chapters" defaultValue={formatMarketChapters(update?.chapters ?? [])} rows={4} placeholder={"00:00 Introductie\n12:40 Forex | forex\n18:10 Goud | gold"} className={fieldClass()} /><span className="block text-xs leading-5 text-[var(--muted)]">Eén regel per hoofdstuk: mm:ss Titel. Voeg eventueel | marktcode toe, zoals forex of gold. Gebruik een geselecteerde markt.</span></label> : null}
       <label className="space-y-1.5"><span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Gerelateerde content</span><textarea name="related_content" defaultValue={(update?.related_content ?? []).map((item) => `${item.label} | ${item.href}`).join("\n")} rows={3} placeholder="Les risicobeheer | /lessons/risicobeheer" className={fieldClass()} /></label>
       <label className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5">

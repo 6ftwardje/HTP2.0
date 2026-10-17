@@ -30,6 +30,8 @@ type Props = {
   muxTokens?: MuxPlaybackTokens | null;
   seekRequest?: VideoSeekRequest | null;
   enableSeeking?: boolean;
+  onTimeUpdate?: (seconds: number) => void;
+  onSeekError?: (message: string | null) => void;
   surface?: "lesson" | "insight";
 };
 
@@ -60,6 +62,8 @@ export function VimeoPlayer({
   muxTokens = null,
   seekRequest = null,
   enableSeeking = false,
+  onTimeUpdate,
+  onSeekError,
   surface = "lesson",
 }: Props) {
   const [providerError, setProviderError] = useState(false);
@@ -73,7 +77,7 @@ export function VimeoPlayer({
   const vimeoPlayerRef = useRef<any>(null);
   const latestSeekRef = useRef<VideoSeekRequest | null>(seekRequest);
   latestSeekRef.current = seekRequest;
-  const shouldListen = (!!onEnded || enableSeeking) && !!videoId;
+  const shouldListen = (!!onEnded || enableSeeking || !!onTimeUpdate) && !!videoId;
   const frameClass = surface === "insight" ? "relative aspect-video w-full overflow-hidden rounded-md bg-[var(--media-background)]" : "relative aspect-video w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--media-background)]";
   useEffect(() => { setProviderError(false); setLoading(true); }, [videoUrl, muxPlaybackId]);
 
@@ -95,6 +99,7 @@ export function VimeoPlayer({
 
     let player: any = null;
     let cancelled = false;
+    const onPosition = (data: { seconds: number }) => onTimeUpdate?.(data.seconds);
     const onProviderError = () => { if (!cancelled) setProviderError(true); };
 
     async function loadAndBind() {
@@ -131,9 +136,10 @@ export function VimeoPlayer({
       setLoading(false);
       vimeoPlayerRef.current = player;
       if (onEnded) player.on("ended", onEnded);
+      if (onTimeUpdate) player.on("timeupdate", onPosition);
       if (latestSeekRef.current) {
         await player.setCurrentTime(latestSeekRef.current.seconds);
-        await player.play().catch(() => undefined);
+        await player.play().catch(() => onSeekError?.("Het tijdstip staat klaar. Druk op afspelen om verder te kijken."));
       }
     }
 
@@ -145,6 +151,7 @@ export function VimeoPlayer({
         try {
           player.off("ended", onEnded);
           player.off("error", onProviderError);
+          player.off("timeupdate", onPosition);
           // destroy removes the iframe. React owns it; Strict Mode/HMR and
           // callback changes can reuse it. Destroy only after actual removal.
           const retiring = player;
@@ -157,15 +164,15 @@ export function VimeoPlayer({
       }
       vimeoPlayerRef.current = null;
     };
-  }, [onEnded, shouldListen, videoId]);
+  }, [onEnded, shouldListen, videoId, onTimeUpdate, onSeekError]);
 
   useEffect(() => {
     if (!seekRequest || !vimeoPlayerRef.current) return;
     void vimeoPlayerRef.current
       .setCurrentTime(seekRequest.seconds)
-      .then(() => vimeoPlayerRef.current?.play())
-      .catch(() => undefined);
-  }, [seekRequest]);
+      .then(() => { onSeekError?.(null); return vimeoPlayerRef.current?.play(); })
+      .catch(() => onSeekError?.("Het tijdstip kan niet automatisch afspelen. Gebruik de tijdlijn in de speler."));
+  }, [seekRequest, onSeekError]);
 
   if (muxId && (muxPlaybackPolicy === "public" || muxTokens?.playback)) {
     return (
@@ -176,6 +183,8 @@ export function VimeoPlayer({
           onEnded={onEnded}
           tokens={muxTokens}
           seekRequest={seekRequest}
+          onTimeUpdate={onTimeUpdate}
+          onSeekError={onSeekError}
           accentColor="var(--accent)"
           onError={() => setProviderError(true)}
         />
