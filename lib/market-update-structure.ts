@@ -1,5 +1,8 @@
+import type { UpdateMarket } from "@/lib/types";
+import { MARKET_OPTIONS } from "@/lib/market-analysis";
+
 /** Metadata used only by the market-update rubric; legacy updates keep their original shape. */
-export type UpdateCategory = "crypto" | "forex" | "stocks" | "indices" | "commodities" | "general";
+export type UpdateCategory = UpdateMarket;
 export type UpdateType = "setup" | "analysis" | "news" | "education";
 export type UpdatePerspective = "technical" | "fundamental" | "combined";
 export type SetupStatus = "waiting" | "running" | "closed";
@@ -32,14 +35,16 @@ export type MarketUpdateStructure = UpdateSnapshot & {
   activity_at: string | null;
 };
 
+/** `category` is the version-1 compatibility label, never the complete market list. */
 export const CATEGORY_OPTIONS = [
-  { value: "crypto", label: "Crypto" },
-  { value: "forex", label: "Forex" },
-  { value: "stocks", label: "Aandelen" },
+  ...MARKET_OPTIONS,
+  { value: "macro", label: "Macro" },
   { value: "indices", label: "Indices" },
-  { value: "commodities", label: "Grondstoffen" },
   { value: "general", label: "Algemeen" },
 ] as const;
+export const isUpdateMarket = (value: unknown): value is UpdateMarket =>
+  typeof value === "string" && CATEGORY_OPTIONS.some((option) => option.value === value);
+
 export const UPDATE_TYPE_OPTIONS = [
   { value: "setup", label: "Setup" },
   { value: "analysis", label: "Analyse" },
@@ -239,13 +244,28 @@ export function getUpdateStructure(update: Pick<UpdateLike, "update_structure"> 
     ? update.update_structure as MarketUpdateStructure : null;
 }
 
+/** Lossless read projection across old rows, including contradictory historical labels.
+ * New writes submit the full array and maintain the primary compatibility label.
+ * General on an old multi-market record is an umbrella, not a replacement for its tags.
+ */
+export function getUpdateMarkets(update: UpdateLike | null | undefined): UpdateMarket[] {
+  if (!update) return [];
+  const values: unknown[] = [...(update.markets ?? []), update.market];
+  const category = getUpdateStructure(update)?.category;
+  if (category && (category !== "general" || !values.some(isUpdateMarket))) values.push(category);
+  return [...new Set(values.filter(isUpdateMarket))];
+}
+
+export function matchesUpdateMarket(update: UpdateLike, market: string): boolean {
+  return getUpdateMarkets(update).some((value) => value === market);
+}
+
+/** Only legacy callers need a single label. Filtering/rendering uses getUpdateMarkets. */
 export function getUpdateCategory(update: UpdateLike): UpdateCategory | null {
   const structure = getUpdateStructure(update);
   if (structure) return structure.category;
-  const markets = [...new Set(update.markets?.filter(Boolean) ?? [])];
-  if (markets.length > 1 || markets[0] === "macro") return "general";
-  if (markets.length === 1) return hasOption(CATEGORY_OPTIONS, markets[0]) ? markets[0] : null;
-  return hasOption(CATEGORY_OPTIONS, update.market) ? update.market : null;
+  const markets = getUpdateMarkets(update);
+  return markets.length > 1 || markets[0] === "macro" ? "general" : markets[0] ?? null;
 }
 
 export const categoryLabel = (value: string | null | undefined) => CATEGORY_OPTIONS.find((option) => option.value === value)?.label ?? "Nog indelen";

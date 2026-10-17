@@ -28,7 +28,9 @@ import { canStartTranscript } from "@/lib/transcription/start-policy";
 import { evaluateCostGate } from "@/lib/transcription/cost-policy";
 import type { VideoTranscriptSummary } from "@/lib/types";
 import { SELECTABLE_WEEKLY_UPDATE_ACCESS_TIERS } from "@/lib/weekly-update-access";
-import { getMondayDate } from "@/lib/market-analysis";
+import { parseMarketChapters, validateMarketChapters } from "@/lib/market-chapters";
+import { getUpdateMarkets, isUpdateMarket } from "@/lib/market-update-structure";
+import { getMondayDate, MARKET_OPTIONS } from "@/lib/market-analysis";
 import { publicAuthorName } from "@/lib/market-update-author";
 import { validateMarketUpdatePublication } from "@/lib/market-update-policy";
 import { getUpdateStructure, isOpenSetup, validateUpdateStructure, type MarketUpdateStructure } from "@/lib/market-update-structure";
@@ -62,7 +64,7 @@ const MARKET_ANALYSIS_TYPES: Array<Exclude<MarketAnalysisType, "live_session">> 
   "weekly_outlook",
   "market_update",
 ];
-const MARKETS: Market[] = ["stocks", "forex", "crypto", "commodities"];
+const MARKETS = MARKET_OPTIONS.map((option) => option.value);
 
 type ThumbnailUploadInput = {
   name?: string;
@@ -95,17 +97,6 @@ function asLineList(value: unknown): string[] {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-}
-
-function asChapters(value: unknown) {
-  return asLineList(value).flatMap((line) => {
-    const match = line.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})\s+(.+)$/);
-    if (!match) return [];
-    return [{
-      title: match[4].trim(),
-      seconds: Number(match[1] ?? 0) * 3600 + Number(match[2]) * 60 + Number(match[3]),
-    }];
-  });
 }
 
 function asRelatedContent(value: unknown) {
@@ -204,9 +195,9 @@ async function notifyFirstPublication({
 
 function readWeeklyUpdateInput(
   formData: FormData,
-  existingWeekStartDate?: string | null
+  current?: WeeklyUpdate | null
 ) {
-  let structure: MarketUpdateStructure | undefined;
+  let structure: MarketUpdateStructure | undefined = getUpdateStructure(current) ?? undefined;
   if (formData.has("update_structure")) {
     try {
       const value: unknown = JSON.parse(asString(formData.get("update_structure")));
@@ -223,27 +214,25 @@ function readWeeklyUpdateInput(
   )
     ? (typeRaw as Exclude<MarketAnalysisType, "live_session">)
     : null;
-  const marketRaw = asString(formData.get("market"));
-  let market = MARKETS.includes(marketRaw as Market)
-    ? (marketRaw as Market)
-    : null;
-  let markets = formData
-    .getAll("markets")
-    .map(asString)
-    .filter((value): value is Market | "macro" => [...MARKETS, "macro"].includes(value as Market | "macro"));
-  if (structure) {
-    market = MARKETS.includes(structure.category as Market) ? structure.category as Market : null;
-    markets = market ? [market] : structure.category === "general" ? ["macro"] : [];
-  }
+  const rawMarkets = formData.getAll("markets").map(asString);
+  if (rawMarkets.some((value) => !isUpdateMarket(value))) return { error: "Kies geldige markten. Er is niets opgeslagen." as const };
+  const explicitMarkets = formData.has("markets_present") || rawMarkets.length > 0;
+  const legacyMarket = asString(formData.get("market"));
+  if (legacyMarket && !isUpdateMarket(legacyMarket)) return { error: "Kies een geldige markt." as const };
+  // Missing checkbox keys in an older form are not permission to discard stored tags.
+  const markets = [...new Set(explicitMarkets ? rawMarkets.filter(isUpdateMarket)
+    : current ? getUpdateMarkets(current)
+    : structure ? [structure.category === "general" ? "macro" as const : structure.category]
+    : isUpdateMarket(legacyMarket) ? [legacyMarket] : [])];
+  if (!markets.length && (type === "market_update" || explicitMarkets)) return { error: "Kies minimaal één markt." as const };
+  if (structure && explicitMarkets) structure = { ...structure, category: markets[0] };
+  const market = markets.find((value): value is Market => MARKETS.includes(value as Market)) ?? null;
+  const parsedChapters = formData.has("chapters") ? parseMarketChapters(formData.get("chapters")) : { chapters: current?.chapters ?? [] };
+  if (!parsedChapters.chapters) return { error: parsedChapters.error ?? "De hoofdstukken zijn ongeldig." };
+  const chapterError = validateMarketChapters(parsedChapters.chapters, current?.video_duration_seconds, markets);
+  if (chapterError) return { error: chapterError };
   const automaticDate = new Date().toISOString().slice(0, 10);
-  const weekStartDate =
-    type === "weekly_outlook"
-      ? getMondayDate(
-          existingWeekStartDate
-            ? new Date(`${existingWeekStartDate}T12:00:00`)
-            : new Date()
-        )
-      : existingWeekStartDate ?? automaticDate;
+  const weekStartDate = current?.week_start_date ?? (type === "weekly_outlook" ? getMondayDate() : automaticDate);
   const accessTierRaw = asString(formData.get("access_tier"));
   const accessTier = ACCESS_TIERS.includes(accessTierRaw as WeeklyUpdateAccessTier)
     ? (accessTierRaw as WeeklyUpdateAccessTier)
@@ -289,12 +278,12 @@ function readWeeklyUpdateInput(
       summary,
       key_takeaways: asLineList(formData.get("key_takeaways")),
       type,
-      market: type === "market_update" ? (markets.find((value): value is Market => value !== "macro") ?? market) : null,
+      market: type === "market_update" ? market : null,
       markets,
       actuality_status: (["current", "still_relevant", "archive"].includes(asString(formData.get("actuality_status"))) ? asString(formData.get("actuality_status")) : "current") as "current" | "still_relevant" | "archive",
       event_context: asNullableString(formData.get("event_context")),
       period_label: asNullableString(formData.get("period_label")),
-      chapters: asChapters(formData.get("chapters")),
+      chapters: parsedChapters.chapters,
       related_content: asRelatedContent(formData.get("related_content")),
       needs_review: false,
       week_start_date: weekStartDate,
@@ -382,10 +371,10 @@ export async function adminCreateQuickMarketUpdate(
     return { success: true, weeklyUpdateId: weeklyUpdate.id };
   }
   const body = asString(formData.get("body"));
-  const markets = formData.getAll("markets").map(asString).filter((value): value is Market | "macro" =>
-    [...MARKETS, "macro"].includes(value as Market | "macro")
-  );
   if (body.length < 20 || body.length > 12000) return { success: false, error: "Schrijf 20 tot 12.000 tekens." };
+  const rawMarkets = formData.getAll("markets").map(asString);
+  if (rawMarkets.some((value) => !isUpdateMarket(value))) return { success: false, error: "Kies geldige markten." };
+  const markets = [...new Set(rawMarkets.filter(isUpdateMarket))];
   if (!markets.length) return { success: false, error: "Kies minimaal één markt." };
   if (!Number.isInteger(chartCount) || chartCount < 0 || chartCount > 4) return { success: false, error: "Voeg maximaal vier charts toe." };
   const title = asString(formData.get("title")) || body.split(/\r?\n/)[0].slice(0, 90);
@@ -395,7 +384,7 @@ export async function adminCreateQuickMarketUpdate(
   const { weeklyUpdate, error } = await createWeeklyUpdateAdmin({
     title, slug, body, content_format: chartCount ? "chart" : "text",
     summary: null, key_takeaways: [], type: "market_update",
-    market: markets.find((value): value is Market => value !== "macro") ?? null,
+    market: markets.find((value): value is Market => MARKETS.includes(value as Market)) ?? null,
     markets, actuality_status: "current", event_context: null, period_label: null,
     chapters: [], related_content: [], needs_review: false,
     week_start_date: now.toISOString().slice(0, 10), mentor_student_id: actorStudent.id,
@@ -485,7 +474,7 @@ export async function adminUpdateWeeklyUpdate(
 
   const parsed = readWeeklyUpdateInput(
     formData,
-    currentWeeklyUpdate.week_start_date
+    currentWeeklyUpdate
   );
   if ("error" in parsed) return { success: false, error: parsed.error };
 

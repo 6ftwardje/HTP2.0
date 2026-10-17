@@ -12,10 +12,12 @@ import {
   emptyStructure,
   getUpdateStructure,
   getUpdateCategory,
+  getUpdateMarkets,
   setupStatusLabel,
   updateTypeLabel,
   type MarketUpdateStructure,
 } from "@/lib/market-update-structure";
+import type { UpdateMarket } from "@/lib/types";
 import type { AdminWeeklyUpdateRow } from "@/lib/admin/weekly-updates";
 
 const inputClass = "w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]";
@@ -42,6 +44,7 @@ export function MarketUpdateStructureFields({
   includeBasics?: boolean;
 }) {
   const [structure, setStructure] = useState<MarketUpdateStructure>(() => getUpdateStructure(update) ?? { ...emptyStructure(), category: update ? getUpdateCategory(update) ?? "general" : "general" });
+  const [markets, setMarkets] = useState<UpdateMarket[]>(() => getUpdateMarkets(update));
   const [title, setTitle] = useState(update?.title ?? "");
   const [summary, setSummary] = useState(update?.summary ?? "");
   const fields = TEMPLATE_FIELDS[structure.type];
@@ -60,12 +63,17 @@ export function MarketUpdateStructureFields({
   return <div className="min-w-0 space-y-5">
     <input type="hidden" name="update_structure" value={JSON.stringify({ ...structure, targets: structure.targets.filter((target) => target.label.trim()) })} />
     <div className="grid gap-3 sm:grid-cols-2">
-      <label className="min-w-0 space-y-1.5">
-        <span className={labelClass}>Categorie</span>
-        <select value={structure.category} onChange={(event) => patch({ category: event.target.value as MarketUpdateStructure["category"] })} className={inputClass}>
-          {CATEGORY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
-      </label>
+      <fieldset className="min-w-0 space-y-2">
+        <legend className={labelClass}>Markten</legend>
+        <input type="hidden" name="markets_present" value="1" />
+        <div className="flex flex-wrap gap-2">{CATEGORY_OPTIONS.map((option) => <label key={option.value} className="flex min-h-11 items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm">
+          <input name="markets" type="checkbox" value={option.value} checked={markets.includes(option.value)} onChange={(event) => {
+            const next = event.target.checked ? [...markets, option.value] : markets.filter((market) => market !== option.value);
+            setMarkets(next);
+            if (next.length) patch({ category: next[0] });
+          }} />{option.label}
+        </label>)}</div>
+      </fieldset>
       <label className="min-w-0 space-y-1.5">
         <span className={labelClass}>Type update</span>
         <select value={structure.type} disabled={typeLocked} onChange={(event) => {
@@ -139,6 +147,6 @@ export function MarketUpdateStructureFields({
 
     {wasPublished ? <label className="block space-y-1.5 border-t border-[var(--border)] pt-4"><span className={labelClass}>Wijzigingsnotitie</span><textarea name="change_note" rows={2} maxLength={2000} placeholder="Wat veranderde aan het scenario of de centrale analyse, en waarom?" className={inputClass} /><span className="block text-xs leading-5 text-[var(--muted)]">Verplicht bij wijzigingen aan setupniveaus, entryvoorwaarden, kernboodschap of onderbouwing, en bij wijzigingen aan de conclusie, onderbouwing of invalidatie van een analyse. De notitie verschijnt in de opvolging en maakt de update opnieuw actueel. Een taalcorrectie in de titel of aanvullende tekst vereist geen notitie.</span></label> : null}
 
-    {includeBasics ? <details className="border-t border-[var(--border)] pt-4"><summary className="cursor-pointer py-1 text-sm font-semibold">Voorbeeldweergave</summary><div className="mt-3 space-y-2"><p className="text-xs font-semibold text-[var(--muted)]">{categoryLabel(structure.category)} · {updateTypeLabel(structure.type)}{structure.type === "setup" ? ` · ${setupStatusLabel(structure.setup_status)}` : ""}</p><h3 className="break-words text-lg font-semibold">{title || "Titel van je update"}</h3><p className="whitespace-pre-line break-words text-sm leading-6">{summary || "Je kernboodschap verschijnt hier."}</p><dl className="space-y-2 border-t border-[var(--border)] pt-3 text-sm">{fields.filter((field) => structure.fields[field.key]).map((field) => <div key={field.key}><dt className="font-semibold">{field.label}</dt><dd className="whitespace-pre-line break-words text-[var(--muted)]">{structure.fields[field.key]}</dd></div>)}{structure.type === "setup" ? structure.targets.filter((target) => target.label).map((target, index) => <div key={index}><dt className="font-semibold">Doel {index + 1}</dt><dd className="break-words text-[var(--muted)]">{target.label}</dd></div>) : null}</dl></div></details> : null}
+    {includeBasics ? <details className="border-t border-[var(--border)] pt-4"><summary className="cursor-pointer py-1 text-sm font-semibold">Voorbeeldweergave</summary><div className="mt-3 space-y-2"><p className="text-xs font-semibold text-[var(--muted)]">{markets.map(categoryLabel).join(" · ") || "Kies markten"} · {updateTypeLabel(structure.type)}{structure.type === "setup" ? ` · ${setupStatusLabel(structure.setup_status)}` : ""}</p><h3 className="break-words text-lg font-semibold">{title || "Titel van je update"}</h3><p className="whitespace-pre-line break-words text-sm leading-6">{summary || "Je kernboodschap verschijnt hier."}</p><dl className="space-y-2 border-t border-[var(--border)] pt-3 text-sm">{fields.filter((field) => structure.fields[field.key]).map((field) => <div key={field.key}><dt className="font-semibold">{field.label}</dt><dd className="whitespace-pre-line break-words text-[var(--muted)]">{structure.fields[field.key]}</dd></div>)}{structure.type === "setup" ? structure.targets.filter((target) => target.label).map((target, index) => <div key={index}><dt className="font-semibold">Doel {index + 1}</dt><dd className="break-words text-[var(--muted)]">{target.label}</dd></div>) : null}</dl></div></details> : null}
   </div>;
 }

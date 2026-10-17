@@ -7,12 +7,8 @@ import Link from "next/link";
 import { CourseThumbnail } from "@/components/CourseThumbnail";
 import { MarketTag, marketTagMarket } from "@/components/ui/MarketTag";
 import type { WeeklyUpdateWithMentor } from "@/lib/weekly-updates";
+import { getUpdateMarkets, categoryLabel } from "@/lib/market-update-structure";
 import { marketUpdateAuthorName } from "@/lib/market-update-author";
-
-const marketNames: Record<string, string> = {
-  crypto: "Crypto", forex: "Forex", stocks: "Aandelen",
-  commodities: "Grondstoffen", macro: "Macro",
-};
 
 function Arrow({ direction }: { direction: "left" | "right" }) {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-4 w-4"><path d={direction === "left" ? "m15 18-6-6 6-6" : "m9 6 6 6-6 6"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -71,7 +67,7 @@ export function RecentMarketUpdatesFeed({
           const author = marketUpdateAuthorName(update);
           const showBody = body && body.trim().toLocaleLowerCase("nl-BE") !== update.title.trim().toLocaleLowerCase("nl-BE");
           const date = update.published_at ?? update.created_at;
-          const markets = update.markets?.length ? update.markets : update.market ? [update.market] : [];
+          const markets = getUpdateMarkets(update);
           return <Link key={update.id} href={`/market-analysis/${update.slug}`} className={styles.card+" group flex flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"}>
             {isVideo || hasChart ? <div className="relative aspect-video overflow-hidden bg-[var(--surface-hover)]">
               {isVideo ? <CourseThumbnail src={image} title={update.title} className="h-full w-full transition-transform duration-200 group-hover:scale-[1.025]" /> : <img src={image ?? ""} alt={`Chart bij ${update.title}`} className="h-full w-full object-contain" />}
@@ -80,7 +76,7 @@ export function RecentMarketUpdatesFeed({
             <div className={`flex flex-1 flex-col p-5 ${isVideo || hasChart ? "min-h-[174px]" : "min-h-[154px]"}`}>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-[var(--muted)]"><span className="text-[var(--foreground)]">{isVideo ? "Video" : isChart ? "Chartupdate" : "Bericht"}</span>{markets.slice(0, 2).map((value) => {
                 const market = marketTagMarket(value);
-                return market ? <MarketTag key={value} market={market}>{marketNames[value] ?? value}</MarketTag> : <span key={value}>· {marketNames[value] ?? value}</span>;
+                return market ? <MarketTag key={value} market={market}>{categoryLabel(value)}</MarketTag> : <span key={value}>· {categoryLabel(value)}</span>;
               })}</div>
               <h3 className="mt-2 line-clamp-2 cb-item-title group-hover:underline">{update.title}</h3>
               {showBody && <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{body}</p>}
