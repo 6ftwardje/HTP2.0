@@ -41,11 +41,11 @@ De oorspronkelijke getroffen update/video-ID en omgeving zijn niet aangeleverd; 
 
 | Taak / issue | Implementatie en controlebewijs | Status |
 |---|---|---|
-| HTP-01 / #40 | 78 baselinegevallen, 54 screenshots; huidige rollen/routes/flags en lokale schemabeperking beschreven. Behoud van gate-/actie-/publicatie-/chatbroncode gecontroleerd ten opzichte van het F1-startpunt; bestaande contracttests slagen. | Te controleren |
-| HTP-02 / #44 | Centrale tokens in app/globals.css; lib/theme.ts initialiseert vóór paint, ThemeToggle bewaart keuze en kan bij opslagweigering wisselen. Beide systeemvoorkeuren, opgeslagen licht/donker, refresh en echte logout/login gecontroleerd. | Te controleren |
-| HTP-03 / #45 | Eén MarketTag met zes basistokens en themagebonden AA-inkt; Crypto amber. Bekende bestaande marktlabels gebruiken dezelfde component; Macro/Indices/Algemeen niet stil heringedeeld, geen datamodel veranderd. Zes echte componentvarianten apart getest. | Te controleren |
-| HTP-04 / #46 | Drie semantische UI-kopniveaus; feedpadding desktop 27→18px en mobiel 24→16px, lesrijpadding 16→10px. Gedeelde RelativeDate met NL-label, Brussel/DST, veilige fallback en focus/hover-tooltip; exacte agenda-/deadlinevelden behouden. Artikelkop heeft op alle zes breedte/themacombinaties exact dezelfde fontgrootte, regelhoogte en gewicht als baseline; intro/byline/regellengte/disclaimer behouden. | Te controleren |
-| HTP-05 / #47 | Bestaand transparant icoon met schaalbare merknaam, geen licht tegeltje; donker/licht volgt de container, login expliciet op donker. Logo op desktop/mobiel en login getest; originele logo-/thumbnailbestanden hashgewijs ongewijzigd. | Te controleren |
+| HTP-01 / #40 | 78 baselinegevallen, 54 screenshots; huidige rollen/routes/flags en lokale schemabeperking beschreven. Behoud van gate-/actie-/publicatie-/chatbroncode gecontroleerd ten opzichte van het F1-startpunt; bestaande contracttests slagen. | Done |
+| HTP-02 / #44 | Centrale tokens in app/globals.css; lib/theme.ts initialiseert vóór paint, ThemeToggle bewaart keuze en kan bij opslagweigering wisselen. Beide systeemvoorkeuren, opgeslagen licht/donker, refresh en echte logout/login gecontroleerd. | Done |
+| HTP-03 / #45 | Eén MarketTag met zes basistokens en themagebonden AA-inkt; Crypto amber. Bekende bestaande marktlabels gebruiken dezelfde component; Macro/Indices/Algemeen niet stil heringedeeld, geen datamodel veranderd. Zes echte componentvarianten apart getest. | Done |
+| HTP-04 / #46 | Drie semantische UI-kopniveaus; feedpadding desktop 27→18px en mobiel 24→16px, lesrijpadding 16→10px. Gedeelde RelativeDate met NL-label, Brussel/DST, veilige fallback en focus/hover-tooltip; exacte agenda-/deadlinevelden behouden. Artikelkop heeft op alle zes breedte/themacombinaties exact dezelfde fontgrootte, regelhoogte en gewicht als baseline; intro/byline/regellengte/disclaimer behouden. | Done |
+| HTP-05 / #47 | Bestaand transparant icoon met schaalbare merknaam, geen licht tegeltje; donker/licht volgt de container, login expliciet op donker. Logo op desktop/mobiel en login getest; originele logo-/thumbnailbestanden hashgewijs ongewijzigd. | Done |
 | HTP-19 / #48 | Bron, lokale responseheaders en officiële providerdocumentatie onderzocht; getroffen video en omgeving ontbreken. Geen referrer-/embedfix uitgevoerd. | Geblokkeerd |
 
 ## Uitgevoerde eindcontroles
@@ -80,7 +80,7 @@ De lokale databaseachterstand uit de baseline blijft bestaan. Daardoor is geen b
 - Reproduceerbare browsercontrole: `HTP_F1_FIXTURE_FILE=/pad/naar/lokale-fixtures.json HTP_F1_BASE_URL=http://127.0.0.1:3117 node scripts/verify-htp-f1.mjs`. Het script accepteert alleen localhost en gebruikt uitsluitend de synthetische accounts; fixturegegevens/cookies blijven buiten Git.
 - De eigen F1-bronpatch, onafhankelijke testlogs en bestandsmanifest staan lokaal onder `output/playwright/htp-f1/`. De patch vergelijkt met de vuile werkmap vóór F1, zodat ouder werk niet als F1 wordt gepresenteerd.
 
-De vijf implementatietaken blijven Te controleren totdat Ward de lokale vormgeving accepteert en de passende integratiestap is afgesproken. Daarna kunnen zij met dit bewijs worden afgerond. Uitvoering stopt hier vóór F2.
+De vijf implementatietaken zijn door de vervolgopdracht geaccepteerd en met dit bewijs afgerond op main 1067df4 / PR #51. F2 is daarna afzonderlijk lokaal goedgekeurd; de huidige overdracht staat in het F2-verificatierapport.
 
 
 ## Releaseaanvulling HTP-49 — 17 oktober 2026

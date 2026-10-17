@@ -2,7 +2,7 @@
 
 Peildatum: 17 oktober 2026 (Europe/Brussels). Bron: `HTP-Platform-Feedback.pdf`, 38 PDF-pagina's, datum 17 oktober 2026. In dit dossier betekent **p.** de PDF-pagina, inclusief omslag; het gedrukte paginanummer is vanaf PDF-pagina 2 één lager. Alle tekst is uitgelezen; alle pagina's zijn gerenderd en de acht ingesloten referentiebeelden zijn visueel bekeken. Het genoemde losse `HTP-prompts.md` is niet aangeleverd en is niet nodig om deze PDF te verwerken.
 
-Historische analyse van vóór uitvoering; de actuele F1-uitvoering staat in [HTP-F1-VERIFICATIE.md](HTP-F1-VERIFICATIE.md). Dit oorspronkelijke onderzoek betrof analyse en planning. De uitvoerprompts in de PDF zijn bronmateriaal, geen toestemming om ze uit te voeren. Alle fasen wachten op afzonderlijke goedkeuring. Aanbevelingen en werktitels blijven voorstellen totdat een besluit is vastgelegd.
+Historische analyse van vóór uitvoering; de actuele F1-uitvoering staat in [HTP-F1-VERIFICATIE.md](HTP-F1-VERIFICATIE.md). F2 staat in [HTP-F2-VERIFICATIE.md](HTP-F2-VERIFICATIE.md); F1/49 staan op main en F2 is alleen lokaal afgerond. Dit oorspronkelijke onderzoek betrof analyse en planning. De uitvoerprompts in de PDF zijn bronmateriaal, geen toestemming om ze uit te voeren. F3a en volgende fasen wachten op afzonderlijke goedkeuring. Aanbevelingen en werktitels blijven voorstellen totdat een besluit is vastgelegd.
 
 Centraal bord: [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Taken en criteria: [HTP-BACKLOG.md](HTP-BACKLOG.md). Uitvoeringsvolgorde: [HTP-FASENPLAN.md](HTP-FASENPLAN.md).
 
@@ -89,7 +89,7 @@ Dit register samen met de individuele taakcriteria dekt de subpunten van iedere 
 |---|---|---|
 | D1: Crypto | HTP-03, F1 | **Besloten door Ward: amber `#E39B4B`.** Groen/rood behouden voor winst/verlies. |
 | D2: filterdrempel/navigatie | HTP-13, F3b | Altijd chips versus pas bij circa 12 items; daarnaast format/type/view zijn verschillende assen. Voorstel tabs Actueel/Zones/Vastgepind + één formatrij en chips vanaf twee toegankelijke markten, drempel 0. Geen extra tweede tabboom; ontwerp eerst beoordelen. |
-| D3: kaartactie | HTP-14, F3b | Open update kan blijven versus weg. Voorstel één kaartlink met subtiele pijl, geen geneste links; PDF-openactie straks buiten die wrapper/stretched-linkstructuur, zodat ook HTP-29 toetsenbordbruikbaar blijft. |
+| D3: kaartactie | HTP-14, F3b | Hele bestaande kaart expliciet goedgekeurd en uitgevoerd via HTP-49 / main 1067df4. Besluit over zichtbaar Open-update-label/pijl hoort bij F3b. Eén kaartlink zonder geneste links; PDF-openactie straks buiten die wrapper/stretched-linkstructuur, zodat ook HTP-29 toetsenbordbruikbaar blijft. |
 | D4: meldingingang | HTP-07/11, F2 | **Besloten door Ward op 17 oktober: alleen bel, huidig klikgedrag behouden.** Geen zijbalkingang en geen auto-open; inhoudelijke chatbadge blijft behouden. |
 | D5: zonenaam/statusmigratie | HTP-33/34, F6 | Belangrijke zones of Investeringszones. Bestaande waiting/running/closed + reason niet blind naar vijf nieuwe staten vertalen; handmatig te beoordelen records/historiek behouden. Ongeldig is een uitkomst, geen verwijderinstructie. |
 | D6: pinnen | HTP-35, F6 | Bestaande maximaal twee tijdelijke actuele pins versus educatieve collecties met vrij aantal/volgorde. Voorstel afzonderlijke betekenis voor collectiepin; bestaande pinhistoriek behouden. |
@@ -117,3 +117,10 @@ Dit register samen met de individuele taakcriteria dekt de subpunten van iedere 
 Project 3 bevatte 15 items over multi-formatupdates, waaronder MU-7/MU-9 en M1.3-M1.5 in Review. Nieuwe HTP-taken zijn vervolgtaken voor het verschil met deze PDF, geen vervangende implementatie van bestaande functionaliteit. HTP-39 verwijst naar #34/#31, HTP-14 naar #30/#32/#33, HTP-12/25 naar #28. Bestaande items blijven hun eigen scope en acceptatie houden.
 
 `docs/CLIENT_FEEDBACK_HTP_IMPLEMENTATION_PLAN.md` (17 juni) blijft historische context: het vraagt een lichtere basis en auto-openmeldingen, terwijl deze PDF donker-default en klikbediening beschrijft. Dat plan niet als uitvoerautoriteit gebruiken voor dit dossier. Het transcriptiebord/-syncscript niet inzetten voor deze nieuwe scope. Uitvoerende codewijzigingen volgen later `CONTRIBUTING.md`: eerst één goedgekeurd issue per slice, geen productie-/remote-implementatie zonder passende opdracht.
+
+
+## Uitvoeringsaanvulling F2
+
+D4 is expliciet beslist: alleen bel en huidig klikgedrag. F2 heeft de shell, accountzone, meldingenbron/paginering/read/delete/UI en dashboardbasis lokaal uitgevoerd; HTP-06 t/m 11 en 39 zijn aantoonbaar gecontroleerd. Het volledig klikbare bestaande kaartvlak staat als HTP-49 al op main; het resterende F3b-kaartontwerp blijft onuitgevoerd. Bron- en commitbewijs staan in het F2-verificatierapport.
+
+De verse lokale database bevestigt main-migratie 20260922020000_restore_level_two_content_access.sql: private update/live-RLS is bewust nog op niveau 2. De afzonderlijke betaalsimulatie is geen toestemming voor cutover; #28 en het productbesluit blijven leidend. De afwijking van het oude lokale migratieregister is niet door een reset of blind herstel opgelost; F2 gebruikt een aparte lokale database.

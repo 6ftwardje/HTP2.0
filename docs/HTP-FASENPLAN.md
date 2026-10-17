@@ -1,6 +1,6 @@
 # HTP feedback: gefaseerd uitvoeringsplan
 
-17 oktober 2026. **F1 goedgekeurd door Ward op 17 oktober 2026; F2 lokaal goedgekeurd op 17 oktober 2026, uitsluitend bel met klikgedrag; stop vóór F3a. F1 plus HTP-49 mogen naar main, F2 nog niet.** [Centraal bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Analyse, bestandspaden en besluitregister](HTP-FEEDBACK-ANALYSE.md).
+17 oktober 2026. **F1 goedgekeurd door Ward op 17 oktober 2026; F1 plus HTP-49 op main 1067df4 / PR #51; F2 uitsluitend lokaal afgerond/gecontroleerd, bel met klikgedrag. Stop vóór F3a; F2 niet gepubliceerd.** [Centraal bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Analyse, bestandspaden en besluitregister](HTP-FEEDBACK-ANALYSE.md).
 
 Elke onderstaande fase/deelfase krijgt afzonderlijke goedkeuring. Een goedgekeurde fase geeft geen toestemming om de volgende automatisch uit te voeren. Bij extra scope of onopgeloste criteria terug naar Backlog/Geblokkeerd; geen stilzwijgende uitbreiding. Er zijn geen datums of uren beloofd.
 
@@ -35,7 +35,7 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 
 **Vooraf:** alleen D1 (Crypto amber/groen) blokkeert de gekozen MarketTag. Voor logo is geen nieuw asset nodig als de voorgestelde combinatie van het bestaande transparante icoon met themagekleurde merknaam wordt gebruikt; in de visuele acceptatie kan later een officiële full-variant worden gekozen. De overige hexwaarden zijn het documentvoorstel; AA-afwijkingen onderbouwen, niet verborgen aanpassen.
 
-**Test en klaar:** HTP-01-baseline, themapersistentie/geen opslag/refresh/systeemfallback, relatieve tijd/DST, contrast/focus en screenshots van bestaande routes. Bewijs van behouden artikelhiërarchie/thumbnails/zoekgedrag en geen nieuwe datawrites. Klaar als HTP-01 t/m 05 aantoonbaar voldoen; HTP-19 heeft diagnose of eerlijk afgebakende vervolgtaak. **Dit is de voorgestelde eerste uitvoeringsfase.**
+**Test en klaar:** HTP-01-baseline, themapersistentie/geen opslag/refresh/systeemfallback, relatieve tijd/DST, contrast/focus en screenshots van bestaande routes. Bewijs van behouden artikelhiërarchie/thumbnails/zoekgedrag en geen nieuwe datawrites. Klaar als HTP-01 t/m 05 aantoonbaar voldoen; HTP-19 heeft diagnose of eerlijk afgebakende vervolgtaak. **Afgerond en na goedkeuring gereleaset via PR #51.**
 
 ## F2 — Shell, meldingen en dashboardbasis
 
@@ -50,6 +50,8 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 **Vooraf:** D4 besloten door Ward: alleen bel; huidig openen op klik behouden, geen auto-open. Typen mappen zonder private staff-/mentorinformatie breder zichtbaar te maken. Gerichte databasebaseline. Geen nieuwe assets.
 
 **Test en klaar:** rollen en directe URLs, 0/1/9/10/>50 meldingen, 29/30/31-dagentelling, nul-href, verwijderen, directe bronopen, dubbele realtime-events/reconnect, fout/retry/ontbrekende migration, chatworkspace/mobile/safe areas en alles-gelezen over volledige set. Klaar als alle badges dezelfde waarheid tonen en notificatierechten/leeractie/composer intact zijn.
+
+**Uitvoering F2:** HTP-06 t/m 11 en HTP-39 Done voor de lokale scope; 241 tests, SQL-/RLS-/browserbewijs, 66 beeldcombinaties en gerichte bevestiging in [F2-verificatie](HTP-F2-VERIFICATIE.md). D4 gesloten: alleen bel, openen op klik. Geen F2-release en geen F3a-start. Betaalactivering blijft afzonderlijk onder #28/productbesluit.
 
 ## F3a — Marktcontract en providerbewijs
 
