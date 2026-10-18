@@ -17,6 +17,6 @@ export async function authorizedPdf(id:string){
  const student=await pdfActor(),db=await createClient();const {data:allowed,error}=await db.rpc('can_read_pdf',{p_document_id:id});if(error)throw new PdfHttpError(503,'PDF’s zijn tijdelijk niet beschikbaar.');if(!allowed)throw new PdfHttpError(404,'Dit document is niet beschikbaar of je hebt geen toegang.');
  const service=createServiceClient();const {data,error:readError}=await service.from('pdf_documents').select('*').eq('id',id).maybeSingle();if(readError||!data)throw new PdfHttpError(404,'Dit document is niet beschikbaar.');return {student,db,service,document:data as PdfRow};
 }
-export function pdfMetadata(row:PdfRow){return {id:row.id,title:row.title,pageCount:row.page_count,version:row.version,state:row.state,accessibleHtml:row.accessible_html};}
+export function pdfMetadata(row:PdfRow){return {id:row.id,title:row.title,pageCount:row.page_count,version:row.version,state:row.state,readingAvailable:row.accessible_verified&&!!row.accessible_html};}
 let active=0;
 export async function pdfWork<T>(work:()=>Promise<T>){if(active>=2)throw new PdfHttpError(503,'De PDF-verwerking is bezet. Probeer over enkele seconden opnieuw.');active++;try{return await work();}finally{active--;}}
