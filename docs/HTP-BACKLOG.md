@@ -1,12 +1,14 @@
 # HTP platformbacklog
 
-**Publicatieopdracht 18 oktober 2026:** Ward keurt F4/F5a naar main goed via [release-PR #84](https://github.com/6ftwardje/HTP2.0/pull/84) / [issue #83](https://github.com/6ftwardje/HTP2.0/issues/83). De actuele productbordrelease 4dd8206 is behouden. Gecombineerd: 298 tests, typecheck, lint en backlogcheck groen; hosted CI/verse database/preview worden vóór merge gecontroleerd en in de PR vastgelegd. F5b mag daarna uitsluitend lokaal; stop vóór F6. Hieronder beschreven eerdere stoppoorten en niet-publicatie gelden voor hun historische acceptatiemoment. Geen remote featuremigratie of betaalactivering inbegrepen.
+**Actueel 18 oktober 2026:** F4/F5a gepubliceerd via [PR #84](https://github.com/6ftwardje/HTP2.0/pull/84), main `68653d8`; main-CI groen. **F5b uitsluitend lokaal geïmplementeerd en technisch geverifieerd: HTP-29 t/m HTP-32 (#85–88) Done voor de expliciet goedgekeurde lokale scope met synthetische testinhoud. Echte inhoud en definitieve rubricatiemapping volgen later, buiten deze acceptatie.** 303 tests, SQL, 25 browsercontrolegroepen en 39 schermgevallen. [Contract](HTP-F5B-CONTRACT.md) · [Bewijs en grenzen](HTP-F5B-VERIFICATIE.md). **F5b niet gepusht; stop vóór F6.**
+
+**Publicatieopdracht 18 oktober 2026:** Ward keurt F4/F5a naar main goed via [release-PR #84](https://github.com/6ftwardje/HTP2.0/pull/84) / [issue #83](https://github.com/6ftwardje/HTP2.0/issues/83). De actuele productbordrelease 4dd8206 is behouden. Gecombineerd: 298 tests, typecheck, lint en backlogcheck groen; hosted CI/verse database/preview zijn groen gecontroleerd en in de PR vastgelegd; merge `68653d8`, main-CI groen. F5b mag daarna uitsluitend lokaal; stop vóór F6. Hieronder beschreven eerdere stoppoorten en niet-publicatie gelden voor hun historische acceptatiemoment. Geen remote featuremigratie of betaalactivering inbegrepen.
 
 Peildatum: **18 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s). Paginanummers hieronder tellen de omslag mee; gedrukte nummering is één lager vanaf PDF-pagina 2.
 
 **Centrale voortgang:** [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Dit bestand bevat de complete taakspecificaties en een gedateerde statussnapshot; bij faseoverdracht worden bord en snapshot samen bijgewerkt. Filter op `HTP-` voor dit feedbackpakket. De bestaande MU/M1-items behouden hun eigen scope.
 
-**Update 18 oktober 2026:** Ward keurt D7 bestaande rechten en D8 voorgesteld PDF-contract expliciet goed. **F5a lokaal uitgevoerd en geverifieerd: HTP-25/#77, HTP-26/#78, HTP-27/#79 en HTP-28/#80 Done voor lokale scope.** 284 tests, SQL-/echte browser-/bron-/retentieproeven, 24 schermgevallen; [volledig bewijs](HTP-F5A-VERIFICATIE.md) en [goedgekeurd contract](HTP-F5A-CONTRACT.md). F1 t/m F3b zijn gepubliceerd; F4 en F5a blijven lokaal, niet gepusht. Geen remote migratie, providerwrites of betaalcutover. **Stop vóór F5b.** [F4-bewijs](HTP-F4-VERIFICATIE.md) · [Fasenplan](HTP-FASENPLAN.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md).
+**Historische F5a-acceptatie:** D7 bestaande rechten en D8 voorgesteld PDF-contract zijn expliciet geaccepteerd; HTP-25 t/m 28 waren eerst lokaal Done. F4/F5a zijn inmiddels gepubliceerd zoals hierboven vermeld. [F5a-bewijs](HTP-F5A-VERIFICATIE.md) · [F4-bewijs](HTP-F4-VERIFICATIE.md) · [Fasenplan](HTP-FASENPLAN.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md).
 
 ## Werkafspraken
 
@@ -20,7 +22,7 @@ Peildatum: **18 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 
 ## Scrumboard: snapshot
 
-49 stabiele HTP-taken: **29 Done, 12 Backlog, 7 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F3b is gepubliceerd; F4/F5a Done betekenen gecontroleerde lokale scope. Drie releasekaarten en vijftien MU/M1-kaarten behouden: totaal 67 bordkaarten.
+49 stabiele HTP-taken: **33 Done, 10 Backlog, 5 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F4/F5a gepubliceerd; F5b Done betreft uitsluitend geverifieerde lokale scope. Vier releasekaarten, één productbordkaart en vijftien MU/M1-kaarten behouden: totaal **69 bordkaarten**.
 
 | ID | Taak | Prio | Fase | Omvang | Beoordeling | Status |
 |---|---|---|---|---|---|---|
@@ -52,10 +54,10 @@ Peildatum: **18 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-26](#htp-26) | Maak private PDF-opslag en geautoriseerde uitlevering | P1 | F5a | M | Al geïmplementeerd | Done |
 | [HTP-27](#htp-27) | Personaliseer PDF-watermerken en registreer openacties | P1 | F5a | M | Al geïmplementeerd | Done |
 | [HTP-28](#htp-28) | Bouw één gedeelde toegankelijke PDF-viewer | P1 | F5a | M | Al geïmplementeerd | Done |
-| [HTP-29](#htp-29) | Koppel PDF-bijlagen aan updates en feed | P1 | F5b | M | Nog uit te voeren | Backlog |
-| [HTP-30](#htp-30) | Voeg Academy-rubrieken en PDF-tab met beheer toe | P1 | F5b | M | Nog uit te voeren | Geblokkeerd |
-| [HTP-31](#htp-31) | Maak een eenvoudige beheerde Toolbox | P2 | F5b | M | Nog uit te voeren | Geblokkeerd |
-| [HTP-32](#htp-32) | Onthoud PDF-leespositie per gebruiker | P2 | F5b | S | Nog uit te voeren | Backlog |
+| [HTP-29](#htp-29) | Koppel PDF-bijlagen aan updates en feed | P1 | F5b | M | Al geïmplementeerd en geverifieerd | Done |
+| [HTP-30](#htp-30) | Voeg Academy-rubrieken en PDF-tab met beheer toe | P1 | F5b | M | Al geïmplementeerd en geverifieerd (synthetisch) | Done |
+| [HTP-31](#htp-31) | Maak een eenvoudige beheerde Toolbox | P2 | F5b | M | Al geïmplementeerd en geverifieerd (synthetisch) | Done |
+| [HTP-32](#htp-32) | Onthoud PDF-leespositie per gebruiker | P2 | F5b | S | Al geïmplementeerd en geverifieerd | Done |
 | [HTP-33](#htp-33) | Migreer setups naar expliciete zonestatussen | P2 | F6 | M | Gedeeltelijk aanwezig | Geblokkeerd |
 | [HTP-34](#htp-34) | Toon zones als denkkader met actieve en afgelopen sectie | P2 | F6 | M | Gedeeltelijk aanwezig | Backlog |
 | [HTP-35](#htp-35) | Maak educatieve pincollecties met beheer en volgorde | P2 | F6 | M | Gedeeltelijk aanwezig | Geblokkeerd |
@@ -723,7 +725,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.29 B; 06 p.18.
 - **Prioriteit / fase / omvang:** P1 / F5b / M.
-- **Beoordeling / status:** Nog uit te voeren / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd en geverifieerd / **Done** (lokale F5b-scope).
 - **Resultaat:** Admins publiceren één of meer PDF’s bij een update; leden openen ze vanuit feed en detail.
 - **Afhankelijkheden:** HTP-14, HTP-26, HTP-28.
 - **Besluiten / blokkades:** Geen extra productbesluit na PDF-contract.
@@ -731,13 +733,13 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Acceptatiecriteria**
 
-- [ ] Editor accepteert titel+bestand+optionele cover, meerdere bijlagen, volgorde/verwijderen en nette upload-/publicatiefouten.
-- [ ] Tekst+PDF zonder video is geldig; publicatie/access/notificatievalidatie laat dit toe zonder rechten af te zwakken of dubbele meldingen te sturen.
-- [ ] Feed/detail tonen cover of icoon, titel, pagina-aantal en Openen in gedeelde viewer; PDF-actie en kaartlink hebben geen geneste links/conflicterende focus.
+- [x] Editor accepteert titel+bestand+optionele cover, meerdere bijlagen, volgorde/verwijderen en nette upload-/publicatiefouten.
+- [x] Tekst+PDF zonder video is geldig; publicatie/access/notificatievalidatie laat dit toe zonder rechten af te zwakken of dubbele meldingen te sturen.
+- [x] Feed/detail tonen cover of icoon, titel, pagina-aantal en Openen in gedeelde viewer; PDF-actie en kaartlink hebben geen geneste links/conflicterende focus.
 
 **Verificatie:** Publiceer synthetische draft met/zonder video/cover en meerdere PDF’s, wijzig bijlage, test gratis/subscriber; directe request zonder recht; keyboard/open/close en mislukte upload.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #85](https://github.com/6ftwardje/HTP2.0/issues/85), 18 oktober 2026, localhost 3118/lokale Supabase en synthetische rollen gratis/Academy/subscription/legacy/admin. `fdd15d6`, `3864675`, `041ecf8`: gedeelde bijlagen/catalogus, update-editor, publicatie zonder dubbele melding, private covers; `components/PdfAttachments.tsx`, `components/MarketUpdateCard.tsx`, `components/admin/PdfDocumentsManager.tsx`, `lib/pdf/catalog.ts` en migratie `20261018220000_htp_f5b_update_documents.sql`. 303 tests, drie rollback-SQL-suites, 15 primaire + 10 levenscyclusgroepen en responsive/themabewijs; [volledig verslag](HTP-F5B-VERIFICATIE.md). Uitsluitend lokaal; niet gepusht.
 
 <a id="htp-30"></a>
 
@@ -745,21 +747,25 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.27-29 C1-2,4-5.
 - **Prioriteit / fase / omvang:** P1 / F5b / M.
-- **Beoordeling / status:** Nog uit te voeren / **Geblokkeerd**.
+- **Beoordeling / status:** Al geïmplementeerd en geverifieerd / **Done** (goedgekeurde lokale synthetische scope).
 - **Resultaat:** Academy toont Video/PDF/Toolbox binnen goedgekeurde rubrieken zonder huidig leerpad te breken.
 - **Afhankelijkheden:** HTP-25-28; rechtenbesluit vóór migratie.
-- **Besluiten / blokkades:** D7: module/rubriekrelatie en inhoudsindeling.
+- **Besluiten / blokkades:** D7 rechten beslist. Ward keurt op 18 oktober expliciet de volledige lokale beheer-/weergaveketen met herkenbare synthetische inhoud goed; echte rubrieken/modulemapping en cursus-PDF’s/volledige leesversies later. Geen fictieve productievulling.
 - **Bestaande implementatie:** E15: huidige Academy is modulevolgorde met theorie/praktijk, geen Crypto-rubriekmodel.
 
 **Acceptatiecriteria**
 
-- [ ] Rubriekrelatie additief met expliciete modulemapping; bestaande module-/les-URL’s, examengates en voortgang blijven bestaan.
-- [ ] Tabs Videocursus/PDF cursussen/Toolbox bewaren keuze in URL; lege tabs verborgen; ongeldige tab heeft fallback; actief accentonderlijn.
-- [ ] PDF-kaarten hebben cover/titel/korte beschrijving/pagina-aantal; admin kan uploaden/ordenen/verwijderen en toegang per rubriek beheren met gedeelde viewer.
+- [x] Rubriekrelatie additief met expliciete modulemapping; bestaande module-/les-URL’s, examengates en voortgang blijven bestaan.
+- [x] Tabs Videocursus/PDF cursussen/Toolbox bewaren keuze in URL; lege tabs verborgen; ongeldige tab heeft fallback; actief accentonderlijn.
+- [x] PDF-kaarten hebben cover/titel/korte beschrijving/pagina-aantal; admin kan uploaden/ordenen/verwijderen en toegang per rubriek beheren met gedeelde viewer.
+
+**Uitgestelde inhoud, buiten deze acceptatie:** werkelijke goedgekeurde rubrieken/modulemapping en cursusassets later aanleveren, invoeren en inhoudelijk controleren; expliciet door Ward geaccordeerd. Geen claim dat dit al is gebeurd.
 
 **Verificatie:** Migratie-fixture zonder/met rubrieken, old URLs en ?tab=pdf direct openen; gratis/Academy/subscription/legacy/admin; lege/gevulde tabs en mobiel.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #86](https://github.com/6ftwardje/HTP2.0/issues/86), 18 oktober 2026, localhost 3118/lokale Supabase en synthetische rollen gratis/Academy/subscription/legacy/admin. `c0cbd5b`, `e7563b2`: expliciete additieve rubriekmapping met transactionele CAS, URL-tabs en behouden leerpad; `app/(protected)/academy/[slug]/page.tsx`, `app/api/admin/academy-rubrics/route.ts`, `components/admin/AcademyRubricsManager.tsx`, migratie `20261018221000_htp_f5b_academy_rubrics.sql`. Alle technische criteria gecontroleerd met synthetische inhoud; echte curriculumacceptatie blijft open. 303 tests, drie rollback-SQL-suites, 15 primaire + 10 levenscyclusgroepen en responsive/themabewijs; [volledig verslag](HTP-F5B-VERIFICATIE.md). Uitsluitend lokaal; niet gepusht.
+
+**Scopeacceptatie 18 oktober 2026:** Ward kiest “Bouw met synthetische testinhoud; echte inhoud later”. Het bestaande bewijs controleert de volledige lokale keten en lege niet-gevulde tabs; daarom Done binnen deze expliciet goedgekeurde scope. Echte content blijft een navolgbare vervolgstap, geen afgeronde inhoudsacceptatie.
 
 <a id="htp-31"></a>
 
@@ -767,21 +773,25 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.28-29 C3-5; 15 p.38.
 - **Prioriteit / fase / omvang:** P2 / F5b / M.
-- **Beoordeling / status:** Nog uit te voeren / **Geblokkeerd**.
+- **Beoordeling / status:** Al geïmplementeerd en geverifieerd / **Done** (goedgekeurde lokale synthetische scope).
 - **Resultaat:** Een beheerbare lijst van PDF’s, links en bestanden, zonder aanvullende appfeatures.
 - **Afhankelijkheden:** HTP-25, HTP-26, HTP-28, HTP-30.
-- **Besluiten / blokkades:** D7: daadwerkelijke Toolbox-inhoud en bestandstoegang.
+- **Besluiten / blokkades:** D7 bestandstoegang erft volledige modulerechten. Ward keurt op 18 oktober herkenbare synthetische testinhoud goed; werkelijke Toolboxitems, bronbestanden/URL’s, module en volgorde volgen later, buiten deze acceptatie. Geen calculators of productiecontent verzonnen.
 - **Bestaande implementatie:** Geen Toolbox aangetroffen; inhoud niet aangeleverd. E15/E18 zijn integratiepunten.
 
 **Acceptatiecriteria**
 
-- [ ] Item heeft titel/beschrijving/type PDF-link-bestand, rubriek/volgorde en beheeractie toevoegen/ordenen/verwijderen.
-- [ ] PDF opent dezelfde beschermde viewer; bestanden hebben expliciete toegangspolicy, links valide veilige URL’s; lege Toolboxtab verborgen.
-- [ ] Geen calculators of inhoud verzonnen; ontbrekende assets/content houden deze taak geblokkeerd of ongevuld buiten de release.
+- [x] Item heeft titel/beschrijving/type PDF-link-bestand, rubriek/volgorde en beheeractie toevoegen/ordenen/verwijderen.
+- [x] PDF opent dezelfde beschermde viewer; bestanden hebben expliciete toegangspolicy, links valide veilige URL’s; lege Toolboxtab verborgen.
+- [x] Geen calculators of inhoud verzonnen; ontbrekende assets/content houden deze taak geblokkeerd of ongevuld buiten de release.
+
+**Uitgestelde inhoud, buiten deze acceptatie:** werkelijke goedgekeurde Toolboxinhoud met modulekoppeling en volgorde later aanleveren en inhoudelijk controleren; expliciet door Ward geaccordeerd. Geen claim dat dit al is gebeurd.
 
 **Verificatie:** Synthetisch item per type, gevaarlijke URL/ontoegankelijk bestand en lege tab; toetsenbord/mobile, beheerrechten en directe downloadtoegang conform D7.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #87](https://github.com/6ftwardje/HTP2.0/issues/87), 18 oktober 2026, localhost 3118/lokale Supabase en synthetische rollen gratis/Academy/subscription/legacy/admin. `1107a16`: beheerde PDF/link/bestand-lijst, veilige URL’s en private geautoriseerde downloads; `components/ToolboxList.tsx`, `components/admin/ToolboxManager.tsx`, `lib/toolbox-policy.ts`, `app/api/toolbox/[id]/download/route.ts`, migratie `20261018222000_htp_f5b_toolbox.sql`. Techniek gecontroleerd; echte Toolboxinhoud ontbreekt. 303 tests, drie rollback-SQL-suites, 15 primaire + 10 levenscyclusgroepen en responsive/themabewijs; [volledig verslag](HTP-F5B-VERIFICATIE.md). Uitsluitend lokaal; niet gepusht.
+
+**Scopeacceptatie 18 oktober 2026:** Ward kiest “Bouw met synthetische testinhoud; echte inhoud later”. Het bestaande bewijs controleert de volledige lokale keten en lege niet-gevulde tabs; daarom Done binnen deze expliciet goedgekeurde scope. Echte content blijft een navolgbare vervolgstap, geen afgeronde inhoudsacceptatie.
 
 <a id="htp-32"></a>
 
@@ -789,7 +799,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.29 C2; 13 p.34.
 - **Prioriteit / fase / omvang:** P2 / F5b / S.
-- **Beoordeling / status:** Nog uit te voeren / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd en geverifieerd / **Done** (lokale F5b-scope).
 - **Resultaat:** Academy-PDF heropent op de laatst gelezen pagina zonder positie van anderen te lekken.
 - **Afhankelijkheden:** HTP-26, HTP-28, HTP-30.
 - **Besluiten / blokkades:** Geen.
@@ -797,13 +807,13 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Acceptatiecriteria**
 
-- [ ] Eigenaar+documentversie heeft geldige laatst bekeken pagina; opslag begrensd en alleen bij toegang.
-- [ ] Heropenen hervat, herstartmogelijkheid aanwezig; nieuwe documentversie/andere paginatelling corrigeert veilig.
-- [ ] Twee apparaten en offline-/writefout zijn herstelbaar; positieopslag wordt niet als werkelijk uitgelezen bewijs gebruikt.
+- [x] Eigenaar+documentversie heeft geldige laatst bekeken pagina; opslag begrensd en alleen bij toegang.
+- [x] Heropenen hervat, herstartmogelijkheid aanwezig; nieuwe documentversie/andere paginatelling corrigeert veilig.
+- [x] Twee apparaten en offline-/writefout zijn herstelbaar; positieopslag wordt niet als werkelijk uitgelezen bewijs gebruikt.
 
 **Verificatie:** Twee gebruikers/apparaten, eerste/laatste pagina, vervangen document en ingetrokken toegang; SQL/actions en viewerheropenen.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #88](https://github.com/6ftwardje/HTP2.0/issues/88), 18 oktober 2026, localhost 3118/lokale Supabase en synthetische rollen gratis/Academy/subscription/legacy/admin. `03ca06e`, `e7563b2`: eigen versiegebonden positie, CAS, twee browsers/conflictherstel, verloren ACK, sluiten vóór debounce, eerste/laatste pagina inclusief korte liggende laatste pagina; `lib/use-pdf-position.ts`, `components/ProtectedPdfViewer.tsx`, `app/api/documents/[id]/position/route.ts`, migratie `20261018223000_htp_f5b_pdf_positions.sql`. Metadatawijziging maakt nieuwe documentversie en hervat veilig op pagina 1; geen uitgelezenclaim. 303 tests, drie rollback-SQL-suites, 15 primaire + 10 levenscyclusgroepen en responsive/themabewijs; [volledig verslag](HTP-F5B-VERIFICATIE.md). Uitsluitend lokaal; niet gepusht.
 
 <a id="htp-33"></a>
 
@@ -1133,7 +1143,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Gebruik synthetische fixtures; non-admin RLS en directe assetrequests, fout/retry/missingmigration testen. CI-scripts eerst op geschiktheid controleren; geen productieschrijfacties in planningsfase.
 
-**Bewijs van uitvoering:** F1 t/m F3b-releasebewijs en lokale F4/F5a-controles vastgelegd; [F5a-dossier](HTP-F5A-VERIFICATIE.md). Integrale F10-acceptatie en latere fasen blijven open: status Backlog.
+**Bewijs van uitvoering:** F1 t/m F5a-releasebewijs (PR #84/main 68653d8) en lokale F5b-controles vastgelegd; [F5b-dossier](HTP-F5B-VERIFICATIE.md). Integrale F10-acceptatie en latere fasen blijven open: status Backlog.
 
 <a id="htp-48"></a>
 
@@ -1155,7 +1165,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Controleer alle IDs/dependencies/bronnen en borditems; lees na schrijven de statussen/inhoud terug. Bij faseoverdracht snapshot+besluitlog+bewijslocatie bijwerken; huidig opzetten is geen toestemming voor code.
 
-**Bewijs van uitvoering:** D7/D8 geaccepteerd en F5a lokaal geverifieerd; 49 unieke HTP-IDs, 29 Done / 12 Backlog / 7 Geblokkeerd / 1 Ready en alle 67 kaarten behouden na bordreadback. F4/F5a niet gepusht; stop vóór F5b. Ready voor doorlopend onderhoud.
+**Bewijs van uitvoering:** F4/F5a gepubliceerd via PR84/main68653d8; F5b lokaal geverifieerd; Ward accepteert synthetische testinhoud en echte inhoud later. 49 unieke HTP-IDs, 33 Done /10 Backlog /5 Geblokkeerd /1 Ready en alle69 kaarten behouden na bordreadback; #85–88 Done voor de goedgekeurde lokale scope. F5b niet gepusht; stop vóór F6. Ready voor doorlopend onderhoud.
 
 
 

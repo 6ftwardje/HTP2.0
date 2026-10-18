@@ -1,3 +1,4 @@
+import {PdfAttachments} from "@/components/PdfAttachments";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Avatar } from "@/components/ui/Avatar";
@@ -25,8 +26,7 @@ export function MarketUpdateCard({ update, author, compact = false, pinned = fal
   const activityAt = marketUpdateActivityAt(update);
   const updated = Boolean(structure && Date.parse(activityAt) > Date.parse(publishedAt));
   const weekly = update.type === "weekly_outlook";
-  return <Link href={`/market-analysis/${update.slug}`} className={styles.card} data-compact={compact || undefined} data-update-id={update.id}
-    style={{ "--card-market": firstMarket ? `var(--market-${firstMarket})` : "var(--border)" } as CSSProperties} aria-label={update.title}>
+  return <article className={styles.card} data-compact={compact || undefined} data-update-id={update.id} style={{ "--card-market": firstMarket ? `var(--market-${firstMarket})` : "var(--border)" } as CSSProperties}><Link href={`/market-analysis/${update.slug}`} className={styles.content} aria-label={update.title}>
     <div className={styles.media}>
       <CourseThumbnail src={thumbnail} videoRef={video?{kind:"update",id:update.id}:undefined} unoptimized={chart} showImageShade={!chart} title={update.title} className={styles.image} imageClassName="!object-contain" sizes={compact ? "(min-width: 1024px) 33vw, 100vw" : "(min-width: 768px) 42vw, 100vw"} />
       {video ? <span className={styles.play} aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m7 4 9 6-9 6Z" fill="currentColor" /></svg></span> : null}
@@ -44,5 +44,5 @@ export function MarketUpdateCard({ update, author, compact = false, pinned = fal
       {updated ? <p className={styles.updated}>Bijgewerkt <RelativeDate value={activityAt} focusable={false} /></p> : null}
       <span className={styles.open}>Open {weekly ? "vooruitblik" : "update"} <span aria-hidden="true">→</span></span>
     </div>
-  </Link>;
+  </Link>{update.pdfViewerId?<div className={styles.documents}><PdfAttachments documents={update.documents??[]} viewerId={update.pdfViewerId} unavailable={update.documentsUnavailable} compact/></div>:null}</article>;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { PdfDocumentsManager } from "@/components/admin/PdfDocumentsManager";
 import { RelativeDate } from "@/components/ui/RelativeDate";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -1052,7 +1053,7 @@ export function AdminWeeklyUpdatesManager({
               Selecteer een marktinzicht uit de bibliotheek of voeg een nieuw inzicht toe.
             </p>
           ) : panel.type === "create" ? (
-            <form action={(formData) => runSave(formData)} onInput={() => { hasUnsavedChanges.current = true; }} onChange={() => { hasUnsavedChanges.current = true; }} className="space-y-4">
+            <form onSubmit={(event) => { event.preventDefault(); runSave(new FormData(event.currentTarget)); }} onInput={() => { hasUnsavedChanges.current = true; }} onChange={() => { hasUnsavedChanges.current = true; }} className="space-y-4">
               <WeeklyUpdateFields key="create" mentors={mentors} paidProductsActive={paidProductsActive} onThumbnailFileChange={setThumbnailFile} onContentFormatChange={setContentFormat} chartFileRef={chartFileRef} />
               {contentFormat === "video" ? <label className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Videobestand</span>
@@ -1064,7 +1065,7 @@ export function AdminWeeklyUpdatesManager({
               </button>
             </form>
           ) : selectedUpdate ? (
-            <form action={(formData) => runSave(formData, selectedUpdate)} onInput={() => { hasUnsavedChanges.current = true; }} onChange={() => { hasUnsavedChanges.current = true; }} className="space-y-4">
+            <form onSubmit={(event) => { event.preventDefault(); runSave(new FormData(event.currentTarget), selectedUpdate); }} onInput={() => { hasUnsavedChanges.current = true; }} onChange={() => { hasUnsavedChanges.current = true; }} className="space-y-4">
               <WeeklyUpdateFields key={`${selectedUpdate.id}-${selectedUpdate.updated_at}`} update={selectedUpdate} mentors={mentors} paidProductsActive={paidProductsActive} onThumbnailFileChange={setThumbnailFile} onContentFormatChange={setContentFormat} chartFileRef={chartFileRef} />
               {contentFormat === "video" ? <div className="rounded-xl border border-[var(--border)] p-3">
                 <div className="flex items-center justify-between gap-3">
@@ -1180,6 +1181,7 @@ export function AdminWeeklyUpdatesManager({
 
           {selectedUpdate && (selectedUpdate.type === "market_update" || !selectedUpdate.type) ? <MarketUpdateWorkflowControls key={`workflow-${selectedUpdate.id}-${selectedUpdate.updated_at}`} update={selectedUpdate} hasUnsavedChanges={() => hasUnsavedChanges.current} /> : null}
 
+          {selectedUpdate ? <div className="mt-8 border-t border-[var(--border)] pt-6"><PdfDocumentsManager key={selectedUpdate.id} parentKind="update" parentId={selectedUpdate.id}/></div> : panel.type === "create" ? <p className="mt-4 text-sm text-[var(--muted)]">Sla eerst het concept op. Open het daarna om één of meer PDF-bijlagen met leesversie en optionele cover toe te voegen.</p> : null}
           {selectedUpdate?.is_published && selectedUpdate.access_tier === "subscription" ? (
             <button
               type="button"

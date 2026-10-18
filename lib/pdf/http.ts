@@ -4,7 +4,7 @@ import {getCurrentStudent,getCurrentAuthUser} from '@/lib/students';
 import {createClient} from '@/lib/supabase/server';
 import {createServiceClient} from '@/lib/supabase/service';
 import {samePdfOrigin,validPdfId,boundedPdfBody} from './policy';
-export type PdfRow={id:string;weekly_update_id:number|null;module_id:number|null;title:string;object_path:string;byte_size:number;page_count:number;sha256:string;version:string;state:string;storage_ready:boolean;accessible_html:string;accessible_verified:boolean;created_at:string;updated_at:string;error_message:string|null};
+export type PdfRow={description:string;sort_order:number;shelf:"course"|"toolbox";cover_path:string|null;id:string;weekly_update_id:number|null;module_id:number|null;title:string;object_path:string;byte_size:number;page_count:number;sha256:string;version:string;state:string;storage_ready:boolean;accessible_html:string;accessible_verified:boolean;created_at:string;updated_at:string;error_message:string|null};
 export class PdfHttpError extends Error {constructor(public status:number,message:string){super(message);}}
 export const pdfHeaders={'Cache-Control':'private, no-store, max-age=0','Vary':'Cookie','X-Content-Type-Options':'nosniff'};
 export const pdfJson=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:pdfHeaders});

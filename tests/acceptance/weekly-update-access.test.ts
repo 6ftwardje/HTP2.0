@@ -1,3 +1,4 @@
+import * as pdfPresentation from "../../lib/pdf/presentation";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -20,6 +21,9 @@ import * as marketStructure from "../../lib/market-update-structure";
 import * as marketEditing from "../../lib/market-update-editing";
 
 const sharedDependencies: Record<string, unknown> = {
+  "@/lib/pdf/presentation": pdfPresentation,
+  "@/lib/pdf/catalog": {visibleDocuments:async()=>[],withUpdateDocuments:async (rows:unknown[])=>rows},
+  "@/components/PdfAttachments": {PdfAttachments:()=>null},
   "@/lib/market-editorial": marketEditorial,
   "@/lib/market-feed": marketFeed,
   "@/lib/market-feed-authors": { getMarketFeedAuthors: async () => ({}) },

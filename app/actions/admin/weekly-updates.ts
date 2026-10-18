@@ -1,5 +1,6 @@
 "use server";
 
+import { updatePdfPublicationError } from '@/lib/pdf/presentation';
 import { parseTakeaways } from "@/lib/market-editorial";
 import { sanitizeArticle } from "@/lib/market-article";
 
@@ -43,6 +44,8 @@ import type {
   WeeklyUpdateContentFormat,
   WeeklyUpdate,
 } from "@/lib/types";
+
+async function pdfPublicationError(id:number){const db=createServiceClient();const {data,error}=await db.from('pdf_documents').select('state,storage_ready,accessible_verified').eq('weekly_update_id',id);return error?'PDF-bijlagen konden niet worden gecontroleerd. Probeer opnieuw.':updatePdfPublicationError(data??[]);}
 
 type ActionResult<T extends object = object> = T & {
   success: boolean;
@@ -412,6 +415,7 @@ export async function adminPublishQuickMarketUpdate(idRaw: unknown): Promise<Act
   const update = await getWeeklyUpdateAdmin(id);
   if (!update || update.type !== "market_update" || update.content_format === "video") return { success: false, error: "Marktupdate niet gevonden." };
   if (update.is_published) return { success: true };
+  const pdfError=await pdfPublicationError(id);if(pdfError)return {success:false,error:pdfError};
   const structure = getUpdateStructure(update);
   const prepared = structure ? prepareMarketUpdateEdit({ submitted: structure, current: update, title: update.title, summary: update.summary, publish: true, author: publicAuthorName(actorStudent) }) : null;
   if (prepared?.error) return { success: false, error: prepared.error };
@@ -500,6 +504,7 @@ export async function adminUpdateWeeklyUpdate(
     };
   }
   if (willPublish) {
+    const pdfError=await pdfPublicationError(weeklyUpdateId);if(pdfError)return {success:false,error:pdfError};
     const publicationError = validateMarketUpdatePublication({
       contentFormat: parsed.input.content_format,
       body: structured.input.update_structure ? structureFallbackBody(structured.input.update_structure, structured.input.summary) : parsed.input.body,

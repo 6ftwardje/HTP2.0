@@ -1,3 +1,4 @@
+import {withUpdateDocuments} from "@/lib/pdf/catalog";
 import { projectMarketFeedUpdates } from "@/lib/market-feed";
 import Link from "next/link";
 import { QuickMarketUpdateComposer } from "@/components/admin/QuickMarketUpdateComposer";
@@ -60,13 +61,13 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (!student) return null;
 
   if (student.access_level === ADMIN_ACCESS_LEVEL) {
-    return <AdminDashboard />;
+    return <AdminDashboard viewerId={student.id}/>;
   }
 
   return <StudentDashboard student={student} intakeCompleted={params?.intake === "completed"} />;
 }
 
-async function AdminDashboard() {
+async function AdminDashboard({viewerId}:{viewerId:string}) {
   const [{ rows: unreadThreads, missingMigration }, drafts, upcomingSessions, recentUpdates, chatAccess] = await Promise.all([
     listAdminMentorThreads({ status: "unread", limit: 3 }), listDashboardDraftsAdmin(),
     listUpcomingLiveSessions(1), listPublishedWeeklyUpdates(6), getChatAccess(),
@@ -114,7 +115,7 @@ async function AdminDashboard() {
         <div><h2 id="admin-live-title" className="cb-section-title">Volgende live marktsessie</h2><p className="mt-1 text-sm text-[var(--muted)]">{nextLiveSession.title+" · "+sessionDate(nextLiveSession.starts_at)}</p></div>
         <Link href="/admin/live-sessions" className="inline-flex min-h-11 items-center text-sm font-semibold underline-offset-4 hover:underline">Beheer sessies →</Link>
       </section>}
-      <RecentMarketUpdatesFeed updates={projectMarketFeedUpdates(recentUpdates)} authors={await getMarketFeedAuthors(recentUpdates)} title="Recent gepubliceerd" description="Deze marktupdates zijn zichtbaar voor studenten met toegang."/>
+      <RecentMarketUpdatesFeed updates={await withUpdateDocuments(projectMarketFeedUpdates(recentUpdates),viewerId)} authors={await getMarketFeedAuthors(recentUpdates)} title="Recent gepubliceerd" description="Deze marktupdates zijn zichtbaar voor studenten met toegang."/>
     </div>
   </div>;
 }
@@ -275,7 +276,7 @@ async function StudentDashboard({
           )}
         </section>
 
-        {hasSubscriberAccess && <RecentMarketUpdatesFeed updates={projectMarketFeedUpdates(recentUpdates)} authors={await getMarketFeedAuthors(recentUpdates)} />}
+        {hasSubscriberAccess && <RecentMarketUpdatesFeed updates={await withUpdateDocuments(projectMarketFeedUpdates(recentUpdates),student.id)} authors={await getMarketFeedAuthors(recentUpdates)} />}
 
         {hasSubscriberAccess && nextLiveSession && (
           <section aria-labelledby="student-live-title" className="flex flex-col gap-4 border-t border-[var(--border)] pt-7 sm:flex-row sm:items-center sm:justify-between">

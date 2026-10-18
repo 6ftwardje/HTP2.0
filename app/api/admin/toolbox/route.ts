@@ -1,0 +1,27 @@
+import {randomUUID,createHash} from 'node:crypto';
+import {createServiceClient} from '@/lib/supabase/service';
+import {pdfActor,pdfOrigin,pdfJsonBody,pdfJson,pdfFailure,PdfHttpError} from '@/lib/pdf/http';
+import {validPdfId,boundedPdfBody} from '@/lib/pdf/policy';
+import {toolboxInput,toolboxFilename,validToolboxFile,TOOLBOX_MAX_BYTES} from '@/lib/toolbox-policy';
+export const dynamic='force-dynamic';
+export async function GET(request:Request){try{await pdfActor(true);const u=new URL(request.url),parent=Number(u.searchParams.get('module')),raw=Number(u.searchParams.get('page')??0),page=Number.isSafeInteger(raw)&&raw>=0&&raw<10000?raw:0;if(!Number.isSafeInteger(parent)||parent<=0)throw new PdfHttpError(400,'Kies een module.');const db=createServiceClient(),{data,error}=await db.from('toolbox_resources').select('id,module_id,title,description,kind,url,filename,byte_size,sort_order,version,state,error_message').eq('module_id',parent).order('sort_order').order('id').range(page*50,page*50+49);if(error)throw new PdfHttpError(503,'De Toolbox kon niet worden geladen.');return pdfJson({items:data,hasMore:data?.length===50});}catch(e){return pdfFailure(e);}}
+export async function POST(request:Request){try{
+ pdfOrigin(request);await pdfActor(true);let f:FormData;try{const bytes=await boundedPdfBody(request,TOOLBOX_MAX_BYTES+16384);f=await new Request(request.url,{method:'POST',headers:{'Content-Type':request.headers.get('content-type')??''},body:bytes}).formData();}catch{throw new PdfHttpError(413,'Gebruik een bestand van maximaal 3 MiB.');}
+ const input=toolboxInput(Object.fromEntries(f)),moduleId=Number(f.get('moduleId')),publish=f.get('publish')==='on';
+ if(!input||!Number.isSafeInteger(moduleId)||moduleId<=0)throw new PdfHttpError(422,'Controleer titel, module, beschrijving, volgorde en veilige HTTPS-link.');
+ const db=createServiceClient(),parent=await db.from('modules').select('id').eq('id',moduleId).maybeSingle();if(parent.error||!parent.data)throw new PdfHttpError(422,'De module bestaat niet.');
+ const id=randomUUID(),file=f.get('file');let bytes:Uint8Array|undefined,filename:string|null=null;
+ if(input.kind==='file'){if(!(file instanceof File))throw new PdfHttpError(422,'Kies een bestand.');bytes=new Uint8Array(await file.arrayBuffer());filename=toolboxFilename(file.name);if(!filename||!validToolboxFile(filename,bytes))throw new PdfHttpError(422,'Gebruik UTF-8 TXT/CSV of een ZIP/XLSX tot 3 MiB. PDF’s voeg je toe via PDF-beheer.');}
+ const path=bytes?`resources/${id}/source.bin`:null;
+ const created=await db.from('toolbox_resources').insert({id,module_id:moduleId,...input,filename,object_path:path,sha256:bytes?createHash('sha256').update(bytes).digest('hex'):null,byte_size:bytes?.length??null,state:input.kind==='link'&&publish?'ready':'draft'});
+ if(created.error)throw new PdfHttpError(503,'Het item kon niet worden opgeslagen.');
+ if(bytes&&path){const uploaded=await db.storage.from('protected-learning-assets').upload(path,bytes,{contentType:'application/octet-stream',upsert:false});if(uploaded.error){await db.from('toolbox_resources').update({state:'error',error_message:'Upload mislukt. Verwijder dit concept en probeer opnieuw.'}).eq('id',id);throw new PdfHttpError(503,'Upload mislukt; het herstelbare concept blijft zichtbaar.');}const done=await db.from('toolbox_resources').update({storage_ready:true,state:publish?'ready':'draft'}).eq('id',id);if(done.error)throw new PdfHttpError(503,'Afronden mislukt. Verwijder het concept en upload opnieuw.');}
+ return pdfJson({id},201);
+}catch(e){return pdfFailure(e);}}
+export async function PATCH(request:Request){try{
+ pdfOrigin(request);await pdfActor(true);const b=await pdfJsonBody(request),input=toolboxInput(b??{});if(!input||!validPdfId(b.id)||!validPdfId(b.version)||typeof b.publish!=='boolean')throw new PdfHttpError(422,'Controleer het item.');
+ const db=createServiceClient();let query=db.from('toolbox_resources').update({...input,state:b.publish?'ready':'draft',version:randomUUID()}).eq('id',b.id).eq('kind',input.kind).eq('version',b.version).in('state',['draft','ready']);if(input.kind==='file')query=query.eq('storage_ready',true);const {data,error}=await query.select('id').maybeSingle();if(error||!data)throw new PdfHttpError(error?503:409,'Het item is gewijzigd of tijdelijk niet beschikbaar. Herlaad en probeer opnieuw.');return pdfJson({id:b.id});
+}catch(e){return pdfFailure(e);}}
+export async function DELETE(request:Request){try{
+ pdfOrigin(request);await pdfActor(true);const b=await pdfJsonBody(request);if(!validPdfId(b?.id)||!validPdfId(b.version))throw new PdfHttpError(400,'Ongeldig item.');const db=createServiceClient(),{data,error}=await db.from('toolbox_resources').update({state:'deleting'}).eq('id',b.id).eq('version',b.version).select('object_path').maybeSingle();if(error||!data)throw new PdfHttpError(error?503:409,'Het item is gewijzigd. Herlaad en probeer opnieuw.');if(data.object_path){if(data.object_path!==`resources/${b.id}/source.bin`)throw new PdfHttpError(422,'Ongeldig opslagpad.');const removed=await db.storage.from('protected-learning-assets').remove([data.object_path]);if(removed.error)throw new PdfHttpError(503,'Bestand verwijderen mislukt. Probeer dezelfde actie opnieuw.');}const deleted=await db.from('toolbox_resources').delete().eq('id',b.id);if(deleted.error)throw new PdfHttpError(503,'Metadata verwijderen mislukt. Probeer dezelfde actie opnieuw.');return pdfJson({deleted:true});
+}catch(e){return pdfFailure(e);}}

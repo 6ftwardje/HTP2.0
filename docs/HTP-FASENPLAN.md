@@ -1,8 +1,8 @@
 # HTP feedback: gefaseerd uitvoeringsplan
 
-**Publicatieopdracht 18 oktober 2026:** Ward keurt F4/F5a naar main goed via [release-PR #84](https://github.com/6ftwardje/HTP2.0/pull/84) / [issue #83](https://github.com/6ftwardje/HTP2.0/issues/83). De actuele productbordrelease 4dd8206 is behouden. Gecombineerd: 298 tests, typecheck, lint en backlogcheck groen; hosted CI/verse database/preview worden vóór merge gecontroleerd en in de PR vastgelegd. F5b mag daarna uitsluitend lokaal; stop vóór F6. Hieronder beschreven eerdere stoppoorten en niet-publicatie gelden voor hun historische acceptatiemoment. Geen remote featuremigratie of betaalactivering inbegrepen.
+**Actueel 18 oktober 2026:** F4 en F5a staan op main `68653d8489db9d5f28336b0474abd36057dff8aa` via [PR #84](https://github.com/6ftwardje/HTP2.0/pull/84), met groene PR-CI/verse database/preview en main-CI. Bestaande productbordrelease behouden. Geen remote featuremigratie, productie-databasereconciliatie of betaalactivering uitgevoerd. Eerdere niet-publicatie/stoppoorten hieronder beschrijven historische acceptatiemomenten. F5b is daarna uitsluitend lokaal uitgevoerd; stop vóór F6. [F5b-bewijs](HTP-F5B-VERIFICATIE.md).
 
-18 oktober 2026. **D7/D8 expliciet geaccepteerd. F5a/HTP-25 t/m 28 lokaal uitgevoerd en geverifieerd; F4/F5a niet gepusht. Stop vóór F5b.** [Bord](https://github.com/users/6ftwardje/projects/3) · [Backlog](HTP-BACKLOG.md) · [Contract](HTP-F5A-CONTRACT.md) · [F5a-bewijs](HTP-F5A-VERIFICATIE.md).
+**F5b-overdracht:** HTP-29 t/m32 (#85–88) lokaal Done voor de expliciet goedgekeurde synthetische scope; echte inhoud/definitieve mapping later. Geen F5b-publicatie of F6 gestart. [Bord](https://github.com/users/6ftwardje/projects/3) · [Backlog](HTP-BACKLOG.md).
 
 Elke onderstaande fase/deelfase krijgt afzonderlijke goedkeuring. Een goedgekeurde fase geeft geen toestemming om de volgende automatisch uit te voeren. Bij extra scope of onopgeloste criteria terug naar Backlog/Geblokkeerd; geen stilzwijgende uitbreiding. Er zijn geen datums of uren beloofd.
 
@@ -129,9 +129,13 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 
 **Geraakt:** update-editor/publicatievalidatie, feed/detail, gedeelde viewer, Academyoverzicht/module/rubriekroutes, admincontent en metadata/rechten, per-gebruiker PDF-leespositie.
 
-**Vooraf:** F5a aanvaard, D7 met rubriekmapping en rechten, echte PDF's/covers/titels/korte beschrijvingen/volgorde. Ontbrekende Toolboxinhoud mag als apart nog geblokkeerd deel buiten een expliciet verkleinde release blijven; dit besluit vastleggen, niet leeg als voltooid tonen.
+**Vooraf / goedgekeurde afbakening:** F5a en D7-rechten aanvaard. Ward keurt de volledige lokale beheer-/weergaveketen met herkenbare synthetische testinhoud expliciet goed; echte PDF’s/covers/titels/leesversies, definitieve rubriekmapping en Toolboxinhoud volgen later. Echte rubrieken/Toolbox blijven ongevuld tot invoer; die inhoud wordt niet als voltooid getoond. Deze expliciete afbakening vervangt de eerdere inhoudsblokkade voor lokale acceptatie.
 
 **Test en klaar:** meerdere bijlagen, upload/publicatiefout, geen video, aparte kaart-/PDF-focusactie, gated assets en ingetrokken toegang. Tabs/URL/back/lege inhoud; rollen gratis/Academy/subscriber/legacy/admin, bestaande examens/voortgang/links en twee-apparatenleespositie. Klaar per expliciet goedgekeurde scope, met alle bijbehorende taken bewezen; geen stil overslaan van Toolboxcriteria.
+
+**Uitgevoerd, uitsluitend lokaal:** vier additieve migrations voor update-PDF-metadata/private assets, expliciete rubrieken/modulemapping, Toolboxresources en versiegebonden PDF-posities. Geen seeds of nieuwe entitlements; oorspronkelijke module-/les-URLs, examengates en voortgang behouden. PDF’s gebruiken dezelfde viewer; Toolboxbestanden zijn expliciete downloads. Positie bewaart eigen pagina met CAS, expliciete conflictkeuze en begrensde foutafhandeling, geen completionbewijs. Zie [contract](HTP-F5B-CONTRACT.md) en [verificatie](HTP-F5B-VERIFICATIE.md).
+
+**Acceptatie en resterende poort:** HTP-29 en 32 Done op 18 oktober: 303 tests, drie rollback-SQL-suites, 25 browsergroepen, 39 thematische/responsive captures en finishreview. HTP-30/31 zijn lokaal Done: Ward keurt expliciet herkenbare synthetische testinhoud goed en stelt echte inhoud uit. Later levert Ward rubrieknamen→modules, echte cursus-PDF’s/volledige leesversies en Toolboxitems→module/volgorde. Geen fictieve inhoud gemigreerd; alleen expliciet synthetische lokale proef. Daarna echte inhoud importeren en dezelfde relevante rechten/leesversies controleren. F5b niet naar main; **stop vóór F6 en wacht op expliciete goedkeuring**.
 
 ## F6 — Zones, collecties en vindbaar archief
 
