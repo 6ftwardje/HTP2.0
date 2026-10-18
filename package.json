@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "backlog:check": "node scripts/sync-transcription-backlog.mjs --check",
+    "product-board:sync": "tsx scripts/sync-product-board.ts",
     "backlog:sync": "node scripts/sync-transcription-backlog.mjs --apply",
     "perf:baseline": "node scripts/performance-baseline.mjs",
     "perf:verify-boundaries": "node scripts/verify-performance-boundaries.mjs",
