@@ -2,7 +2,7 @@
 
 18 oktober 2026, Europe/Brussels. Opdracht: F4/F5a naar main, daarna F5b uitsluitend lokaal, scrumboard bijhouden en stoppen vóór F6. [Contract](HTP-F5B-CONTRACT.md) · [Backlog](HTP-BACKLOG.md) · [Centraal bord](https://github.com/users/6ftwardje/projects/3).
 
-**Uitkomst:** F4/F5a gepubliceerd. F5b lokaal technisch geïmplementeerd/gecontroleerd; HTP-29/#85 en HTP-32/#88 Done. HTP-30/#86 en HTP-31/#87 blijven Geblokkeerd op echte rubriekmapping/cursus-/Toolboxinhoud, ondanks geslaagde technische acceptatie. Geen contentacceptatie verzonnen. F5b niet gepusht; F6 niet gestart.
+**Uitkomst:** F4/F5a gepubliceerd. F5b lokaal technisch geïmplementeerd/gecontroleerd; HTP-29 t/m32 (#85–88) Done voor de lokale synthetische scope. Ward keurt “Bouw met synthetische testinhoud; echte inhoud later” expliciet goed; de eerdere inhoudsblokkade vervalt binnen deze afbakening. Geen contentacceptatie verzonnen. F5b niet gepusht; F6 niet gestart.
 
 ## Release F4/F5a
 
@@ -47,8 +47,12 @@ Browserevidence is Chrome met viewport/touch-emulatie, geen volledige VoiceOver/
 
 ## Open inhoud en overdracht
 
-HTP-30 blijft Geblokkeerd tot Ward goedgekeurde rubrieknamen, expliciete modulemapping en echte cursus-PDF’s met volledige gecontroleerde leesversies aanlevert. HTP-31 blijft Geblokkeerd tot werkelijke Toolboxitems met bronbestand/URL, module en volgorde zijn aangeleverd. Daarna alleen goedgekeurde inhoud invoeren en bijbehorende rechten/leesversies verifiëren. Geen contentbeslissing uit D7 afgeleid.
+HTP-30/31 zijn na de expliciete scopegoedkeuring lokaal Done op basis van de reeds gecontroleerde synthetische keten. Buiten deze acceptatie levert Ward later goedgekeurde rubrieknamen, expliciete modulemapping, echte cursus-PDF’s/volledige gecontroleerde leesversies en Toolboxitems met bronbestand/URL, module en volgorde. Daarna alleen goedgekeurde inhoud invoeren en bijbehorende rechten/leesversies verifiëren. Geen contentbeslissing uit D7 afgeleid.
 
-Scrumboard: 49 unieke HTP-ID’s, 31 Done /10 Backlog /7 Geblokkeerd /1 Ready; 69 bestaande kaarten behouden. HTP-47 blijft Backlog voor integrale F10-acceptatie; HTP-48 Ready voor doorlopend onderhoud. F5b is uitsluitend lokaal. **Stop vóór F6; verdere uitvoering of publicatie wacht op expliciete goedkeuring.**
+Scrumboard: 49 unieke HTP-ID’s, 33 Done /10 Backlog /5 Geblokkeerd /1 Ready; 69 bestaande kaarten behouden. HTP-47 blijft Backlog voor integrale F10-acceptatie; HTP-48 Ready voor doorlopend onderhoud. F5b is uitsluitend lokaal. **Stop vóór F6; verdere uitvoering of publicatie wacht op expliciete goedkeuring.**
 
 Herstel bij afwijzing van deze lokale versie: stop uitsluitend deze preview, herstel applicatie naar main68653d8 en behoud additive schema/data; verwijder hoogstens de herkenbare eigen synthetische proefset gericht. Geen gedeelde lokale database resetten of productie downgraden. Auth-/storage-/bucketproeven zijn al hersteld. Preview blijft beschikbaar voor review.
+
+## Scopebesluit na technische overdracht
+
+Ward bevestigt op 18 oktober 2026 de voorgestelde synthetische aanpak en echte inhoud later. HTP-30/#86 en HTP-31/#87 gaan daardoor van Geblokkeerd naar Done voor de geverifieerde lokale scope. De uitgestelde echte contentcriteria worden expliciet als vervolgwerk bewaard; niet afgevinkt als uitgevoerd. De 303 tests, SQL, 25 browsergroepen en 39 schermgevallen blijven het bestaande technische bewijs. Deze administratieve scopewijziging verandert geen applicatiegedrag, database, rechten of productie. Geen nieuwe functionele tests nodig; bordstatus/issuecriteria worden teruggelezen. F5b niet gepusht, stop vóór F6.
