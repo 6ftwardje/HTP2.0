@@ -27,3 +27,8 @@
 .footer { padding:10px 20px; color:var(--media-foreground); font-size:.75rem; line-height:1.5; }
 @media(max-width:640px) { .header { padding:12px; } .toolbar { padding:8px 12px; } .mode { margin-left:0; width:100%; } .mode select { min-width:0; flex:1; } .viewport { padding:16px 8px; } .footer { padding:8px 12px; } }
 @media print { .reading,.dialog { display:none!important; } }
+
+.position { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 20px; font-size: .8rem; background: var(--media-background); color: var(--media-foreground); }
+.position button { padding: 6px 8px; border: 1px solid var(--field-border); border-radius: 4px; text-decoration: underline; text-underline-offset: 3px; }
+
+.controls { min-width: 0; }

@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import {usePdfPosition} from '@/lib/use-pdf-position';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {PDFDocumentProxy,PDFDocumentLoadingTask,RenderTask} from 'pdfjs-dist';
 import styles from './ProtectedPdfViewer.module.css';
@@ -55,6 +56,7 @@ export function ProtectedPdfViewer({documentId,viewerId,label='Open document',ha
  useEffect(()=>setPageInput(String(current)),[current]);
  function go(page:number){const next=Math.max(1,Math.min(sizes.length,page));setCurrent(next);setPageInput(String(next));slots.current[next-1]?.scrollIntoView({block:'start'});}
  function rescale(value:number){setZoom(Math.max(.5,Math.min(2,value)));requestAnimationFrame(()=>slots.current[current-1]?.scrollIntoView({block:'start'}));}
+ const position=usePdfPosition({documentId,viewerId,version:metadata?.version??null,active:open&&status==='ready',page:current,onRestore:go});
  const scrollTick=useRef<number|null>(null);
  function scroll(){if(scrollTick.current!==null||mode!=='canvas')return;scrollTick.current=requestAnimationFrame(()=>{scrollTick.current=null;const bounds=viewport.current?.getBoundingClientRect();if(!bounds)return;let best=current,area=0;slots.current.forEach((slot,i)=>{if(!slot)return;const box=slot.getBoundingClientRect();const visible=Math.max(0,Math.min(box.bottom,bounds.bottom)-Math.max(box.top,bounds.top));if(visible>area){area=visible;best=i+1;}});setCurrent(best);});}
  useEffect(()=>()=>{if(scrollTick.current!==null)cancelAnimationFrame(scrollTick.current);},[]);
@@ -63,11 +65,12 @@ export function ProtectedPdfViewer({documentId,viewerId,label='Open document',ha
   onContextMenu={event=>{if(mode==='canvas'&&(event.target as HTMLElement).closest(`.${styles.pages}`))event.preventDefault();}} onDragStart={event=>{if(mode==='canvas')event.preventDefault();}}
   onKeyDown={event=>{const target=event.target as HTMLElement;if(mode==='canvas'&&(event.ctrlKey||event.metaKey)&&['s','p','c'].includes(event.key.toLowerCase())&&!target.closest('input,textarea,select,[contenteditable="true"]'))event.preventDefault();}}>
   <header className={styles.header}><h2 id={`pdf-title-${documentId}`}>{metadata?.title??'Document openen'}</h2><button data-close type="button" onClick={()=>setOpen(false)}>Sluiten</button></header>
-  <div className={styles.toolbar} aria-label="Documentbediening">
+  <div className={styles.controls}><div className={styles.toolbar} aria-label="Documentbediening">
    <button type="button" disabled={status!=='ready'||mode==='text'||current<=1} aria-label="Vorige pagina" onClick={()=>go(current-1)}>Vorige</button><label>Pagina <input aria-label="Paginanummer" type="number" min={1} max={sizes.length||1} value={pageInput} disabled={status!=='ready'||mode==='text'} onChange={event=>setPageInput(event.target.value)} onBlur={()=>{const n=Number(pageInput);if(Number.isSafeInteger(n)&&n>0)go(n);else setPageInput(String(current));}} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();const n=Number(pageInput);if(Number.isSafeInteger(n)&&n>0)go(n);else setPageInput(String(current));}}}/></label><span aria-live="polite">/ {sizes.length||'…'}</span><button type="button" disabled={status!=='ready'||mode==='text'||current>=sizes.length} aria-label="Volgende pagina" onClick={()=>go(current+1)}>Volgende</button>
-   <button type="button" disabled={status!=='ready'||mode==='text'||zoom<=.5} aria-label="Uitzoomen" onClick={()=>rescale(zoom-.25)}>−</button><span>{Math.round(zoom*100)}%</span><button type="button" disabled={status!=='ready'||mode==='text'||zoom>=2} aria-label="Inzoomen" onClick={()=>rescale(zoom+.25)}>+</button><button type="button" disabled={status!=='ready'||mode==='text'} onClick={()=>rescale(1)}>Passend</button>
+   <button type="button" disabled={status!=='ready'||mode==='text'||zoom<=.5} aria-label="Uitzoomen" onClick={()=>rescale(zoom-.25)}>−</button><span>{Math.round(zoom*100)}%</span><button type="button" disabled={status!=='ready'||mode==='text'||zoom>=2} aria-label="Inzoomen" onClick={()=>rescale(zoom+.25)}>+</button><button type="button" disabled={status!=='ready'||mode==='text'} onClick={()=>rescale(1)}>Passend</button><button type="button" disabled={status!=='ready'||mode==='text'||position.state!=='idle'} onClick={position.restart}>Opnieuw beginnen</button>
    <label className={styles.mode}>Weergave <select aria-label="Leesweergave" value={mode} disabled={status!=='ready'} onChange={event=>{clear();setMode(event.target.value as 'canvas'|'text');viewport.current?.scrollTo(0,0);}}><option value="canvas">Pagina’s</option><option value="text" disabled={!metadata?.readingAvailable}>Toegankelijke leesversie</option></select></label>
   </div>
+  {position.message?<div className={styles.position} role="status"><span>{position.message}</span>{position.state==='error'?<button type="button" onClick={position.retry}>Positie opnieuw proberen</button>:null}{position.state==='conflict'?<><button type="button" onClick={position.reload}>Andere positie laden</button><button type="button" onClick={position.overwrite}>Mijn pagina bewaren</button></>:null}</div>:null}</div>
   <div ref={viewport} className={styles.viewport} tabIndex={0} aria-label="Documentinhoud" onScroll={scroll}>
    {status==='loading'?<p role="status" className={styles.message}>Je persoonlijke document wordt klaargezet…</p>:null}
    {status==='error'?<div className={styles.message}><p role="alert">{error}</p><p><Link href={`/documents/${documentId}/reading`} prefetch={false}>Open de toegankelijke leesversie zonder PDF-speler</Link></p><button type="button" onClick={()=>setAttempt(value=>value+1)}>Opnieuw proberen</button> <button type="button" onClick={()=>location.reload()}>Pagina vernieuwen</button></div>:null}

@@ -1,5 +1,5 @@
-import {PdfAttachments} from "@/components/PdfAttachments";
 "use client";
+import {PdfAttachments} from "@/components/PdfAttachments";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
