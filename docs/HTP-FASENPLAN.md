@@ -1,6 +1,6 @@
 # HTP feedback: gefaseerd uitvoeringsplan
 
-18 oktober 2026. **Hervat bij lokale F5a/HTP-25: contract en proef beschikbaar, D7/D8 ter keuze; HTP-26/27/28 wachten. F3b main 2c103b6 / PR #72; F4 lokaal, niet gepusht. Stop vóór F5b.** [Bord](https://github.com/users/6ftwardje/projects/3) · [Backlog](HTP-BACKLOG.md) · [F5a-contract](HTP-F5A-CONTRACT.md).
+18 oktober 2026. **D7/D8 expliciet geaccepteerd. F5a/HTP-25 t/m 28 lokaal uitgevoerd en geverifieerd; F4/F5a niet gepusht. Stop vóór F5b.** [Bord](https://github.com/users/6ftwardje/projects/3) · [Backlog](HTP-BACKLOG.md) · [Contract](HTP-F5A-CONTRACT.md) · [F5a-bewijs](HTP-F5A-VERIFICATIE.md).
 
 Elke onderstaande fase/deelfase krijgt afzonderlijke goedkeuring. Een goedgekeurde fase geeft geen toestemming om de volgende automatisch uit te voeren. Bij extra scope of onopgeloste criteria terug naar Backlog/Geblokkeerd; geen stilzwijgende uitbreiding. Er zijn geen datums of uren beloofd.
 
@@ -115,7 +115,7 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 
 **Test en klaar:** anon/verkeerde gebruiker/ingetrokken recht/draft/expired/range/cache verzoeken, geen cross-user watermark of publieke object-URL; grote/kapotte/versleutelde PDF, mobiel zoom/scroll, keyboard/assistieve route. UI-knoppen verbergen is geen bewijs van bescherming. Klaar als de werkelijke toegang en rendering aantoonbaar voldoen aan het gekozen contract en beperkingen zichtbaar gedocumenteerd zijn.
 
-**Uitvoering F5a, 18 oktober:** op Wards hervatverzoek HTP-25/#77 lokaal uitgevoerd tot contractreview: broncode/referentie onderzocht, rechten-/beschermingsvoorstel en geïsoleerde synthetische PDF-proef beschikbaar. [Contract/D7/D8](HTP-F5A-CONTRACT.md) · [Proef en grenzen](HTP-F5A-VERIFICATIE.md). HTP-25 blijft Geblokkeerd op twee productkeuzes, criteria niet afgevinkt; HTP-26/27/28 wachten. F4 niet gepubliceerd. Geen productcode, app-dependencies, configuratie of database aangepast. De eerdere stop vóór F5a is door het hervatverzoek vervangen; **stop vóór F5b** blijft gelden.
+**Uitvoering F5a, 18 oktober:** Ward koos D7 bestaande rechten en D8 voorgesteld contract. HTP-25/#77, 26/#78, 27/#79 en 28/#80 lokaal Done: private opslag/toegang, serverwatermark/adminlog/werkelijke 30-dagenretentie, gedeelde viewer/zelfstandige semantische leesroute en beheer. [Contract](HTP-F5A-CONTRACT.md) · [Alle acceptatiecontroles/grenzen](HTP-F5A-VERIFICATIE.md). 284 tests, SQL, echte upload/HTTP/browser-/bron-/cronproeven en 24 schermgevallen. Uitsluitend lokale additieve migratie en noodzakelijke gemelde dependencies/assettracing; geen remote uitrol of push. **Stop vóór F5b.** Echte PDF’s/leesversies, rubricatiemapping en Toolboxinhoud zijn voor F5b nog te controleren; dit besluit keurt geen fictieve content of nieuwe abonnementen goed.
 
 ## F5b — PDF's in updates, Academy en Toolbox
 

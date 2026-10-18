@@ -4,7 +4,7 @@ Peildatum: **18 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 
 **Centrale voortgang:** [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Dit bestand bevat de complete taakspecificaties en een gedateerde statussnapshot; bij faseoverdracht worden bord en snapshot samen bijgewerkt. Filter op `HTP-` voor dit feedbackpakket. De bestaande MU/M1-items behouden hun eigen scope.
 
-**Update 18 oktober 2026:** Ward vroeg de uitvoering van issues te hervatten. F5a is lokaal gestart bij **HTP-25 / #77**, met een [concreet conceptcontract](HTP-F5A-CONTRACT.md) en [synthetische proef](HTP-F5A-VERIFICATIE.md). D7/D8 staan ter keuze; **HTP-25 Geblokkeerd op contractacceptatie, niet Done**. HTP-26/27/28 blijven Backlog tot die keuze. F1 t/m F3b staan op main (F3b 2c103b6 / PR #72); F4 blijft uitsluitend lokaal geverifieerd en niet gepusht. D10 blijft besloten: 95% weergave, bestaande lesgates behouden. Geen remote migratie, productie-/providerwrites of betaalcutover. Stop vóór F5b. [F4-bewijs](HTP-F4-VERIFICATIE.md) · [Fasenplan](HTP-FASENPLAN.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md).
+**Update 18 oktober 2026:** Ward keurt D7 bestaande rechten en D8 voorgesteld PDF-contract expliciet goed. **F5a lokaal uitgevoerd en geverifieerd: HTP-25/#77, HTP-26/#78, HTP-27/#79 en HTP-28/#80 Done voor lokale scope.** 284 tests, SQL-/echte browser-/bron-/retentieproeven, 24 schermgevallen; [volledig bewijs](HTP-F5A-VERIFICATIE.md) en [goedgekeurd contract](HTP-F5A-CONTRACT.md). F1 t/m F3b zijn gepubliceerd; F4 en F5a blijven lokaal, niet gepusht. Geen remote migratie, providerwrites of betaalcutover. **Stop vóór F5b.** [F4-bewijs](HTP-F4-VERIFICATIE.md) · [Fasenplan](HTP-FASENPLAN.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md).
 
 ## Werkafspraken
 
@@ -18,7 +18,7 @@ Peildatum: **18 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 
 ## Scrumboard: snapshot
 
-49 stabiele HTP-taken: **25 Done, 15 Backlog, 8 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F3b is gepubliceerd; F4 Done betekent gecontroleerde lokale scope. Release-issues H2.0/#59, H3.0/#63 en H3.1/#71 zijn daarnaast Done; de vijftien MU/M1-kaarten blijven behouden. Totaal 67 bordkaarten.
+49 stabiele HTP-taken: **29 Done, 12 Backlog, 7 Geblokkeerd, 1 Ready**, geen taak In uitvoering of Te controleren. F3b is gepubliceerd; F4/F5a Done betekenen gecontroleerde lokale scope. Drie releasekaarten en vijftien MU/M1-kaarten behouden: totaal 67 bordkaarten.
 
 | ID | Taak | Prio | Fase | Omvang | Beoordeling | Status |
 |---|---|---|---|---|---|---|
@@ -46,10 +46,10 @@ Peildatum: **18 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-22](#htp-22) | Modelleer veilige videopositie en voltooiing | P1 | F4 | M | Al geïmplementeerd | Done |
 | [HTP-23](#htp-23) | Sla videopositie op en toon hervatten in speler/lijsten | P1 | F4 | M | Al geïmplementeerd | Done |
 | [HTP-24](#htp-24) | Maak hoofdstukken sticky, actief en via marktlinks bereikbaar | P1 | F3b | M | Al geïmplementeerd | Done |
-| [HTP-25](#htp-25) | Beslis PDF-contract, rubrieken en beschermingsniveau | P1 | F5a | M | Proef aanwezig; contract open | Geblokkeerd |
-| [HTP-26](#htp-26) | Maak private PDF-opslag en geautoriseerde uitlevering | P1 | F5a | M | Nog uit te voeren | Backlog |
-| [HTP-27](#htp-27) | Personaliseer PDF-watermerken en registreer openacties | P1 | F5a | M | Nog uit te voeren | Backlog |
-| [HTP-28](#htp-28) | Bouw één gedeelde toegankelijke PDF-viewer | P1 | F5a | M | Nog uit te voeren | Backlog |
+| [HTP-25](#htp-25) | Beslis PDF-contract, rubrieken en beschermingsniveau | P1 | F5a | M | Contract geaccepteerd | Done |
+| [HTP-26](#htp-26) | Maak private PDF-opslag en geautoriseerde uitlevering | P1 | F5a | M | Al geïmplementeerd | Done |
+| [HTP-27](#htp-27) | Personaliseer PDF-watermerken en registreer openacties | P1 | F5a | M | Al geïmplementeerd | Done |
+| [HTP-28](#htp-28) | Bouw één gedeelde toegankelijke PDF-viewer | P1 | F5a | M | Al geïmplementeerd | Done |
 | [HTP-29](#htp-29) | Koppel PDF-bijlagen aan updates en feed | P1 | F5b | M | Nog uit te voeren | Backlog |
 | [HTP-30](#htp-30) | Voeg Academy-rubrieken en PDF-tab met beheer toe | P1 | F5b | M | Nog uit te voeren | Geblokkeerd |
 | [HTP-31](#htp-31) | Maak een eenvoudige beheerde Toolbox | P2 | F5b | M | Nog uit te voeren | Geblokkeerd |
@@ -633,21 +633,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.27-29; 00 p.5.
 - **Prioriteit / fase / omvang:** P1 / F5a / M.
-- **Beoordeling / status:** Onderzoek/proef lokaal aanwezig / **Geblokkeerd**.
+- **Beoordeling / status:** Al geïmplementeerd en geverifieerd / **Done** (lokale F5a-scope).
 - **Resultaat:** Een reviewbaar technisch ontwerp en kleine proef vóór private PDF-implementatie.
 - **Afhankelijkheden:** HTP-01; baseline-/rechtenonderzoek E15/E18.
-- **Besluiten / blokkades:** D7/D8: kies bestaande ouderrechten en het voorgestelde toegankelijke lees-/serverwatermark-/30-dagenlogcontract. Concrete voorstellen liggen voor; algemene hervatting keurt documentaanbevelingen niet stil goed.
+- **Besluiten / blokkades:** D7/D8 expliciet door Ward geaccepteerd; bestaande ouderrechten, gecontroleerde leesversie, serverwatermark naam/e-mail/datum, 30-dagenlog, 3 MiB/150 pagina’s. Geen open F5a-productbesluit. F5b apart.
 - **Bestaande implementatie:** E15/E18; geen PDF-keten of rubriekentiteit aangetroffen. Referenties 3-4 zijn in PDF beschikbaar.
 
 **Acceptatiecriteria**
 
-- [ ] Toegangscontract per update/Academy-rubriek/Toolbox, PDF-bestandslimieten en render-/proxy-/signedstrategie vastgelegd; geen publieke bestands-URL.
-- [ ] Bescherming eerlijk: screenshots/OCR/bytes blijven mogelijk; canvas zonder tekstlaag versus AA heeft een overeengekomen toegankelijke route.
-- [ ] Watermark naam/e-mail/datum, logbewaring/adminrechten en kandidaat pdf.js/worker/dependencyreden beoordeeld; proef toont mobiel geheugen/zoom en groot document.
+- [x] Toegangscontract per update/Academy-rubriek/Toolbox, PDF-bestandslimieten en render-/proxy-/signedstrategie vastgelegd; geen publieke bestands-URL.
+- [x] Bescherming eerlijk: screenshots/OCR/bytes blijven mogelijk; canvas zonder tekstlaag versus AA heeft een overeengekomen toegankelijke route.
+- [x] Watermark naam/e-mail/datum, logbewaring/adminrechten en kandidaat pdf.js/worker/dependencyreden beoordeeld; proef toont mobiel geheugen/zoom en groot document.
 
 **Verificatie:** Ontwerpreview met rechtenmatrix en threat-/cachecases binnen deze feature; proef pas na goedkeuring F5a met synthetische PDF. Resultaat stopt vóór F5b als contract niet geaccepteerd.
 
-**Bewijs van uitvoering:** [Issue #77](https://github.com/6ftwardje/HTP2.0/issues/77), lokale synthetische 120-pagina-/watermarkproef en code-/hostingonderzoek op 18 oktober; proefcommit `ff216c2` op `codex/htp-f5a-local`. [Contract](HTP-F5A-CONTRACT.md) en [resultaten/beperkingen](HTP-F5A-VERIFICATIE.md). Criteria blijven open voor contractkeuze; HTP-26/27/28 niet gestart. Geen applicatiewijziging of remote uitrol.
+**Bewijs van uitvoering:** [Issue #77](https://github.com/6ftwardje/HTP2.0/issues/77), 18 oktober 2026, uitsluitend localhost en synthetische accounts. D7/D8 expliciet gekozen door Ward; contract, rechtenmatrix, renderer-/limiet-/beschermingsafspraken en proef geaccepteerd. Historische proef ff216c2, actuele lokale uitvoering hieronder. [Alle controles, herstelplan en beperkingen](HTP-F5A-VERIFICATIE.md). Geen publicatie of remote migratie.
 
 <a id="htp-26"></a>
 
@@ -655,21 +655,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.29 A1-2.
 - **Prioriteit / fase / omvang:** P1 / F5a / M.
-- **Beoordeling / status:** Nog uit te voeren / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd en geverifieerd / **Done** (lokale F5a-scope).
 - **Resultaat:** PDF-objecten en metadata zijn uitsluitend via gecontroleerde toegang beschikbaar.
 - **Afhankelijkheden:** HTP-25; gevalideerde migratiebaseline.
-- **Besluiten / blokkades:** Uitkomst D7/D8.
+- **Besluiten / blokkades:** D7/D8 expliciet door Ward geaccepteerd; bestaande ouderrechten, gecontroleerde leesversie, serverwatermark naam/e-mail/datum, 30-dagenlog, 3 MiB/150 pagina’s. Geen open F5a-productbesluit. F5b apart.
 - **Bestaande implementatie:** E18 private charts als patroon, geen PDF-opslag/endpoint aangetroffen.
 
 **Acceptatiecriteria**
 
-- [ ] Private opslag, geschoonde metadata/titel/pagina-aantal/versie en adminupload met formaat-/groottecontrole; geen publieke bron-URL in feed/HTML.
-- [ ] Elke uitlevering valideert sessie én update/rubriekrechten, incl. range requests; kortlevende credentials of proxy conform goedgekeurd contract, geen cross-user cache.
-- [ ] Vreemde ID, ingetrokken toegang, draft/verwijderd bestand en vervallen sessie blokkeren leesbaar; upload-/verwijderfouten laten herstelbare metadata achter.
+- [x] Private opslag, geschoonde metadata/titel/pagina-aantal/versie en adminupload met formaat-/groottecontrole; geen publieke bron-URL in feed/HTML.
+- [x] Elke uitlevering valideert sessie én update/rubriekrechten, incl. range requests; kortlevende credentials of proxy conform goedgekeurd contract, geen cross-user cache.
+- [x] Vreemde ID, ingetrokken toegang, draft/verwijderd bestand en vervallen sessie blokkeren leesbaar; upload-/verwijderfouten laten herstelbare metadata achter.
 
 **Verificatie:** Non-admin HTTP/SQL-integratie met eigenaar/geautoriseerd/ongeautoriseerd/anon en getamperde paden; cacheheaders/expiry/range testen; synthetische documenten.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #78](https://github.com/6ftwardje/HTP2.0/issues/78), 18 oktober 2026, uitsluitend localhost en synthetische accounts. `9682a6c`: private storage, actuele ouderrechten/RLS, begrensde uploads/metadata, versie-CAS, volledige persoonlijke levering zonder bron-URL, rangerequests/bronhash en herstelbare foutstaten. Echte adminformulier/API/storage- en negatieve toegangsproeven geslaagd. GET bevat geen leesinhoud; gelogde POST-levering bevestigd in 6ba23eb. [Alle controles, herstelplan en beperkingen](HTP-F5A-VERIFICATIE.md). Geen publicatie of remote migratie.
 
 <a id="htp-27"></a>
 
@@ -677,21 +677,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.28-29 A6-7.
 - **Prioriteit / fase / omvang:** P1 / F5a / M.
-- **Beoordeling / status:** Nog uit te voeren / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd en geverifieerd / **Done** (lokale F5a-scope).
 - **Resultaat:** Elk gelezen document heeft de afgesproken herleidbare markering en een beperkt beheerlog.
 - **Afhankelijkheden:** HTP-25, HTP-26.
-- **Besluiten / blokkades:** D8: watermarkvariant en gegevens/logbewaring.
+- **Besluiten / blokkades:** D7/D8 expliciet door Ward geaccepteerd; bestaande ouderrechten, gecontroleerde leesversie, serverwatermark naam/e-mail/datum, 30-dagenlog, 3 MiB/150 pagina’s. Geen open F5a-productbesluit. F5b apart.
 - **Bestaande implementatie:** Geen bestaande PDF-watermark/openlog aangetroffen; E18 toont huidige toegangspatronen.
 
 **Acceptatiecriteria**
 
-- [ ] Elke pagina toont herhaald diagonaal naam+e-mail+datum, circa 8-10% dekking maar leesbaar; serververankering indien gekozen, overlaybeperking expliciet.
-- [ ] Geen watermark/cached document van andere gebruiker zichtbaar; naamswissel/datum/versie en opnieuw openen volgen vastgelegde regels.
-- [ ] Openlog toont wie/welk document/wanneer voor bevoegde beheerder; geen downloadtokens in log; bewaartermijn en inzage conform D8.
+- [x] Elke pagina toont herhaald diagonaal naam+e-mail+datum, circa 8-10% dekking maar leesbaar; serververankering indien gekozen, overlaybeperking expliciet.
+- [x] Geen watermark/cached document van andere gebruiker zichtbaar; naamswissel/datum/versie en opnieuw openen volgen vastgelegde regels.
+- [x] Openlog toont wie/welk document/wanneer voor bevoegde beheerder; geen downloadtokens in log; bewaartermijn en inzage conform D8.
 
 **Verificatie:** Synthetische twee gebruikers dezelfde PDF, cache-/concurrencytest, tekst/chartleesbaarheid op mobiel en zoom; controle dat watermark in geleverde inhoud zit als servervariant gekozen.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #79](https://github.com/6ftwardje/HTP2.0/issues/79), 18 oktober 2026, uitsluitend localhost en synthetische accounts. `9682a6c`: serverwatermark met geverifieerde Auth-mail/current naam/Brusselse datum; complete portrait-/landscapemarks voor twee sessies, naamswissel en bronintegriteit gecontroleerd. Server-only idempotent log, admininzage en werkelijke pg_cron-verwijdering na 30 dagen geslaagd. [Alle controles, herstelplan en beperkingen](HTP-F5A-VERIFICATIE.md). Geen publicatie of remote migratie.
 
 <a id="htp-28"></a>
 
@@ -699,21 +699,21 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.27-29 A3-5.
 - **Prioriteit / fase / omvang:** P1 / F5a / M.
-- **Beoordeling / status:** Nog uit te voeren / **Backlog**.
+- **Beoordeling / status:** Al geïmplementeerd en geverifieerd / **Done** (lokale F5a-scope).
 - **Resultaat:** Eén ProtectedPdfViewer voor updates, Academy en Toolbox.
 - **Afhankelijkheden:** HTP-25, HTP-26, HTP-27.
-- **Besluiten / blokkades:** D8 bepaalt tekstlaag/toegankelijke route en blokkades.
+- **Besluiten / blokkades:** D7/D8 expliciet door Ward geaccepteerd; bestaande ouderrechten, gecontroleerde leesversie, serverwatermark naam/e-mail/datum, 30-dagenlog, 3 MiB/150 pagina’s. Geen open F5a-productbesluit. F5b apart.
 - **Bestaande implementatie:** Niet aangetroffen; E08 heeft chartdialog die geen PDF-viewer is.
 
 **Acceptatiecriteria**
 
-- [ ] Volledig venster met donkere achtergrond, titel/sluiten, Escape/focusbeheer, gecentreerde scrollpagina’s, paginastand en zoom +/−/passend; responsive en fout/loading/herstel.
-- [ ] Geen native PDF-iframe/downloadknop; gekozen canvas-/alternatieve toegankelijkheidsroute volgt D8; lazy/virtuele rendering voorkomt mobiele geheugengroei.
-- [ ] Rechtsklik/slepen/S/P/C alleen binnen viewer afremmen voor zover gekozen; printinhoud verbergen; geen claim absolute beveiliging en geen globale keyboardblokkade.
+- [x] Volledig venster met donkere achtergrond, titel/sluiten, Escape/focusbeheer, gecentreerde scrollpagina’s, paginastand en zoom +/−/passend; responsive en fout/loading/herstel.
+- [x] Geen native PDF-iframe/downloadknop; gekozen canvas-/alternatieve toegankelijkheidsroute volgt D8; lazy/virtuele rendering voorkomt mobiele geheugengroei.
+- [x] Rechtsklik/slepen/S/P/C alleen binnen viewer afremmen voor zover gekozen; printinhoud verbergen; geen claim absolute beveiliging en geen globale keyboardblokkade.
 
 **Verificatie:** Referentie 3 vergelijken; toetsenbord/screenreader/200% zoom, 1 en veel pagina’s, kapotte/versleutelde/grote PDF, netwerkonderbreking en sessieverval.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #80](https://github.com/6ftwardje/HTP2.0/issues/80), 18 oktober 2026, uitsluitend localhost en synthetische accounts. `8b4e5b0`: gedeelde canvasviewer, begrensde rendering, focus/keyboard/pagina/zoom, zelfstandige gecontroleerde leesroute zonder PDF.js en beheer. 25 browsercontrolegroepen en 24 schermgevallen; fouten/sessies/accountwissels/print/selecteerbare semantiek gecontroleerd. Verifiers c820f63; 5MP-inhoud behouden en mobiel gecontroleerd in 26c82d2. [Alle controles, herstelplan en beperkingen](HTP-F5A-VERIFICATIE.md). Geen publicatie of remote migratie.
 
 <a id="htp-29"></a>
 
@@ -1131,7 +1131,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Gebruik synthetische fixtures; non-admin RLS en directe assetrequests, fout/retry/missingmigration testen. CI-scripts eerst op geschiktheid controleren; geen productieschrijfacties in planningsfase.
 
-**Bewijs van uitvoering:** F1/F2/F3a/F3b-releases en lokaal F4-deelbewijs vastgelegd; [F4-dossier](HTP-F4-VERIFICATIE.md). Status Backlog voor integrale F10-acceptatie en nog niet goedgekeurde fasen. Geen afsluiting op alleen code of build.
+**Bewijs van uitvoering:** F1 t/m F3b-releasebewijs en lokale F4/F5a-controles vastgelegd; [F5a-dossier](HTP-F5A-VERIFICATIE.md). Integrale F10-acceptatie en latere fasen blijven open: status Backlog.
 
 <a id="htp-48"></a>
 
@@ -1153,7 +1153,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Controleer alle IDs/dependencies/bronnen en borditems; lees na schrijven de statussen/inhoud terug. Bij faseoverdracht snapshot+besluitlog+bewijslocatie bijwerken; huidig opzetten is geen toestemming voor code.
 
-**Bewijs van uitvoering:** 18 oktober: lokale F5a hervat bij HTP-25/#77; contract/proef beschikbaar, D7/D8 ter keuze en HTP-26/27/28 wachten. 49 unieke HTP-IDs en alle 67 kaarten behouden; 25 Done, 15 Backlog, 8 Geblokkeerd, 1 Ready. F4 niet gepusht, stop vóór F5b. Status Ready voor doorlopend onderhoud.
+**Bewijs van uitvoering:** D7/D8 geaccepteerd en F5a lokaal geverifieerd; 49 unieke HTP-IDs, 29 Done / 12 Backlog / 7 Geblokkeerd / 1 Ready en alle 67 kaarten behouden na bordreadback. F4/F5a niet gepusht; stop vóór F5b. Ready voor doorlopend onderhoud.
 
 
 

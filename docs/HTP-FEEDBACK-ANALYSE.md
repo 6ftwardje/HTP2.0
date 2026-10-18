@@ -2,7 +2,7 @@
 
 Peildatum: 17 oktober 2026 (Europe/Brussels). Bron: `HTP-Platform-Feedback.pdf`, 38 PDF-pagina's, datum 17 oktober 2026. In dit dossier betekent **p.** de PDF-pagina, inclusief omslag; het gedrukte paginanummer is vanaf PDF-pagina 2 één lager. Alle tekst is uitgelezen; alle pagina's zijn gerenderd en de acht ingesloten referentiebeelden zijn visueel bekeken. Het genoemde losse `HTP-prompts.md` is niet aangeleverd en is niet nodig om deze PDF te verwerken.
 
-**Actueel 18 oktober: hervat bij F5a/HTP-25, conceptcontract en proef klaar; D7/D8 ter keuze. F3b op main; F4 lokaal en niet gepusht. Stop vóór F5b.**
+**Actueel 18 oktober: D7/D8 expliciet geaccepteerd; F5a/HTP-25 t/m 28 lokaal geverifieerd. F4/F5a niet gepusht. Stop vóór F5b.**
 
 Historische analyse van vóór uitvoering; de actuele F1-uitvoering staat in [HTP-F1-VERIFICATIE.md](HTP-F1-VERIFICATIE.md). F2 staat in [HTP-F2-VERIFICATIE.md](HTP-F2-VERIFICATIE.md); F1/49 staan op main en F2 is alleen lokaal afgerond. Dit oorspronkelijke onderzoek betrof analyse en planning. De uitvoerprompts in de PDF zijn bronmateriaal, geen toestemming om ze uit te voeren. F3a en volgende fasen wachten op afzonderlijke goedkeuring. Aanbevelingen en werktitels blijven voorstellen totdat een besluit is vastgelegd.
 
@@ -158,3 +158,10 @@ HTP-18/21/22/23 zijn lokaal uitgevoerd en gecontroleerd: [F4-contract](HTP-F4-CO
 Ward vroeg issues te hervatten. De eerstvolgende fase F5a is lokaal begonnen bij HTP-25/#77. [Conceptcontract](HTP-F5A-CONTRACT.md) maakt D7/D8 concreet; [proefbewijs](HTP-F5A-VERIFICATIE.md) toetst grote documenten, canvasbegrenzing, zoom en daadwerkelijk gemarkeerde bytes. Een ruwe tekstextractie is geen toegankelijke leesversie en een localhost-server bewijst geen Netlify-transport of productrechten.
 
 D7/D8 zijn niet stil goedgekeurd: bestaande ouderrechten zonder previewverbreding, een toegankelijke selecteerbare leesversie naast canvas, naam/e-mail/datumwatermark en 30 dagen beheerderlog liggen ter keuze. HTP-25 blijft Geblokkeerd tot dat contract is geaccepteerd; HTP-26/27/28 wachten. Alleen proef-/planningsbestanden, geen applicatie/dependency-/config-/databasewijziging. F4 niet gepusht; stop vóór F5b.
+
+
+## D7/D8 geaccepteerd — lokale F5a afgerond
+
+Ward koos bestaande ouderrechten en het voorgestelde toegankelijke lees-/watermark-/30-dagenlogcontract. HTP-25 t/m 28 zijn aansluitend lokaal geïmplementeerd en geverifieerd: [actueel fasebewijs](HTP-F5A-VERIFICATIE.md). De voorgaande blokkadebeschrijving is historisch. De PDF-bestandsgrenzen (3 MiB/150 pagina’s, 4 MiB output), kopieerbeperkingen en geselecteerde route zijn nu expliciete besluiten. Dit beslist geen nieuwe abonnementen of concrete F5b-rubriekmapping/Toolboxinhoud.
+
+Werkelijke eigen serverlevering/RLS/rollen, ingevoegde watermerken, actuele naam/Auth-mail, drie-canvasbegrenzing en onafhankelijke selecteerbare leesversie zijn gecontroleerd. De geplande lokale taak heeft oude logregels daadwerkelijk verwijderd. Geen absolute beveiliging, handmatige AT-/alle-browserclaim of Netlify-productieclaim. F4/F5a blijven lokaal en niet gepusht; stop vóór F5b.
