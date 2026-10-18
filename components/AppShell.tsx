@@ -31,7 +31,7 @@ function SidebarContent({ studentName, studentId, avatarPath, accessLevel, hasSu
   const pathname=usePathname();
   function render(item: typeof coreNav[number]) {
     const href=item.href==="/mentor"&&isChatMentor?"/mentor-inbox":item.href;
-    const active=pathname===href || pathname.startsWith(href+"/") || (href==="/market-analysis"&&pathname.startsWith("/updates"));
+    const active=pathname===href || pathname.startsWith(href+"/") || (href==="/modules"&&pathname.startsWith("/academy/")) || (href==="/market-analysis"&&pathname.startsWith("/updates"));
     const label=item.href==="/mentor" ? (isChatMentor?"Studentvragen":"Mentorchat")+(unreadChatCount>0?" ("+Math.min(unreadChatCount,99)+")":"") : item.label;
     return <SidebarNavItem key={href} href={href} label={label} icon={item.icon} active={active} onNavigate={onNavigate}/>;
   }
