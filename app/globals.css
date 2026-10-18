@@ -378,3 +378,7 @@ a:focus-visible .cb-date-tooltip, button:focus-visible .cb-date-tooltip { opacit
 .market-post-context li { max-width: 100%; overflow-wrap: anywhere; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--foreground); font-size: .85rem; }
 
 @media (min-width: 1280px) { .market-post:has([data-chapter-layout="rail"]) { max-width: 1280px; } }
+
+.video-thumbnail-progress { position: absolute; inset: auto 0 0; height: 4px; background: var(--border); z-index: 2; }
+.video-thumbnail-progress > span { display: block; height: 100%; background: var(--accent); }
+.video-thumbnail-completed { position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 4px; color: var(--media-foreground); background: var(--media-background); font-size: .75rem; font-weight: 650; z-index: 2; }

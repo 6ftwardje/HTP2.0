@@ -1,6 +1,8 @@
 # HTP feedback: gefaseerd uitvoeringsplan
 
-17 oktober 2026. **F1/HTP-49, F2 en F3a gepubliceerd; F3a main 0fd99e2 / PR #64. F3b uitsluitend lokaal uitgevoerd en geverifieerd. Stop vóór F4.** [Centraal bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Analyse en besluiten](HTP-FEEDBACK-ANALYSE.md).
+**Publicatieopdracht 18 oktober 2026:** Ward keurt F4/F5a naar main goed via [release-PR #84](https://github.com/6ftwardje/HTP2.0/pull/84) / [issue #83](https://github.com/6ftwardje/HTP2.0/issues/83). De actuele productbordrelease 4dd8206 is behouden. Gecombineerd: 298 tests, typecheck, lint en backlogcheck groen; hosted CI/verse database/preview worden vóór merge gecontroleerd en in de PR vastgelegd. F5b mag daarna uitsluitend lokaal; stop vóór F6. Hieronder beschreven eerdere stoppoorten en niet-publicatie gelden voor hun historische acceptatiemoment. Geen remote featuremigratie of betaalactivering inbegrepen.
+
+18 oktober 2026. **D7/D8 expliciet geaccepteerd. F5a/HTP-25 t/m 28 lokaal uitgevoerd en geverifieerd; F4/F5a niet gepusht. Stop vóór F5b.** [Bord](https://github.com/users/6ftwardje/projects/3) · [Backlog](HTP-BACKLOG.md) · [Contract](HTP-F5A-CONTRACT.md) · [F5a-bewijs](HTP-F5A-VERIFICATIE.md).
 
 Elke onderstaande fase/deelfase krijgt afzonderlijke goedkeuring. Een goedgekeurde fase geeft geen toestemming om de volgende automatisch uit te voeren. Bij extra scope of onopgeloste criteria terug naar Backlog/Geblokkeerd; geen stilzwijgende uitbreiding. Er zijn geen datums of uren beloofd.
 
@@ -83,21 +85,23 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 
 **Test en klaar:** 1/5/30 updates, 1/3 markten, beperkte rechten, lang/geen/legacy content, archiefcontext, 0/1/2 vervolgkandidaten; één focusbare contentlink, hoofdstukklik/actieve staat/timestamp-URL en oude aliases. Structuur en vrije artikels apart testen. Klaar als alle in-scope acties werkelijk werken; hero met dode marktlinks is geen afgeronde fase.
 
-**Uitvoering F3b:** HTP-13 t/m 17 en HTP-24 Done voor de lokale scope. Variant A na gedelegeerde keuze van Ward; tabs blijven tot F6, Open update blijft binnen één kaartlink. Gedeelde kaart/feed, echte weekhero en veilige vervolgselectie, optionele artikelcontext/ol en Mux-hoofdstukken uitgevoerd. [Ontwerp](HTP-F3B-ONTWERP.md) · [Acceptatiebewijs en beperkingen](HTP-F3B-VERIFICATIE.md). Geen F3b-publicatie. **Stop vóór F4.** Voor F4 zijn geen nieuwe productbeslisvragen nodig om het bestaande voorstel te beoordelen; uitvoering wacht op expliciete goedkeuring.
+**Uitvoering F3b:** HTP-13 t/m 17 en HTP-24 Done voor de lokale scope. Variant A na gedelegeerde keuze van Ward; tabs blijven tot F6, Open update blijft binnen één kaartlink. Gedeelde kaart/feed, echte weekhero en veilige vervolgselectie, optionele artikelcontext/ol en Mux-hoofdstukken uitgevoerd. [Ontwerp](HTP-F3B-ONTWERP.md) · [Acceptatiebewijs en beperkingen](HTP-F3B-VERIFICATIE.md). Daarna op expliciete opdracht gepubliceerd via PR #72, main 2c103b6; PR-/main-CI en verse database-/chatintegratie groen. Ward keurde F4 afzonderlijk lokaal goed.
 
 ## F4 — Video: bediening, posters en hervatten
 
 **Doel en taken:** langere video's bruikbaar in meerdere sessies. HTP-18, HTP-21, HTP-22, HTP-23; HTP-19 herstel alleen als diagnose dit rechtvaardigt; HTP-47/48.
 
-**Binnen:** juiste poster waar ondersteund, langzame snelheden en voorkeur, pitch/zichtbare controls/shortcuts conform providerbewijs, eigen positieopslag en hervatten, bekekenmarkeringen/thumbnailbalken. Afgebakend herstel van fout 153 met bevestigde oorzaak.
+**Binnen:** juiste poster waar ondersteund, langzame snelheden en voorkeur, pitch/zichtbare controls/shortcuts conform providerbewijs, eigen positieopslag en hervatten, bekekenmarkeringen/thumbnailbalken. HTP-19 blijft historisch geblokkeerd zonder getroffen video; geen onbewezen 153-herstel.
 
 **Buiten:** dashboardretentie, PDF-leespositie, automatisch omzetten van alle video's naar één provider, hostingheaders aanpassen op vermoeden en onverwachte verandering van examengates.
 
-**Geraakt:** gedeelde Mux/Vimeo/YouTube-wrappers, Lesson/WeeklyUpdate-autocomplete, actions, progresshelper/RLS en nieuwe of uitgebreide videopositieopslag, feed/Academy/collectie-thumbnails. Bestaande watched-historie behouden.
+**Geraakt:** gedeelde Mux/Vimeo/YouTube-wrappers, Lesson/WeeklyUpdate-autocomplete, actions, progresshelper/RLS en nieuwe of uitgebreide videopositieopslag, bestaande feed-/Academy-thumbnails. Collecties bestaan nog niet (F8). Bestaande watched-historie behouden.
 
-**Vooraf:** D10 voor 95%-voltooiing en les-/examengates, multi-deviceconflicten en gevolgd-definitie; providerbeperkingen uit F3a. Gerichte migratiebaseline en testmedia. Bij ontbrekende externe mogelijkheden geen universele pitch-/autoplaygarantie.
+**Vooraf:** D10 voor F4 door Ward besloten: 95% alleen voor weergave; bestaande completion-/les-/examengates behouden. Hoogste positie bepaalt Bekeken, geen bewijs van alle bekeken seconden. Revisieconflict stopt writes tot expliciete overname. Bezoek/updates-gevolgd-telling blijft F8; providerbeperkingen uit F3a. Gerichte migratiebaseline en testmedia. Bij ontbrekende externe mogelijkheden geen universele pitch-/autoplaygarantie.
 
 **Test en klaar:** ondersteunde snelheden/pitch horen en zien; toetsen tijdens playerfocus en typen; voorkeuropslag geblokkeerd; twee apparaten, pauze/reload/offline/sluiten, vervangende video en ingetrokken toegang. Periodieke writes circa 10s; sluitflush best-effort. Geen heropening op onjuiste video/positie, geen nieuwe ontgrendellek. Fout-153-herstel alleen sluiten als werkende én getroffen video zijn vergeleken.
+
+**Uitvoering F4:** HTP-18/21/22/23 Done voor de lokale scope op `codex/htp-f4-local`. Additieve eigenaarsopslag/versie/RLS, posters, zes snelheden, focusbediening, expliciet hervatten en gedeelde voortgangsweergave. Geen wijziging van oude completion-actions of gates. [Contract](HTP-F4-CONTRACT.md) · [Acceptatiebewijs en grenzen](HTP-F4-VERIFICATIE.md). Lokale migratie, geen remote uitrol of F4-push. **Stop vóór F5a.** Volgende voorstel blijft eerst HTP-25 PDF-contract/proef met D7/D8, daarna pas HTP-26/27/28 binnen expliciet goedgekeurde scope.
 
 ## F5a — PDF-fundament en gedeelde viewer
 
@@ -112,6 +116,8 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 **Vooraf:** D7/D8: rechten/rubriekrelatie, grenzen/renderer, canvas zonder tekstlaag versus AA, toegankelijke route, naam/e-mail/datum in watermark en logbewaring. Synthetische documenten volstaan voor proef, echte cursusassets pas F5b. Na proef een expliciete ontwerpacceptatie vóór definitieve implementatie binnen deze fase wanneer de gekozen aanpak van het voorstel afwijkt.
 
 **Test en klaar:** anon/verkeerde gebruiker/ingetrokken recht/draft/expired/range/cache verzoeken, geen cross-user watermark of publieke object-URL; grote/kapotte/versleutelde PDF, mobiel zoom/scroll, keyboard/assistieve route. UI-knoppen verbergen is geen bewijs van bescherming. Klaar als de werkelijke toegang en rendering aantoonbaar voldoen aan het gekozen contract en beperkingen zichtbaar gedocumenteerd zijn.
+
+**Uitvoering F5a, 18 oktober:** Ward koos D7 bestaande rechten en D8 voorgesteld contract. HTP-25/#77, 26/#78, 27/#79 en 28/#80 lokaal Done: private opslag/toegang, serverwatermark/adminlog/werkelijke 30-dagenretentie, gedeelde viewer/zelfstandige semantische leesroute en beheer. [Contract](HTP-F5A-CONTRACT.md) · [Alle acceptatiecontroles/grenzen](HTP-F5A-VERIFICATIE.md). 284 tests, SQL, echte upload/HTTP/browser-/bron-/cronproeven en 24 schermgevallen. Uitsluitend lokale additieve migratie en noodzakelijke gemelde dependencies/assettracing; geen remote uitrol of push. **Stop vóór F5b.** Echte PDF’s/leesversies, rubricatiemapping en Toolboxinhoud zijn voor F5b nog te controleren; dit besluit keurt geen fictieve content of nieuwe abonnementen goed.
 
 ## F5b — PDF's in updates, Academy en Toolbox
 

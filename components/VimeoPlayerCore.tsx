@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { extractVimeoId, getVimeoEmbedUrl } from "@/lib/vimeo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MuxPlaybackTokens } from "@/lib/types";
+import type { VideoRef } from "@/lib/video-position";
 import type { VideoSeekRequest } from "@/lib/video-seek";
 
 const MuxLessonPlayer = dynamic(
@@ -22,6 +23,8 @@ const MuxLessonPlayer = dynamic(
 
 type Props = {
   videoUrl: string | null;
+  poster?: string | null;
+  videoRef?: VideoRef;
   videoProvider?: string;
   muxPlaybackId?: string | null;
   muxPlaybackPolicy?: "public" | "signed";
@@ -54,6 +57,8 @@ function extractMuxPlaybackId(
 
 export function VimeoPlayer({
   videoUrl,
+  poster,
+  videoRef,
   videoProvider = "vimeo",
   muxPlaybackId,
   muxPlaybackPolicy = "public",
@@ -176,9 +181,12 @@ export function VimeoPlayer({
 
   if (muxId && (muxPlaybackPolicy === "public" || muxTokens?.playback)) {
     return (
-      <div className={frameClass}>
+      <div className="relative">
         <MuxLessonPlayer
           playbackId={muxId}
+          poster={poster}
+          videoRef={videoRef}
+          frameClassName={frameClass}
           title={title}
           onEnded={onEnded}
           tokens={muxTokens}

@@ -18,7 +18,7 @@ export function MarketPostContents({ update, summary, takeaways, chapters, muxTo
   const structured = Boolean(structure);
   const content = <MarketUpdateStructureContent update={update}>
     {article ? html.trim() ? <ArticleContent html={html} /> : structured ? null : <p className="market-media-state" role="status">De artikelinhoud is tijdelijk niet beschikbaar.</p> :
-      <div className={structured ? "mt-8" : undefined}><WeeklyUpdateAutoCompleteVideo weeklyUpdateId={update.id} videoUrl={update.video_url} videoProvider={update.video_provider} muxPlaybackId={update.mux_playback_id} muxPlaybackPolicy={update.mux_playback_policy} muxTokens={muxTokens} title={update.title} chapters={chapters} /></div>}
+      <div className={structured ? "mt-8" : undefined}><WeeklyUpdateAutoCompleteVideo weeklyUpdateId={update.id} poster={update.thumbnail_url} videoUrl={update.video_url} videoProvider={update.video_provider} muxPlaybackId={update.mux_playback_id} muxPlaybackPolicy={update.mux_playback_policy} muxTokens={muxTokens} title={update.title} chapters={chapters} /></div>}
     {!structured && context.summary ? <section className="market-post-text-section"><h2>Samenvatting</h2><p>{context.summary}</p></section> : null}
     {!structured && context.event ? <section className="market-post-text-section"><h2>Wat is er gebeurd?</h2><p>{context.event}</p></section> : null}
     {filledTakeaways.length ? <section className="market-post-text-section"><h2>Key takeaways</h2><ol>{filledTakeaways.map((takeaway, index) => <li key={index}>{takeaway}</li>)}</ol></section> : null}

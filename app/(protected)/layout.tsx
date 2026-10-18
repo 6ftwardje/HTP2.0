@@ -1,3 +1,4 @@
+import { VideoProgressProvider } from "@/components/VideoProgressProvider";
 import { redirect } from "next/navigation";
 import { ensureCurrentStudent } from "@/lib/students";
 import { AppShell } from "@/components/AppShell";
@@ -36,7 +37,7 @@ export default async function ProtectedLayout({
   ]);
 
   return (
-    <ChatPresenceProvider currentStudentId={student.id}><AppShell
+    <VideoProgressProvider key={student.id} viewerId={student.id}><ChatPresenceProvider currentStudentId={student.id}><AppShell
       studentName={student.name ?? null}
       avatarPath={avatarPath}
       accessLevel={student.access_level}
@@ -47,6 +48,6 @@ export default async function ProtectedLayout({
       {...notificationChrome}
     >
       {children}
-    </AppShell></ChatPresenceProvider>
+    </AppShell></ChatPresenceProvider></VideoProgressProvider>
   );
 }

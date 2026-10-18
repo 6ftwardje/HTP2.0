@@ -15,17 +15,22 @@
     "transcription:backfill-dry-run": "tsx scripts/transcription-backfill-dry-run.ts",
     "lint": "next lint",
     "verify:supabase-target": "node scripts/verify-supabase-target.mjs",
-    "verify:avatar-storage": "node scripts/verify-avatar-storage.mjs"
+    "verify:avatar-storage": "node scripts/verify-avatar-storage.mjs",
+    "prebuild": "node scripts/copy-pdf-assets.mjs",
+    "predev": "node scripts/copy-pdf-assets.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
     "@mux/mux-node": "^15.2.0",
     "@mux/mux-player-react": "^3.13.0",
+    "@pdf-lib/fontkit": "1.1.1",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.10",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "next": "^15.5.25",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "6.4.299",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-easy-crop": "6.2.4",

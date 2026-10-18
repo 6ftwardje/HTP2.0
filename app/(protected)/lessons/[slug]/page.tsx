@@ -9,7 +9,6 @@ import { getProgressByLessonIds } from "@/lib/progress";
 import { getExamByModuleId } from "@/lib/exams";
 import { getLegacyAcademyModuleIds, getModuleAccessMap } from "@/lib/module-gate";
 import { canOpenLessonWithIntake, canOpenModuleWithIntake, FULL_COURSE_ACCESS_LEVEL } from "@/lib/module-access-policy";
-import { VimeoPlayer } from "@/components/VimeoPlayerLegacy";
 import { LessonAutoCompleteVideo } from "./LessonAutoCompleteVideo";
 import { asText } from "@/lib/as-text";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -34,6 +33,7 @@ type Props = { params: Promise<{ slug: string }> };
 
 function LessonRailRow({
   lessonSlug,
+  lessonId,
   title,
   orderIndex,
   status,
@@ -43,6 +43,7 @@ function LessonRailRow({
   thumbnailUrl,
 }: {
   lessonSlug: string;
+  lessonId: number;
   title: string;
   orderIndex: number;
   status: LessonStatus;
@@ -64,10 +65,11 @@ function LessonRailRow({
         className={`flex items-start gap-3 rounded-xl border border-[var(--border)] px-3 py-2.5 ${
           isCurrent
             ? "bg-[color-mix(in_oklab,var(--card)_88%,var(--muted)_12%)]"
-            : "bg-[color-mix(in_oklab,var(--background)_92%,var(--muted)_8%)] opacity-70"
+            : "bg-[color-mix(in_oklab,var(--background)_92%,var(--muted)_8%)]"
         }`}
       >
         <CourseThumbnail
+          videoRef={{kind:"lesson",id:lessonId}}
           src={thumbnailUrl}
           title={title}
           eyebrow={`${orderIndex}`}
@@ -78,7 +80,7 @@ function LessonRailRow({
           <div className="text-sm font-semibold text-[var(--muted)] line-clamp-2">
             {title}
           </div>
-          <div className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--muted)] opacity-80">
+          <div className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
             {label}
           </div>
           <div className="mt-2">
@@ -99,6 +101,7 @@ function LessonRailRow({
       }`}
     >
       <CourseThumbnail
+        videoRef={{kind:"lesson",id:lessonId}}
         src={thumbnailUrl}
         title={title}
         eyebrow={`${orderIndex}`}
@@ -123,7 +126,7 @@ function LessonRailRow({
           {label}
         </div>
         <div className="mt-2">
-          <LessonTypeBadge type={lessonType} />
+          <LessonTypeBadge type={lessonType} className={isCurrent ? "!text-[var(--background)] !bg-transparent !border-current" : ""} />
         </div>
       </div>
     </Link>
@@ -312,6 +315,7 @@ export default async function LessonPage({ params }: Props) {
               <LessonRailRow
                 key={l.id}
                 lessonSlug={l.slug}
+                lessonId={l.id}
                 title={l.title}
                 orderIndex={l.order_index}
                 status={st}
@@ -332,27 +336,9 @@ export default async function LessonPage({ params }: Props) {
     <>
       <section className="overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--card)] shadow-[0_1px_0_rgba(28,25,23,0.04)] dark:shadow-[0_1px_0_rgba(255,255,255,0.06)]">
         <div className="p-4 sm:p-5">
-          {isCompleted ? (
-            <VimeoPlayer
-              videoUrl={lesson.video_url}
-              videoProvider={lesson.video_provider}
-              muxPlaybackId={lesson.mux_playback_id}
-              muxPlaybackPolicy={lesson.mux_playback_policy}
-              muxTokens={muxTokens}
-              title={lesson.title}
-            />
-          ) : (
-            <LessonAutoCompleteVideo
-              lessonId={lesson.id}
-              videoUrl={lesson.video_url}
-              videoProvider={lesson.video_provider}
-              muxPlaybackId={lesson.mux_playback_id}
-              muxPlaybackPolicy={lesson.mux_playback_policy}
-              muxTokens={muxTokens}
-              title={lesson.title}
-              isCompleted={isCompleted}
-            />
-          )}
+          <LessonAutoCompleteVideo lessonId={lesson.id} poster={lesson.thumbnail_url}
+            videoUrl={lesson.video_url} videoProvider={lesson.video_provider} muxPlaybackId={lesson.mux_playback_id}
+            muxPlaybackPolicy={lesson.mux_playback_policy} muxTokens={muxTokens} title={lesson.title} isCompleted={isCompleted} />
         </div>
       </section>
 
@@ -406,7 +392,7 @@ export default async function LessonPage({ params }: Props) {
               ← Vorige: {prevLesson.title}
             </Link>
           ) : (
-            <span className="text-sm text-[var(--muted)] opacity-80">Geen vorige les</span>
+            <span className="text-sm text-[var(--muted)]">Geen vorige les</span>
           )}
         </div>
         <div className="text-right">
@@ -447,7 +433,7 @@ export default async function LessonPage({ params }: Props) {
               Rond deze les af om de toets vrij te spelen.
             </p>
           ) : (
-            <span className="text-sm text-[var(--muted)] opacity-80">Geen volgende les</span>
+            <span className="text-sm text-[var(--muted)]">Geen volgende les</span>
           )}
         </div>
       </nav>

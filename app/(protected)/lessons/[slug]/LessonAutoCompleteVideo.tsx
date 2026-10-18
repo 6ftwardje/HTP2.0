@@ -9,6 +9,7 @@ import type { MuxPlaybackTokens } from "@/lib/types";
 export function LessonAutoCompleteVideo({
   lessonId,
   videoUrl,
+  poster,
   videoProvider,
   muxPlaybackId,
   muxPlaybackPolicy,
@@ -18,6 +19,7 @@ export function LessonAutoCompleteVideo({
 }: {
   lessonId: number;
   videoUrl: string | null;
+  poster?: string | null;
   videoProvider?: string;
   muxPlaybackId?: string | null;
   muxPlaybackPolicy?: "public" | "signed";
@@ -55,6 +57,8 @@ export function LessonAutoCompleteVideo({
   return (
     <div className="relative">
       <VimeoPlayer
+        poster={poster}
+        videoRef={{kind:"lesson",id:lessonId}}
         videoUrl={videoUrl}
         videoProvider={videoProvider}
         muxPlaybackId={muxPlaybackId}

@@ -1,0 +1,13 @@
+# F4 — lokaal video-/voortgangscontract
+
+17 oktober 2026. F3b is gepubliceerd via PR #72, main 2c103b6. Ward keurt F4 uitsluitend lokaal goed. Stop vóór F5a.
+
+**D10 expliciet besloten door Ward:** “95% voor weergave; bestaande lesgates behouden (aanbevolen)”. De nieuwe videovertoning/positie is dus afzonderlijk van bestaande `progress.watched` en `weekly_update_views`. Einde-video behoudt bestaande completion-actions en hun huidige gates. Geen 95%-write naar lesafronding, examens of entitlements. ‘Bekeken’ betekent de bereikte video-/weergavegrens; het is geen bewijs dat alle seconden beluisterd zijn.
+
+Eén additieve tabel met eigenaar en exact één les/update, unieke eigenaarsleutel, positie/duur/hoogste positie, Mux-videoversie, revisie en schrijfsessie/volgnummer. Mux-playback-id identificeert een vaste video; de versie bevat geen signed JWT of URL-token. Vervanging maakt oude positie onbruikbaar. Alleen eigen actuele toegankelijke gepubliceerde video’s; lesvolgorde/intake/modulegates blijven van kracht. Lezen is RLS-beveiligd, schrijven alleen via geauthenticeerde gevalideerde RPC. Geen wijziging van bestaande completion- of toegangspolicies.
+
+Opslag circa elke 10 seconden tijdens kijken (vanaf 1,25× korter naar rato, 5s bij 2×), direct bij pauze, pagehide/verborgen/ontkoppelen best-effort. Eén write tegelijk; pauze tijdens een lopende write bewaart na de bevestiging het nieuwste sample. Beperkte retry met backoff en idempotent volgnummer. Revisieconflict overschrijft niets en stopt automatische writes; gebruiker kan expliciet op dit apparaat verdergaan na opnieuw inlezen. Geen onbeperkte offline queue. Eigenaarwissel weigert oude requests. Bestaande watched-historie blijft behouden; opnieuw beginnen verandert de hervatpositie, niet de hoogste bereikte voortgang.
+
+Hervatten wordt aangeboden, niet afgedwongen. Expliciete hoofdstuk-/URL-seek heeft voorrang; voltooid beeld start geen automatische sprong naar het einde. Snelheid 0,5/0,75/1/1,25/1,5/2, per gebruiker lokaal onthouden met opslagweigering als veilige fallback. Alleen spelerfocus krijgt platformshortcuts; geen dubbele Mux-hotkeys of invoerveldinterceptie. Gewone providercontrols blijven bruikbaar.
+
+Actief: Mux. Legacy Vimeo/YouTube blijven compatibel met hun bestaande gedrag, maar krijgen geen onbewezen nieuwe resume-/posterclaims. Geen fout-153-fix zonder getroffen video; HTP-19 blijft expliciet historisch onderzoek. Geen nieuwe dependencies, externe assets, providerwrites, remote migratie of betaalcutover. Lokale additieve migratie, RLS-/concurrentie-/gatingtests en runtimebewijs zijn vereist vóór Done.

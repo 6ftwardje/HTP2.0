@@ -36,3 +36,6 @@ yarn-error.log*
 
 # Local Netlify folder
 .netlify
+
+# Generated from the pinned PDF.js package by prebuild/predev
+/public/pdf-assets/

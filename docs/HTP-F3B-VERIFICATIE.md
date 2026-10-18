@@ -1,5 +1,7 @@
 # F3b — Feed, weekvooruitblik en artikelvervolg
 
+**Release-aanvulling 17 oktober 2026:** F3b is op Wards expliciete opdracht gepubliceerd via [PR #72](https://github.com/6ftwardje/HTP2.0/pull/72), main **2c103b6c31e7450d21fcd973a2533d824102c620**. PR- en main-CI, policy, verse database-/chatintegratie en Netlify-preview groen; release-issue #71 Done. Geen remote migratie of betaalcutover. F4 is daarna afzonderlijk lokaal goedgekeurd en geverifieerd; [actuele overdracht](HTP-F4-VERIFICATIE.md), **stop vóór F5a**. Onderstaande tekst bewaart de oorspronkelijke lokale F3b-acceptatie; de toenmalige stop-/publicatiezinnen zijn historisch.
+
 17 oktober 2026. **F3a staat op main 0fd99e2ddd0c27440be9a0b9cc157951fbf9d703 via [PR #64](https://github.com/6ftwardje/HTP2.0/pull/64). F3b is uitsluitend lokaal uitgevoerd en gecontroleerd. Stop vóór F4.**
 
 [Centraal scrumboard](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Fasenplan](HTP-FASENPLAN.md) · [Ontwerpbesluit](HTP-F3B-ONTWERP.md).

@@ -65,6 +65,7 @@ const nextConfig: NextConfig = {
   // faalt readFile in productie). Lokaal niet nodig, maar voorkomt een prod-landmijn.
   outputFileTracingIncludes: {
     "/admin/**": ["./knowledge/**/*.md"],
+    "/api/documents/*/open": ["./assets/pdf-fonts/**"],
   },
   images: {
     remotePatterns: [
