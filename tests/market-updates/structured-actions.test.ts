@@ -1,3 +1,4 @@
+import * as pdfPresentation from "../../lib/pdf/presentation";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -54,6 +55,7 @@ function harness(initial: WeeklyUpdate[] = []) {
   const calls = { auth: 0, notifications: [] as number[], audit: [] as unknown[], queries: [] as QueryTrace[], chartCopies: [] as Array<[string, string]> };
   let deny = false;
   let forcedConflict = false;
+  let pdfRows:{state:string;storage_ready:boolean;accessible_verified:boolean}[]=[];
   let sequence = 100;
   let revision = 0;
   const forbidden = () => { throw new Error("An external provider boundary must not be called by these tests."); };
@@ -93,11 +95,12 @@ function harness(initial: WeeklyUpdate[] = []) {
     },
   };
   const dependencies: Record<string, unknown> = {
+    "@/lib/pdf/presentation":pdfPresentation,
     "next/cache": { revalidatePath: () => {} },
     "@/lib/admin/access": { requireAdmin: async () => { calls.auth++; if (deny) throw new Error("synthetic forbidden"); return { actorStudent: actor }; } },
     "@/lib/admin/audit": { logAdminAction: async (...args: unknown[]) => { calls.audit.push(args); } },
     "@/lib/supabase/server": { createClient: async () => db },
-    "@/lib/supabase/service": { createServiceClient: () => ({ storage: { from: (bucket: string) => {
+    "@/lib/supabase/service": { createServiceClient: () => ({ from:(table:string)=>{assert.equal(table,"pdf_documents");const query={select:()=>query,eq:async()=>({data:pdfRows,error:null})};return query;},storage: { from: (bucket: string) => {
       assert.equal(bucket, "market-update-charts");
       return { copy: async (source: string, target: string) => { calls.chartCopies.push([source, target]); return { data: {}, error: null }; } };
     } } }) },
@@ -137,7 +140,7 @@ function harness(initial: WeeklyUpdate[] = []) {
     return loaded.exports;
   }
   return {
-    rows, calls, deny: () => { deny = true; }, conflict: () => { forcedConflict = true; },
+    rows, calls, pdfs:(items:typeof pdfRows)=>{pdfRows=items;}, deny: () => { deny = true; }, conflict: () => { forcedConflict = true; },
     actions: load("app/actions/admin/weekly-updates.ts"), workflow: load("app/actions/admin/market-update-workflow.ts"),
   };
 }
@@ -482,3 +485,17 @@ test('F3b saving editorial context normalizes new takeaway prefixes without modi
   assert.equal((await h.actions.adminUpdateWeeklyUpdate(original.id,request)).success,true);assert.deepEqual(h.rows.get(original.id)!.markets,["gold","forex"]);
   request.delete("markets");request.append("markets","forex");assert.equal((await h.actions.adminUpdateWeeklyUpdate(original.id,request)).success,true);assert.deepEqual(h.rows.get(original.id)!.markets,["forex"]);
  });
+
+
+test("F5b publication checks actual attached PDFs and preserves one notification transition",async()=>{
+ const h=harness([row({content_format:"text"})]);
+ h.pdfs([{state:"draft",storage_ready:true,accessible_verified:false}]);
+ assert.match((await h.actions.adminPublishQuickMarketUpdate(42)).error,/PDF/);
+ assert.equal(h.rows.get(42)?.is_published,false);assert.deepEqual(h.calls.notifications,[]);
+ const submitted=form(row());submitted.set("is_published","true");
+ assert.match((await h.actions.adminUpdateWeeklyUpdate(42,submitted)).error,/PDF/);
+ h.pdfs([{state:"ready",storage_ready:true,accessible_verified:true}]);
+ assert.equal((await h.actions.adminPublishQuickMarketUpdate(42)).success,true);
+ assert.equal((await h.actions.adminPublishQuickMarketUpdate(42)).success,true);
+ assert.deepEqual(h.calls.notifications,[42]);
+});
