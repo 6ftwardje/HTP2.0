@@ -1,10 +1,10 @@
 # HTP platformbacklog
 
-Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s). Paginanummers hieronder tellen de omslag mee; gedrukte nummering is één lager vanaf PDF-pagina 2.
+Peildatum: **18 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s). Paginanummers hieronder tellen de omslag mee; gedrukte nummering is één lager vanaf PDF-pagina 2.
 
 **Centrale voortgang:** [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Dit bestand bevat de complete taakspecificaties en een gedateerde statussnapshot; bij faseoverdracht worden bord en snapshot samen bijgewerkt. Filter op `HTP-` voor dit feedbackpakket. De bestaande MU/M1-items behouden hun eigen scope.
 
-**Update 17 oktober 2026:** F1/HTP-49, F2 en F3a staan op main. F3b is op expliciete opdracht gepubliceerd als **2c103b6 / [PR #72](https://github.com/6ftwardje/HTP2.0/pull/72)**; PR- en main-CI zijn groen. Daarna is F4 lokaal uitgevoerd en geverifieerd op branch `codex/htp-f4-local`. **D10 besloten door Ward: 95% voor weergave; bestaande lesgates behouden. Stop vóór F5a. F4 is niet gepusht.** Actieve provider Mux, Crypto amber en uitsluitend het belletje met bestaand klikgedrag behouden. Geen remote migratie, providerwrites of betaalcutover. Done voor F4 betreft de goedgekeurde lokale scope. Ready betekent voorbereid, geen uitvoertoestemming. [F1](HTP-F1-VERIFICATIE.md) · [F2](HTP-F2-VERIFICATIE.md) · [F3a](HTP-F3A-VERIFICATIE.md) · [F3b](HTP-F3B-VERIFICATIE.md) · [F4-bewijs](HTP-F4-VERIFICATIE.md) · [F4-contract](HTP-F4-CONTRACT.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md) · [Fasenplan](HTP-FASENPLAN.md).
+**Update 18 oktober 2026:** Ward vroeg de uitvoering van issues te hervatten. F5a is lokaal gestart bij **HTP-25 / #77**, met een [concreet conceptcontract](HTP-F5A-CONTRACT.md) en [synthetische proef](HTP-F5A-VERIFICATIE.md). D7/D8 staan ter keuze; **HTP-25 Geblokkeerd op contractacceptatie, niet Done**. HTP-26/27/28 blijven Backlog tot die keuze. F1 t/m F3b staan op main (F3b 2c103b6 / PR #72); F4 blijft uitsluitend lokaal geverifieerd en niet gepusht. D10 blijft besloten: 95% weergave, bestaande lesgates behouden. Geen remote migratie, productie-/providerwrites of betaalcutover. Stop vóór F5b. [F4-bewijs](HTP-F4-VERIFICATIE.md) · [Fasenplan](HTP-FASENPLAN.md) · [Analyse](HTP-FEEDBACK-ANALYSE.md).
 
 ## Werkafspraken
 
@@ -46,7 +46,7 @@ Peildatum: **17 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s
 | [HTP-22](#htp-22) | Modelleer veilige videopositie en voltooiing | P1 | F4 | M | Al geïmplementeerd | Done |
 | [HTP-23](#htp-23) | Sla videopositie op en toon hervatten in speler/lijsten | P1 | F4 | M | Al geïmplementeerd | Done |
 | [HTP-24](#htp-24) | Maak hoofdstukken sticky, actief en via marktlinks bereikbaar | P1 | F3b | M | Al geïmplementeerd | Done |
-| [HTP-25](#htp-25) | Beslis PDF-contract, rubrieken en beschermingsniveau | P1 | F5a | M | Nader te onderzoeken | Geblokkeerd |
+| [HTP-25](#htp-25) | Beslis PDF-contract, rubrieken en beschermingsniveau | P1 | F5a | M | Proef aanwezig; contract open | Geblokkeerd |
 | [HTP-26](#htp-26) | Maak private PDF-opslag en geautoriseerde uitlevering | P1 | F5a | M | Nog uit te voeren | Backlog |
 | [HTP-27](#htp-27) | Personaliseer PDF-watermerken en registreer openacties | P1 | F5a | M | Nog uit te voeren | Backlog |
 | [HTP-28](#htp-28) | Bouw één gedeelde toegankelijke PDF-viewer | P1 | F5a | M | Nog uit te voeren | Backlog |
@@ -633,10 +633,10 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 - **Bron:** rubriek 11 p.27-29; 00 p.5.
 - **Prioriteit / fase / omvang:** P1 / F5a / M.
-- **Beoordeling / status:** Nader te onderzoeken / **Geblokkeerd**.
+- **Beoordeling / status:** Onderzoek/proef lokaal aanwezig / **Geblokkeerd**.
 - **Resultaat:** Een reviewbaar technisch ontwerp en kleine proef vóór private PDF-implementatie.
 - **Afhankelijkheden:** HTP-01; baseline-/rechtenonderzoek E15/E18.
-- **Besluiten / blokkades:** D7, D8: rubriek/toegang, toegankelijkheid, watermark/logging en renderstrategie.
+- **Besluiten / blokkades:** D7/D8: kies bestaande ouderrechten en het voorgestelde toegankelijke lees-/serverwatermark-/30-dagenlogcontract. Concrete voorstellen liggen voor; algemene hervatting keurt documentaanbevelingen niet stil goed.
 - **Bestaande implementatie:** E15/E18; geen PDF-keten of rubriekentiteit aangetroffen. Referenties 3-4 zijn in PDF beschikbaar.
 
 **Acceptatiecriteria**
@@ -647,7 +647,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Ontwerpreview met rechtenmatrix en threat-/cachecases binnen deze feature; proef pas na goedkeuring F5a met synthetische PDF. Resultaat stopt vóór F5b als contract niet geaccepteerd.
 
-**Bewijs van uitvoering:** niet beschikbaar; deze planning heeft geen implementatie-/runtimeverificatie uitgevoerd. Vul bij uitvoering commit/PR, datum, omgeving, accountrol, checkresultaat en eventuele screenshot in.
+**Bewijs van uitvoering:** [Issue #77](https://github.com/6ftwardje/HTP2.0/issues/77), lokale synthetische 120-pagina-/watermarkproef en code-/hostingonderzoek op 18 oktober; proefcommit `ff216c2` op `codex/htp-f5a-local`. [Contract](HTP-F5A-CONTRACT.md) en [resultaten/beperkingen](HTP-F5A-VERIFICATIE.md). Criteria blijven open voor contractkeuze; HTP-26/27/28 niet gestart. Geen applicatiewijziging of remote uitrol.
 
 <a id="htp-26"></a>
 
@@ -1153,7 +1153,7 @@ Releasebewijs: main 1067df4, PR #51, gebruikersgoedkeuring en CI groen op 17 okt
 
 **Verificatie:** Controleer alle IDs/dependencies/bronnen en borditems; lees na schrijven de statussen/inhoud terug. Bij faseoverdracht snapshot+besluitlog+bewijslocatie bijwerken; huidig opzetten is geen toestemming voor code.
 
-**Bewijs van uitvoering:** F3b-release en lokale F4-overdracht gecontroleerd: 49 unieke HTP-IDs; 25 Done, 15 Backlog, 8 Geblokkeerd en 1 Ready; alle 67 bordkaarten behouden. Stop vóór F5a; F4 niet gepusht. Status Ready voor doorlopend onderhoud.
+**Bewijs van uitvoering:** 18 oktober: lokale F5a hervat bij HTP-25/#77; contract/proef beschikbaar, D7/D8 ter keuze en HTP-26/27/28 wachten. 49 unieke HTP-IDs en alle 67 kaarten behouden; 25 Done, 15 Backlog, 8 Geblokkeerd, 1 Ready. F4 niet gepusht, stop vóór F5b. Status Ready voor doorlopend onderhoud.
 
 
 

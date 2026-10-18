@@ -2,7 +2,7 @@
 
 Peildatum: 17 oktober 2026 (Europe/Brussels). Bron: `HTP-Platform-Feedback.pdf`, 38 PDF-pagina's, datum 17 oktober 2026. In dit dossier betekent **p.** de PDF-pagina, inclusief omslag; het gedrukte paginanummer is vanaf PDF-pagina 2 één lager. Alle tekst is uitgelezen; alle pagina's zijn gerenderd en de acht ingesloten referentiebeelden zijn visueel bekeken. Het genoemde losse `HTP-prompts.md` is niet aangeleverd en is niet nodig om deze PDF te verwerken.
 
-**Actueel: F3b main 2c103b6 / PR #72; F4 lokaal geverifieerd, stop vóór F5a. D10: 95% weergave, bestaande lesgates behouden. Zie de actuele overdracht onderaan.**
+**Actueel 18 oktober: hervat bij F5a/HTP-25, conceptcontract en proef klaar; D7/D8 ter keuze. F3b op main; F4 lokaal en niet gepusht. Stop vóór F5b.**
 
 Historische analyse van vóór uitvoering; de actuele F1-uitvoering staat in [HTP-F1-VERIFICATIE.md](HTP-F1-VERIFICATIE.md). F2 staat in [HTP-F2-VERIFICATIE.md](HTP-F2-VERIFICATIE.md); F1/49 staan op main en F2 is alleen lokaal afgerond. Dit oorspronkelijke onderzoek betrof analyse en planning. De uitvoerprompts in de PDF zijn bronmateriaal, geen toestemming om ze uit te voeren. F3a en volgende fasen wachten op afzonderlijke goedkeuring. Aanbevelingen en werktitels blijven voorstellen totdat een besluit is vastgelegd.
 
@@ -151,3 +151,10 @@ F3b staat op expliciete opdracht op main **2c103b6c31e7450d21fcd973a2533d824102c
 F4 is afzonderlijk lokaal goedgekeurd. Ward besloot expliciet **“95% voor weergave; bestaande lesgates behouden (aanbevolen)”**. Dit vervangt alleen het F4-deel van D10: een nieuwe eigen videopositie met hoogste bereikte positie bepaalt Bekeken; bestaande `progress.watched`, `weekly_update_views`, intake-, module- en examengates behouden hun betekenis. Het F8-bezoek-/gevolgd-contract is hiermee niet besloten. Alleen Mux actief; geen nieuwe live-providerclaims over Vimeo/YouTube.
 
 HTP-18/21/22/23 zijn lokaal uitgevoerd en gecontroleerd: [F4-contract](HTP-F4-CONTRACT.md) en [acceptatiebewijs](HTP-F4-VERIFICATIE.md). Hervatten vraagt een keuze; expliciete hoofdstukken hebben voorrang. CAS voorkomt stil overschrijven op twee apparaten; herstart verlaagt de hoogste bereikte voortgang niet. Sluitflush is best-effort en geen garantie bij browser-/apparaatuitval. Er is geen nieuwe collectie-app gebouwd. **F4 niet gepusht; stop vóór F5a.**
+
+
+## Hervatting 18 oktober — F5a-contract en proef
+
+Ward vroeg issues te hervatten. De eerstvolgende fase F5a is lokaal begonnen bij HTP-25/#77. [Conceptcontract](HTP-F5A-CONTRACT.md) maakt D7/D8 concreet; [proefbewijs](HTP-F5A-VERIFICATIE.md) toetst grote documenten, canvasbegrenzing, zoom en daadwerkelijk gemarkeerde bytes. Een ruwe tekstextractie is geen toegankelijke leesversie en een localhost-server bewijst geen Netlify-transport of productrechten.
+
+D7/D8 zijn niet stil goedgekeurd: bestaande ouderrechten zonder previewverbreding, een toegankelijke selecteerbare leesversie naast canvas, naam/e-mail/datumwatermark en 30 dagen beheerderlog liggen ter keuze. HTP-25 blijft Geblokkeerd tot dat contract is geaccepteerd; HTP-26/27/28 wachten. Alleen proef-/planningsbestanden, geen applicatie/dependency-/config-/databasewijziging. F4 niet gepusht; stop vóór F5b.

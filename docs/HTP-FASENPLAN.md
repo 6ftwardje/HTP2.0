@@ -1,6 +1,6 @@
 # HTP feedback: gefaseerd uitvoeringsplan
 
-17 oktober 2026. **F1/HTP-49, F2, F3a en F3b gepubliceerd; F3b main 2c103b6 / PR #72. F4 uitsluitend lokaal uitgevoerd en geverifieerd. D10: 95% weergave, bestaande lesgates behouden. Stop vóór F5a.** [Centraal bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Analyse en besluiten](HTP-FEEDBACK-ANALYSE.md).
+18 oktober 2026. **Hervat bij lokale F5a/HTP-25: contract en proef beschikbaar, D7/D8 ter keuze; HTP-26/27/28 wachten. F3b main 2c103b6 / PR #72; F4 lokaal, niet gepusht. Stop vóór F5b.** [Bord](https://github.com/users/6ftwardje/projects/3) · [Backlog](HTP-BACKLOG.md) · [F5a-contract](HTP-F5A-CONTRACT.md).
 
 Elke onderstaande fase/deelfase krijgt afzonderlijke goedkeuring. Een goedgekeurde fase geeft geen toestemming om de volgende automatisch uit te voeren. Bij extra scope of onopgeloste criteria terug naar Backlog/Geblokkeerd; geen stilzwijgende uitbreiding. Er zijn geen datums of uren beloofd.
 
@@ -114,6 +114,8 @@ HTP-48 (bord/besluitlog) loopt door elke fase; HTP-47 levert per fase de relevan
 **Vooraf:** D7/D8: rechten/rubriekrelatie, grenzen/renderer, canvas zonder tekstlaag versus AA, toegankelijke route, naam/e-mail/datum in watermark en logbewaring. Synthetische documenten volstaan voor proef, echte cursusassets pas F5b. Na proef een expliciete ontwerpacceptatie vóór definitieve implementatie binnen deze fase wanneer de gekozen aanpak van het voorstel afwijkt.
 
 **Test en klaar:** anon/verkeerde gebruiker/ingetrokken recht/draft/expired/range/cache verzoeken, geen cross-user watermark of publieke object-URL; grote/kapotte/versleutelde PDF, mobiel zoom/scroll, keyboard/assistieve route. UI-knoppen verbergen is geen bewijs van bescherming. Klaar als de werkelijke toegang en rendering aantoonbaar voldoen aan het gekozen contract en beperkingen zichtbaar gedocumenteerd zijn.
+
+**Uitvoering F5a, 18 oktober:** op Wards hervatverzoek HTP-25/#77 lokaal uitgevoerd tot contractreview: broncode/referentie onderzocht, rechten-/beschermingsvoorstel en geïsoleerde synthetische PDF-proef beschikbaar. [Contract/D7/D8](HTP-F5A-CONTRACT.md) · [Proef en grenzen](HTP-F5A-VERIFICATIE.md). HTP-25 blijft Geblokkeerd op twee productkeuzes, criteria niet afgevinkt; HTP-26/27/28 wachten. F4 niet gepubliceerd. Geen productcode, app-dependencies, configuratie of database aangepast. De eerdere stop vóór F5a is door het hervatverzoek vervangen; **stop vóór F5b** blijft gelden.
 
 ## F5b — PDF's in updates, Academy en Toolbox
 
