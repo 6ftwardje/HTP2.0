@@ -1,5 +1,7 @@
 # F4 — Mux-bediening, posters en hervatten
 
+**Publicatieopdracht 18 oktober 2026:** Ward keurt F4/F5a naar main goed via [release-PR #84](https://github.com/6ftwardje/HTP2.0/pull/84) / [issue #83](https://github.com/6ftwardje/HTP2.0/issues/83). De actuele productbordrelease 4dd8206 is behouden. Gecombineerd: 298 tests, typecheck, lint en backlogcheck groen; hosted CI/verse database/preview worden vóór merge gecontroleerd en in de PR vastgelegd. F5b mag daarna uitsluitend lokaal; stop vóór F6. Hieronder beschreven eerdere stoppoorten en niet-publicatie gelden voor hun historische acceptatiemoment. Geen remote featuremigratie of betaalactivering inbegrepen.
+
 **Hervataanvulling 18 oktober 2026:** op Wards verzoek is F5a lokaal gestart bij HTP-25-contract/proef. D7/D8 liggen ter keuze; F4 is niet gepusht. [Actuele overdracht](HTP-F5A-VERIFICATIE.md). De stop vóór F5a hieronder beschrijft het oorspronkelijke F4-acceptatiemoment.
 
 17 oktober 2026. **F3b gepubliceerd via [PR #72](https://github.com/6ftwardje/HTP2.0/pull/72), main `2c103b6c31e7450d21fcd973a2533d824102c620`. F4 uitsluitend lokaal uitgevoerd en geverifieerd. Stop vóór F5a.**

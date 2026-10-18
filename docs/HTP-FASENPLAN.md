@@ -1,5 +1,7 @@
 # HTP feedback: gefaseerd uitvoeringsplan
 
+**Publicatieopdracht 18 oktober 2026:** Ward keurt F4/F5a naar main goed via [release-PR #84](https://github.com/6ftwardje/HTP2.0/pull/84) / [issue #83](https://github.com/6ftwardje/HTP2.0/issues/83). De actuele productbordrelease 4dd8206 is behouden. Gecombineerd: 298 tests, typecheck, lint en backlogcheck groen; hosted CI/verse database/preview worden vóór merge gecontroleerd en in de PR vastgelegd. F5b mag daarna uitsluitend lokaal; stop vóór F6. Hieronder beschreven eerdere stoppoorten en niet-publicatie gelden voor hun historische acceptatiemoment. Geen remote featuremigratie of betaalactivering inbegrepen.
+
 18 oktober 2026. **D7/D8 expliciet geaccepteerd. F5a/HTP-25 t/m 28 lokaal uitgevoerd en geverifieerd; F4/F5a niet gepusht. Stop vóór F5b.** [Bord](https://github.com/users/6ftwardje/projects/3) · [Backlog](HTP-BACKLOG.md) · [Contract](HTP-F5A-CONTRACT.md) · [F5a-bewijs](HTP-F5A-VERIFICATIE.md).
 
 Elke onderstaande fase/deelfase krijgt afzonderlijke goedkeuring. Een goedgekeurde fase geeft geen toestemming om de volgende automatisch uit te voeren. Bij extra scope of onopgeloste criteria terug naar Backlog/Geblokkeerd; geen stilzwijgende uitbreiding. Er zijn geen datums of uren beloofd.

@@ -1,5 +1,7 @@
 # F5a — Private PDF’s, watermerken en toegankelijke viewer
 
+**Publicatieopdracht 18 oktober 2026:** Ward keurt F4/F5a naar main goed via [release-PR #84](https://github.com/6ftwardje/HTP2.0/pull/84) / [issue #83](https://github.com/6ftwardje/HTP2.0/issues/83). De actuele productbordrelease 4dd8206 is behouden. Gecombineerd: 298 tests, typecheck, lint en backlogcheck groen; hosted CI/verse database/preview worden vóór merge gecontroleerd en in de PR vastgelegd. F5b mag daarna uitsluitend lokaal; stop vóór F6. Hieronder beschreven eerdere stoppoorten en niet-publicatie gelden voor hun historische acceptatiemoment. Geen remote featuremigratie of betaalactivering inbegrepen.
+
 18 oktober 2026. **D7/D8 expliciet door Ward goedgekeurd. HTP-25/#77, HTP-26/#78, HTP-27/#79 en HTP-28/#80 zijn lokaal uitgevoerd en geverifieerd. Geen F4-/F5a-push; stop vóór F5b.**
 
 [Bord](https://github.com/users/6ftwardje/projects/3) · [Complete backlog](HTP-BACKLOG.md) · [Goedgekeurd contract](HTP-F5A-CONTRACT.md) · [Fasenplan](HTP-FASENPLAN.md) · [Historische geïsoleerde proef](HTP-F5A-PROEF.md).

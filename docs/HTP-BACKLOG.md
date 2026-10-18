@@ -1,5 +1,7 @@
 # HTP platformbacklog
 
+**Publicatieopdracht 18 oktober 2026:** Ward keurt F4/F5a naar main goed via [release-PR #84](https://github.com/6ftwardje/HTP2.0/pull/84) / [issue #83](https://github.com/6ftwardje/HTP2.0/issues/83). De actuele productbordrelease 4dd8206 is behouden. Gecombineerd: 298 tests, typecheck, lint en backlogcheck groen; hosted CI/verse database/preview worden vóór merge gecontroleerd en in de PR vastgelegd. F5b mag daarna uitsluitend lokaal; stop vóór F6. Hieronder beschreven eerdere stoppoorten en niet-publicatie gelden voor hun historische acceptatiemoment. Geen remote featuremigratie of betaalactivering inbegrepen.
+
 Peildatum: **18 oktober 2026**. Bron: `HTP-Platform-Feedback.pdf` (38 pagina’s). Paginanummers hieronder tellen de omslag mee; gedrukte nummering is één lager vanaf PDF-pagina 2.
 
 **Centrale voortgang:** [bestaand GitHub Project 3](https://github.com/users/6ftwardje/projects/3). Dit bestand bevat de complete taakspecificaties en een gedateerde statussnapshot; bij faseoverdracht worden bord en snapshot samen bijgewerkt. Filter op `HTP-` voor dit feedbackpakket. De bestaande MU/M1-items behouden hun eigen scope.
