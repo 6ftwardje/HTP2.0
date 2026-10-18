@@ -20,7 +20,7 @@ export async function getDevelopmentBoard(): Promise<DevelopmentSnapshot & { liv
       const response: Response = await fetch("https://api.github.com/graphql", {
         method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ query: `query($cursor:String){ user(login:"6ftwardje"){projectV2(number:3){items(first:100,after:$cursor){pageInfo{hasNextPage endCursor} nodes{id content{... on Issue{title body url repository{nameWithOwner} assignees(first:10){nodes{login}}} ... on DraftIssue{title body}} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}`, variables: { cursor } }),
-        next: { revalidate: 60 }, signal: AbortSignal.timeout(8000),
+        cache: "no-store", signal: AbortSignal.timeout(8000),
       });
       if (!response.ok) throw new Error("GitHub unavailable");
       const payload: { errors?: unknown[]; data?: { user?: { projectV2?: { items: ProjectConnection } } } } = await response.json();
