@@ -1,3 +1,4 @@
+import {PdfAttachments} from "@/components/PdfAttachments";
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -27,6 +28,7 @@ function WeeklyHero({ update, now }: { update: FeedUpdate; now: number }) {
         <span className={styles.heroOpen}>Open vooruitblik <span aria-hidden="true">→</span></span>
       </div>
     </Link>
+    {update.pdfViewerId?<PdfAttachments documents={update.documents??[]} viewerId={update.pdfViewerId} unavailable={update.documentsUnavailable} compact/>:null}
     {marketChapters.length ? <nav className={styles.chapterLinks} aria-label="Markten in deze weekvooruitblik"><span>Direct naar</span>{marketChapters.map((chapter) => <Link key={chapter.market} href={`/market-analysis/${update.slug}?t=${chapter.seconds}`}>{categoryLabel(chapter.market!)} <span aria-hidden="true">→</span></Link>)}</nav> : null}
   </section>;
 }

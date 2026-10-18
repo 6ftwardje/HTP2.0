@@ -1,5 +1,6 @@
 "use client";
 
+import { PdfDocumentsManager } from "@/components/admin/PdfDocumentsManager";
 import { RelativeDate } from "@/components/ui/RelativeDate";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -1180,6 +1181,7 @@ export function AdminWeeklyUpdatesManager({
 
           {selectedUpdate && (selectedUpdate.type === "market_update" || !selectedUpdate.type) ? <MarketUpdateWorkflowControls key={`workflow-${selectedUpdate.id}-${selectedUpdate.updated_at}`} update={selectedUpdate} hasUnsavedChanges={() => hasUnsavedChanges.current} /> : null}
 
+          {selectedUpdate ? <div className="mt-8 border-t border-[var(--border)] pt-6"><PdfDocumentsManager key={selectedUpdate.id} parentKind="update" parentId={selectedUpdate.id}/></div> : panel.type === "create" ? <p className="mt-4 text-sm text-[var(--muted)]">Sla eerst het concept op. Open het daarna om één of meer PDF-bijlagen met leesversie en optionele cover toe te voegen.</p> : null}
           {selectedUpdate?.is_published && selectedUpdate.access_tier === "subscription" ? (
             <button
               type="button"

@@ -1,3 +1,5 @@
+import {visibleDocuments,withUpdateDocuments} from "@/lib/pdf/catalog";
+import {PdfAttachments} from "@/components/PdfAttachments";
 import { MarketFollowing } from "@/components/market-insight/MarketFollowing";
 import { getMarketFeedAuthors } from "@/lib/market-feed-authors";
 import { followingMarketUpdates } from "@/lib/market-feed";
@@ -66,10 +68,11 @@ export default async function MarketAnalysisDetailPage({ params, searchParams }:
     author={author}
     publishedAt={update.published_at ?? update.created_at} tags={tags} duration={duration}
     contextLabels={structure ? [] : editorialContext(enrichment?.summary ?? update.summary, update.event_context).labels}
-    following={<MarketFollowing updates={following} authors={followingAuthors} />}
+    following={<MarketFollowing updates={await withUpdateDocuments(following,student.id)} authors={followingAuthors} />}
     intro={structure ? null : update.intro} postId={update.id} reaction={meta.reaction}>
     <SourceNotificationRead targets={[{ table: "weekly_updates", id: String(update.id) }]}/>
     <MarketPostContents update={update} timestamp={timestamp} summary={enrichment?.summary ?? update.summary}
       takeaways={enrichment?.keyTakeaways ?? update.key_takeaways} chapters={readableMarketChapters(enrichment?.chapters ?? update.chapters, update.video_duration_seconds)} muxTokens={muxTokens} />
+    <PdfAttachments documents={await visibleDocuments("update",[update.id])} viewerId={student.id}/>
   </MarketPostLayout>;
 }

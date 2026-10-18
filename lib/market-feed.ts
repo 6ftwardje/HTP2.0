@@ -2,7 +2,7 @@ import type { WeeklyUpdate } from "@/lib/types";
 import { CATEGORY_OPTIONS, getUpdateMarkets, getUpdateStructure, isOpenSetup, marketUpdateActivityAt, matchesUpdateMarket, type SetupStatus, type UpdateCategory } from "@/lib/market-update-structure";
 import { marketPlainText } from "@/lib/market-editorial";
 
-export type FeedUpdate = WeeklyUpdate & { mentor: { id: string; name: string | null } | null };
+export type FeedUpdate = WeeklyUpdate & { documents?: import("@/lib/pdf/catalog").PdfListing[]; pdfViewerId?:string; documentsUnavailable?:boolean; mentor: { id: string; name: string | null } | null };
 /** The client feed needs the credited display identity, never a mentor's email. */
 export function projectMarketFeedUpdates(updates: readonly FeedUpdate[]): FeedUpdate[] {
   return updates.map((update) => ({ ...update, mentor: update.mentor ? { id: update.mentor.id, name: update.mentor.name } : null }));

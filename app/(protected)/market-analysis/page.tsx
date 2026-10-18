@@ -1,3 +1,4 @@
+import {withUpdateDocuments} from "@/lib/pdf/catalog";
 import { projectMarketFeedUpdates } from "@/lib/market-feed";
 import { getMarketFeedAuthors } from "@/lib/market-feed-authors";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -32,7 +33,7 @@ export default async function MarketAnalysisPage({ searchParams }: Props) {
         title="Marktinzicht"
         description="Setups, analyses, nieuws en educatie, overzichtelijk per markt."
       />
-      <MarketInsightLibrary updates={projectMarketFeedUpdates(updates)} authors={await getMarketFeedAuthors(updates)} initialMarket={initialMarket} />
+      <MarketInsightLibrary updates={await withUpdateDocuments(projectMarketFeedUpdates(updates),student.id)} authors={await getMarketFeedAuthors(updates)} initialMarket={initialMarket} />
     </div>
   );
 }
