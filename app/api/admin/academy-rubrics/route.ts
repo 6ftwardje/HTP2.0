@@ -3,9 +3,11 @@ import {pdfActor,pdfOrigin,pdfJsonBody,pdfJson,pdfFailure,PdfHttpError} from '@/
 import {pdfTitle,validPdfId} from '@/lib/pdf/policy';
 export const dynamic='force-dynamic';
 export async function GET(){try{
- await pdfActor(true);const db=await createClient();const [rubrics,mapping,modules]=await Promise.all([db.from('academy_rubrics').select('*').order('sort_order').order('id'),db.from('academy_rubric_modules').select('*'),db.from('modules').select('id,title,order_index').order('order_index').order('id')]);
- if(rubrics.error||mapping.error||modules.error)throw new PdfHttpError(503,'De Academy-indeling is tijdelijk niet beschikbaar.');
- return pdfJson({rubrics:(rubrics.data??[]).map(x=>({...x,moduleIds:(mapping.data??[]).filter(m=>m.rubric_id===x.id).map(m=>m.module_id)})),modules:modules.data});
+ await pdfActor(true);const db=await createClient();
+ // Read each rubric version and its exact module mapping in one database snapshot.
+ const rubrics:{id:string;title:string;slug:string;description:string;sort_order:number;is_published:boolean;version:number;academy_rubric_modules:{module_id:number}[]}[]=[];for(let offset=0;;offset+=250){const result=await db.from('academy_rubrics').select('*,academy_rubric_modules(module_id)').order('sort_order').order('id').range(offset,offset+249);if(result.error)throw new PdfHttpError(503,'De Academy-indeling is tijdelijk niet beschikbaar.');rubrics.push(...(result.data??[]));if(!result.data||result.data.length<250)break;}
+ const modules:{id:number;title:string;order_index:number}[]=[];for(let offset=0;;offset+=250){const result=await db.from('modules').select('id,title,order_index').order('order_index').order('id').range(offset,offset+249);if(result.error)throw new PdfHttpError(503,'De modules zijn tijdelijk niet beschikbaar.');modules.push(...(result.data??[]));if(!result.data||result.data.length<250)break;}
+ return pdfJson({rubrics:rubrics.map(({academy_rubric_modules,...r})=>({...r,moduleIds:(academy_rubric_modules??[]).map((m:{module_id:number})=>m.module_id)})),modules});
 }catch(e){return pdfFailure(e);}}
 export async function POST(request:Request){try{
  pdfOrigin(request);await pdfActor(true);const b=await pdfJsonBody(request),title=pdfTitle(b?.title);

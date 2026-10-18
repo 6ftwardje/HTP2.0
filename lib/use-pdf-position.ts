@@ -21,9 +21,9 @@ export function usePdfPosition({documentId,viewerId,version,active,page,onRestor
   finally{s.busy=false;if(s.loaded&&!s.blocked&&s.page!==s.saved)void send(s);}
  }
  async function load(s:Session,signal?:AbortSignal){
-  s.loaded=false;s.blocked=true;feedback(s,'loading','Leespositie laden…');
+  const openedPage=s.page;s.loaded=false;s.blocked=true;feedback(s,'loading','Leespositie laden…');
   try{const r=await fetch(`/api/documents/${s.id}/position?version=${s.version}`,{cache:'no-store',signal}),data=await r.json();if(!r.ok||data.viewerId!==s.viewerId||data.version!==s.version)throw Error('load');if(session.current!==s)return;
-   const target=signal&&s.page!==1?s.page:data.page;s.revision=data.revision;s.saved=data.page;s.page=target;s.retry=null;s.conflict=null;s.loaded=true;s.blocked=false;restore.current(target);feedback(s,'idle',target>1?`Hervat op pagina ${target}.`:'');
+   const target=s.page!==openedPage?s.page:data.page;s.revision=data.revision;s.saved=data.page;s.page=target;s.retry=null;s.conflict=null;s.loaded=true;s.blocked=false;restore.current(target);feedback(s,'idle',target>1?`Hervat op pagina ${target}.`:'');
   }catch{if(!signal?.aborted)feedback(s,'error','De leespositie kon niet worden geladen. Herlaad de positie om opslaan te activeren.');}
  }
  useEffect(()=>{
