@@ -20,3 +20,9 @@ Eigen leespositie per documentversie, begrensd op bestaande pagina’s en alleen
 
 ## Verificatie
 Gerichte unit-/SQL-autorisatie/concurrency/versieproeven en echte lokale HTTP-/beheer-/browserflow met synthetische fixtures. Rollen gratis zonder/met intake, Academy, abonnee zonder Academy, legacy, admin en anon; directe private opslag-/downloadrequests. Desktop/tablet/mobiel en licht/donker, URL/back/focus/lege tabs, dubbele publicatie en onveranderde video-/examengates. Bestaande F4/F5a SQL blijven geldig. Geen remote migratie, providerwrite, echte contentvulling of F6-code.
+
+## Bestaande productcontext en visuele grens
+
+F5b breidt het bestaande ledenplatform uit: leden openen toegankelijke PDF-bijlagen bij hun update of volledige Academy-module, beheerders beheren die inhoud bij dezelfde bron. Bestaande module-, abonnement-, intake- en examengates blijven leidend. De geaccepteerde keuzes D7/D8 en deze fase worden in dit contract, het fasenplan en de stabiele HTP-29 t/m HTP-32 vastgelegd; deze bestaande documentatie is de productcontext voor deze uitbreiding. Er is geen nieuwe productidentiteit of visuele richting besloten. Bestaande shell, typografie, thematokens en knoppen zijn de visuele bron; de baseline en F5b-captures maken de vergelijking controleerbaar. De gebruiksmodus is beheren/lezen.
+
+Echte rubrieknamen, rubricering van modules, cursus-PDF’s met volledig gecontroleerde leesversies en Toolboxinhoud zijn nog niet aangeleverd. De lokale proef bevat uitsluitend herkenbare synthetische inhoud. Nieuwe navigatie moet ook mobiel leesbare titels en afzonderlijk bedienbare PDF-, leesversie- en downloadacties behouden. Geen nieuwe abonnementen, curriculumkeuzes of F6-werk inbegrepen.
