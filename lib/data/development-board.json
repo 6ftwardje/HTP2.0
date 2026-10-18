@@ -1,5 +1,5 @@
 {
-  "syncedAt": "2026-10-18T20:31:30.760Z",
+  "syncedAt": "2026-10-18T20:54:03.398Z",
   "projectUrl": "https://github.com/users/6ftwardje/projects/3",
   "items": [
     {
@@ -756,15 +756,15 @@
       "description": "Academy toont Video/PDF/Toolbox binnen goedgekeurde rubrieken zonder huidig leerpad te breken.",
       "result": "Academy toont Video/PDF/Toolbox binnen goedgekeurde rubrieken zonder huidig leerpad te breken.",
       "proof": "",
-      "status": "blocked",
-      "sourceStatus": "Geblokkeerd",
+      "status": "done",
+      "sourceStatus": "Done",
       "priority": "P1",
       "phase": "F5b",
       "owner": "",
       "ownerId": null,
       "dueDate": null,
       "url": "https://github.com/6ftwardje/HTP2.0/issues/86",
-      "blocker": "Bekijk de blokkade en volgende actie in het GitHub-project.",
+      "blocker": "",
       "version": 0
     },
     {
@@ -773,15 +773,15 @@
       "description": "Een beheerbare lijst van PDF’s, links en bestanden, zonder aanvullende appfeatures.",
       "result": "Een beheerbare lijst van PDF’s, links en bestanden, zonder aanvullende appfeatures.",
       "proof": "",
-      "status": "blocked",
-      "sourceStatus": "Geblokkeerd",
+      "status": "done",
+      "sourceStatus": "Done",
       "priority": "P2",
       "phase": "F5b",
       "owner": "",
       "ownerId": null,
       "dueDate": null,
       "url": "https://github.com/6ftwardje/HTP2.0/issues/87",
-      "blocker": "Bekijk de blokkade en volgende actie in het GitHub-project.",
+      "blocker": "",
       "version": 0
     },
     {
