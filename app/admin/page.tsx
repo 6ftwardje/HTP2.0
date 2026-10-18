@@ -3,6 +3,11 @@ import { PageHeader } from "@/components/layout/PageHeader";
 
 const dailyWork = [
   {
+    href: "/admin/product-board",
+    title: "Productontwikkeling volgen",
+    description: "Bekijk nieuwe features en plan gedeelde teamtaken op het productbord.",
+  },
+  {
     href: "/admin/mentor-inbox",
     title: "Mentorvragen beantwoorden",
     description: "Bekijk gesprekken met studenten en stuur een antwoord.",
