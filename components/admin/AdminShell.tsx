@@ -38,6 +38,7 @@ const adminNav = [
     label: "Lesvideo's",
     icon: <NavigationIcon name="lessons" />,
   },
+  { href: "/admin/documents", label: "PDF-beheer", icon: <NavigationIcon name="lessons" /> },
   {
     href: "/admin/live-sessions",
     label: "Live marktsessies",
