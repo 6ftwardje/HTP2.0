@@ -1,3 +1,4 @@
+import {publishedRubrics} from "@/lib/academy-rubrics";
 import Link from "next/link";
 import { ensureCurrentStudent } from "@/lib/students";
 import { getPublishedModules } from "@/lib/modules";
@@ -21,6 +22,7 @@ export default async function ModulesPage() {
     ensureCurrentStudent(),
     getPublishedModules(),
   ]);
+  const rubrics=await publishedRubrics();
   const moduleIds = modules.map((module) => module.id);
 
   const [lessonCountMap, examMap, onboarding, legacyAccessModuleIds] = await Promise.all([
@@ -202,7 +204,7 @@ export default async function ModulesPage() {
         title="Modules"
         description="Volg de lessen in je eigen tempo. De gratis modules openen na je intake; voor de overige modules heb je volledige Academy-toegang nodig."
       />
-      <div className="min-w-0">{main}</div>
+      <div className="min-w-0">{rubrics.length?<section aria-label="Academy-rubrieken" className="mb-8"><h2 className="mb-3 text-xl font-semibold">Rubrieken</h2><nav className="flex flex-wrap gap-3">{rubrics.map(r=><Link className="cb-btn cb-btn-secondary" key={r.id} href={`/academy/${r.slug}`}>{r.title}</Link>)}</nav></section>:null}{main}</div>
     </div>
   );
 }
