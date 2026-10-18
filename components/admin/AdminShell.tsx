@@ -19,6 +19,11 @@ const adminNav = [
     icon: <NavigationIcon name="dashboard" />,
   },
   {
+    href: "/admin/product-board",
+    label: "Productbord",
+    icon: <NavigationIcon name="dashboard" />,
+  },
+  {
     href: "/admin/students",
     label: "Studenten",
     icon: <NavigationIcon name="students" />,
@@ -143,7 +148,7 @@ export function AdminShell({
   const { mobileOpen, menuTriggerRef, menuCloseRef, menuPanelRef, openMobileMenu, closeMobileMenu } = useMobileDrawer();
   const pathname = usePathname();
   useNotificationsRealtime(studentId);
-  const isWideWorkspace = pathname.startsWith("/admin/videos");
+  const isWideWorkspace = pathname.startsWith("/admin/videos") || pathname.startsWith("/admin/product-board");
 
   return (
     <div className="platform-surface flex h-[100dvh] max-h-[100dvh] min-h-0 w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
