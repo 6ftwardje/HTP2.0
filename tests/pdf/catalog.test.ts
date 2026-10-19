@@ -9,7 +9,7 @@ test("a missing RPC is logged with the original PostgREST error and never become
   const original = { code: "PGRST202", message: "Function missing", details: "Schema cache", hint: "Apply migration" };
   const db = { rpc: () => ({ range: async () => ({ data: null, error: original, status: 404 }) }) } as unknown as SupabaseClient;
   await assert.rejects(queryVisibleDocuments(db, "update", [17]), (error: Error) => error.cause === original);
-  const entry = JSON.parse(output.mock.calls[0].arguments[0]);
+  const entry = JSON.parse(output.mock.calls[0].arguments[0].slice("[htp] ".length));
   assert.equal(entry.event, "pdf.catalog.rpc_failed");
   assert.deepEqual(entry.parentIds, [17]); assert.equal(entry.status, 404);
   assert.equal(entry.kind, "update"); assert.equal(entry.rpc, "list_visible_pdf_documents");
@@ -41,13 +41,13 @@ test("thrown transport failures and nested causes retain diagnostic context", as
   const output = t.mock.method(console,"error",()=>{}), original = new TypeError("Fetch failed");
   const db = { rpc: () => ({ range: async () => { throw original; } }) } as unknown as SupabaseClient;
   await assert.rejects(queryVisibleDocuments(db,"update",[17]), error=>error===original);
-  assert.equal(JSON.parse(output.mock.calls[0].arguments[0]).event,"pdf.catalog.request_failed");
+  assert.equal(JSON.parse(output.mock.calls[0].arguments[0].slice("[htp] ".length)).event,"pdf.catalog.request_failed");
   const boundary = Object.assign(new Error("Documents unavailable",{cause:{code:"PGRST202",message:"Missing RPC"}}),{digest:"418920492"});
   logError("market.detail.render_failed",boundary,{pathname:"/market-analysis/example"});
-  const entry=JSON.parse(output.mock.calls[1].arguments[0]);
+  const entry=JSON.parse(output.mock.calls[1].arguments[0].slice("[htp] ".length));
   assert.equal(entry.error.cause.code,"PGRST202");assert.equal(entry.error.digest,"418920492");
   logError("extended.error",Object.assign(new Error("Missing function"),{code:"PGRST202",details:"Schema cache"}));
-  assert.equal(JSON.parse(output.mock.calls[2].arguments[0]).error.code,"PGRST202");
+  assert.equal(JSON.parse(output.mock.calls[2].arguments[0].slice("[htp] ".length)).error.code,"PGRST202");
   const cyclic=new Error("Cycle");cyclic.cause=cyclic;
   assert.doesNotThrow(()=>logError("cycle",cyclic));
 });

@@ -32,7 +32,7 @@ function serializeError(error: unknown, depth = 0): Record<string, unknown> {
 
 export function logError(event: string, error: unknown, context: LogContext = {}) {
   console.error(
-    JSON.stringify({
+    "[htp] " + JSON.stringify({
       level: "error",
       event,
       timestamp: new Date().toISOString(),

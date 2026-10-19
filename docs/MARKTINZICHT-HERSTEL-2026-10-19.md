@@ -31,7 +31,7 @@ Geen blanket `supabase db push`, wijziging van bestaande ouder-entitlements, bet
 ## Codeherstel
 
 - Bijlagenquery logt oorspronkelijke code/message/details/hint, RPC, oudertype/-IDs, range en HTTP-status; transportfouten worden ook gelogd. De feedfallback logt kijker/postcontext.
-- Logger bewaart `cause` en Next-digest, met begrensde recursie.
+- Logger bewaart `cause`, foutvelden en Next-digest, met begrensde recursie. Een vaste `[htp]`-prefix houdt de volledige JSON-inhoud zichtbaar in Netlify CLI/serverlogs: de live previewproef liet zien dat JSON-only regels anders als lege message werden teruggegeven.
 - Detail-queryfouten worden gelogd en gegooid; alleen een succesvolle lege query betekent ontbrekende inhoud. Een databasefout wordt daardoor geen paywall/404.
 - Metadata-, auteur-, reactie-, notificatie- en hervatfouten in de Marktinzicht-flow krijgen contextlogging. De foutgrens logt route/digest.
 - PDF HTTP-fouten loggen pad/methode/status en behouden onderliggende RPC-/storagefouten bij autorisatie, openen en leespositie.
