@@ -33,7 +33,7 @@ export async function listStudentsAdmin(
   const to = from + pageSize;
 
   let qBuilder = db
-    .from("students")
+    .from("student_directory")
     .select(
       "id, email, name, phone, access_level, mentor_status, tags, created_at, last_seen"
     );

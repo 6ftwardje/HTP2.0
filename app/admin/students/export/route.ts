@@ -22,7 +22,7 @@ export async function GET() {
 
   for (let from = 0; ; from += EXPORT_BATCH_SIZE) {
     const { data, error } = await db
-      .from("students")
+      .from("student_directory")
       .select(
         "id, email, name, phone, access_level, mentor_status, tags, created_at, last_seen"
       )

@@ -19,7 +19,8 @@
     "verify:avatar-storage": "node scripts/verify-avatar-storage.mjs",
     "prebuild": "node scripts/copy-pdf-assets.mjs",
     "predev": "node scripts/copy-pdf-assets.mjs",
-    "verify:profile-schema": "node scripts/verify-profile-schema.mjs"
+    "verify:profile-schema": "node scripts/verify-profile-schema.mjs",
+    "verify:test-account-schema": "node scripts/verify-test-account-schema.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",

@@ -3,7 +3,7 @@
   publish = ".next"
 
 [context.production]
-  command = "npm run verify:market-schema && npm run verify:profile-schema && npm run build"
+  command = "npm run verify:market-schema && npm run verify:profile-schema && npm run verify:test-account-schema && npm run build"
 
 [build.environment]
   NEXT_PUBLIC_SITE_URL = "https://hettradeplatform.be"

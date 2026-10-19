@@ -72,13 +72,19 @@ export async function notifyWeeklyUpdatePublished({
     );
   } else {
     const students = await db
-      .from("students")
+      .from("student_directory")
       .select("id")
       .gte("access_level", audience.minAccessLevel);
     if (students.error) {
       return { notified: 0, skipped: false, error: students.error.message };
     }
     recipients = (students.data ?? []).map((student) => student.id).filter(Boolean);
+  }
+
+  if(recipients.length && audience.kind === "entitlement") {
+    const eligible = await db.from("student_directory").select("id").in("id",recipients);
+    if(eligible.error)return {notified:0,skipped:false,error:eligible.error.message};
+    recipients=(eligible.data??[]).map(row=>row.id);
   }
 
   if (recipients.length === 0) {
