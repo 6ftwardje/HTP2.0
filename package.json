@@ -15,6 +15,7 @@
     "transcription:backfill-dry-run": "tsx scripts/transcription-backfill-dry-run.ts",
     "lint": "next lint",
     "verify:supabase-target": "node scripts/verify-supabase-target.mjs",
+    "verify:market-schema": "node scripts/verify-market-schema.mjs",
     "verify:avatar-storage": "node scripts/verify-avatar-storage.mjs",
     "prebuild": "node scripts/copy-pdf-assets.mjs",
     "predev": "node scripts/copy-pdf-assets.mjs"

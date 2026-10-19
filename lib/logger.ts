@@ -1,11 +1,13 @@
 type LogContext = Record<string, unknown>;
 
-function serializeError(error: unknown) {
+function serializeError(error: unknown, depth = 0): Record<string, unknown> {
   if (error instanceof Error) {
     return {
       name: error.name,
       message: error.message,
       stack: error.stack,
+      ...("digest" in error ? { digest: error.digest } : {}),
+      ...(error.cause && depth < 4 ? { cause: serializeError(error.cause, depth + 1) } : {}),
     };
   }
 

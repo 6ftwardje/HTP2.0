@@ -7,4 +7,4 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
  const {data,error}=await service.storage.from('protected-learning-assets').download(document.cover_path);
  if(error||!data||data.size>1024*1024)throw new PdfHttpError(404,'Geen cover beschikbaar.');
  return new NextResponse(await data.arrayBuffer(),{headers:{...pdfHeaders,'Content-Type':'image/webp','Content-Disposition':'inline'}});
-}catch(error){return pdfFailure(error);}}
+}catch(error){return pdfFailure(error,_request);}}

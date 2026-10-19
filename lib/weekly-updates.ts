@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logError } from "@/lib/logger";
 import { paidProductsEnabled } from "@/lib/billing";
 import {
   projectPublishedVideoEnrichment,
@@ -32,6 +33,7 @@ export async function listMarketUpdateRubricUpdates(
     if (freeOnly) query = query.eq("access_tier", "free");
     const { data, error } = await query;
     if (error) {
+      logError("market.archive.query_failed", error, { freeOnly, offset, pageSize });
       // Partial archives would make search results misleading.
       throw new Error("Marktupdates konden niet volledig worden geladen.");
     }
@@ -68,7 +70,7 @@ export async function listPublishedWeeklyUpdates(
   const { data, error } = await query;
 
   if (error) {
-    console.error("listPublishedWeeklyUpdates", error.message);
+    logError("market.listPublishedWeeklyUpdates.query_failed", error, { limit, freeOnly });
     return [];
   }
 
@@ -97,7 +99,7 @@ export async function listPublishedWeeklyOutlooks(
     .limit(limit);
 
   if (error) {
-    console.error("listPublishedWeeklyOutlooks", error.message);
+    logError("market.listPublishedWeeklyOutlooks.query_failed", error, { limit });
     return [];
   }
 
@@ -127,7 +129,7 @@ export async function listPublishedMarketUpdates(
     .limit(limit);
 
   if (error) {
-    console.error("listPublishedMarketUpdates", error.message);
+    logError("market.listPublishedMarketUpdates.query_failed", error, { limit });
     return [];
   }
 
@@ -164,7 +166,7 @@ export async function listPublishedMarketUpdatesByMarket(
   const { data, error } = await query;
 
   if (error) {
-    console.error("listPublishedMarketUpdatesByMarket", error.message);
+    logError("market.listPublishedMarketUpdatesByMarket.query_failed", error, { market, limit, freeOnly });
     return [];
   }
 
@@ -191,7 +193,11 @@ export async function getPublishedWeeklyUpdateBySlug(
     .eq("is_published", true)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) {
+    logError("market.detail.query_failed", error, { slug });
+    throw new Error("Het marktinzicht kon niet worden opgehaald.", { cause: error });
+  }
+  if (!data) return null;
   return data as WeeklyUpdateWithMentor;
 }
 
@@ -212,6 +218,7 @@ export async function getPublishedEnrichmentForWeeklyUpdate(
     .order("published_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (error) logError("market.enrichment.query_failed", error, { weeklyUpdateId });
   if (error || !data) return null;
   return projectPublishedVideoEnrichment(data);
 }
@@ -230,7 +237,7 @@ export async function getWeeklyUpdateViewsByIds(
     .in("weekly_update_id", weeklyUpdateIds);
 
   if (error) {
-    console.error("getWeeklyUpdateViewsByIds", error.message);
+    logError("market.getWeeklyUpdateViewsByIds.query_failed", error, { studentId, weeklyUpdateIds });
     return new Map();
   }
 

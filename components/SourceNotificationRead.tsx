@@ -1,5 +1,6 @@
 "use client";
 
+import { logError } from "@/lib/logger";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { readSourceNotifications } from "@/app/actions/notifications";
@@ -14,9 +15,9 @@ export function SourceNotificationRead({ targets }: { targets: NotificationSourc
     let active = true;
     readSourceNotifications(JSON.parse(key)).then((result) => {
       if (!active) return;
-      if (!result.success) setError(result.error);
+      if (!result.success) { logError("market.notification.read_failed", result.error, { targets: JSON.parse(key) }); setError(result.error); }
       else { setError(null); if (result.changed) router.refresh(); }
-    }).catch(() => { if (active) setError("De gelezenstatus kon niet worden bijgewerkt. Probeer opnieuw."); });
+    }).catch((error) => { logError("market.notification.request_failed", error, { targets: JSON.parse(key) }); if (active) setError("De gelezenstatus kon niet worden bijgewerkt. Probeer opnieuw."); });
     return () => { active = false; };
   }, [key, attempt, router]);
   return error ? <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-sm text-[var(--foreground)]">
