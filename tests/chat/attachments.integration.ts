@@ -50,7 +50,7 @@ async function main() {
     const email = `chat-attachment-${randomUUID()}@example.invalid`; const password = randomUUID();
     const user = ok(await service.auth.admin.createUser({ email, password, email_confirm: true }), "create fresh free account").data.user!;
     const fixture = { userId: user.id, studentId: "" }; created.push(fixture);
-    const profile = ok(await service.from("students").insert({ email, auth_user_id: user.id, name: "Screenshot fixture", access_level: 1 }).select("id").single(), "create free profile").data!;
+    const profile = ok(await service.from("students").insert({ email, auth_user_id: user.id, name: "Screenshot fixture", phone: "+32470123456", access_level: 1 }).select("id").single(), "create free profile").data!;
     fixture.studentId = profile.id;
     return actor({ email, password, userId: user.id, studentId: profile.id });
   }

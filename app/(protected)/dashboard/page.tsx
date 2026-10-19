@@ -1,3 +1,4 @@
+import { greetingFirstName } from "@/lib/profile";
 import {withUpdateDocuments} from "@/lib/pdf/catalog";
 import { projectMarketFeedUpdates } from "@/lib/market-feed";
 import Link from "next/link";
@@ -35,12 +36,6 @@ type Props = {
   searchParams?: Promise<{ intake?: string }>;
 };
 
-function displayFirstName(name: string | null) {
-  const firstName = name?.trim().split(/\s+/)[0];
-  return firstName && firstName.toLocaleLowerCase("nl-BE") !== "onbekend"
-    ? firstName
-    : null;
-}
 
 function sessionDate(date: string) {
   return new Intl.DateTimeFormat("nl-BE", {
@@ -153,7 +148,7 @@ async function StudentDashboard({
   const hasSubscriberAccess = canAccessSubscriberContent(student, billingOverview);
   const recentUpdates = hasSubscriberAccess ? await listPublishedWeeklyUpdates(10) : [];
   const nextLiveSession = upcomingLiveSessions[0] ?? null;
-  const firstName = displayFirstName(student.name);
+  const firstName = greetingFirstName(student.name);
   const moduleTitle = nextStep.module
     ? stripModulePrefix(nextStep.module.title, nextStep.module.order_index)
     : "Academy";

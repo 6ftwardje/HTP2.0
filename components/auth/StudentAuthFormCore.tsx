@@ -3,6 +3,8 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PhoneField } from "@/components/profile/PhoneField";
+import { normalizeProfileName, normalizeProfilePhone } from "@/lib/profile";
 import { BrandLogo } from "@/components/ui/Brand";
 
 type AuthMode = "login" | "register" | "reset";
@@ -63,6 +65,8 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [fullName, setFullName] = useState("");
+  const [phone,setPhone] = useState("");
+  const [phoneCountry,setPhoneCountry] = useState("BE");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
@@ -105,6 +109,13 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
       return;
     }
 
+    const profileName = normalizeProfileName(fullName);
+    const profilePhone = normalizeProfilePhone(phone, phoneCountry);
+    if(mode === "register" && (!profileName || !profilePhone)) {
+      setStatus("error");
+      setMessage(!profileName ? "Vul je eigen naam in (maximaal 100 tekens)." : "Vul een geldig telefoonnummer met de juiste landcode in.");
+      return;
+    }
     setStatus("loading");
     setMessage("");
 
@@ -160,7 +171,8 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
         password,
         options: {
           data: {
-            full_name: fullName.trim(),
+            full_name: profileName,
+            phone: profilePhone,
             legal_acceptance_version: LEGAL_ACCEPTANCE_VERSION,
             legal_acceptance_accepted_at: acceptedAt,
             legal_acceptance_scope: LEGAL_ACCEPTANCE_SCOPE,
@@ -310,6 +322,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                   </label>
                   <input
                     id="full-name"
+                    maxLength={100}
                     type="text"
                     value={fullName}
                     onChange={(event) => setFullName(event.target.value)}
@@ -321,6 +334,8 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                   />
                 </div>
               )}
+
+              {mode === "register" && <PhoneField country={phoneCountry} onCountryChange={setPhoneCountry} phone={phone} onPhoneChange={setPhone} disabled={status === "loading" || status === "success"}/> }
 
               <div>
                 <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">
