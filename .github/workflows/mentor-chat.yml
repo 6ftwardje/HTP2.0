@@ -56,6 +56,7 @@ jobs:
           node scripts/mentor-chat-ci.mjs sql tests/sql/mentor-chat-privacy-routing.sql
           node scripts/mentor-chat-ci.mjs sql tests/sql/mentor-chat-email.sql
           node scripts/mentor-chat-ci.mjs sql tests/sql/mentor-chat-profiles-presence.sql
+          node scripts/mentor-chat-ci.mjs sql tests/sql/q2-required-profile.sql
       - name: Start local Next API with local-only credentials
         run: node scripts/mentor-chat-ci.mjs app
       - name: Private screenshots through authenticated HTTP, RPC and Storage
