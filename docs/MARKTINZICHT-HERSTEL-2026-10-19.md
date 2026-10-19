@@ -31,7 +31,7 @@ Geen blanket `supabase db push`, wijziging van bestaande ouder-entitlements, bet
 ## Codeherstel
 
 - Bijlagenquery logt oorspronkelijke code/message/details/hint, RPC, oudertype/-IDs, range en HTTP-status; transportfouten worden ook gelogd. De feedfallback logt kijker/postcontext.
-- Logger bewaart `cause`, foutvelden en Next-digest, met begrensde recursie. Een vaste `[htp]`-prefix houdt de volledige JSON-inhoud zichtbaar in Netlify CLI/serverlogs: de live previewproef liet zien dat JSON-only regels anders als lege message werden teruggegeven.
+- Logger bewaart `cause`, foutvelden en Next-digest, met begrensde recursie. Een vaste `[htp]`-prefix maakt de volledige JSON-inhoud herkenbaar in de live Netlify-serverlogstream. De historische previewlog-API gaf ook met deze prefix lege messages terug; daarom is de ontvangst apart via de echte live stream bewezen. Dit is een beperking van die historische logweergave, geen bewijs dat de applicatie niet logt.
 - Detail-queryfouten worden gelogd en gegooid; alleen een succesvolle lege query betekent ontbrekende inhoud. Een databasefout wordt daardoor geen paywall/404.
 - Metadata-, auteur-, reactie-, notificatie- en hervatfouten in de Marktinzicht-flow krijgen contextlogging. De foutgrens logt route/digest.
 - PDF HTTP-fouten loggen pad/methode/status en behouden onderliggende RPC-/storagefouten bij autorisatie, openen en leespositie.
@@ -45,6 +45,7 @@ Geen blanket `supabase db push`, wijziging van bestaande ouder-entitlements, bet
 - Drie echte lokale rollback-SQL-suites geslaagd: F4 videoposities, F5a private documenten en F5b documenten/Academy. Inclusief ouderrechten, anon, storageafscherming, versie, eigenaarschap en concurrency. Geen reset van de gedeelde database.
 - Productie-readback na schemaherstel: feed plus alle vijf gepubliceerde detail-URL’s HTTP 200 zonder numerieke renderdigest of bijlagenfout; ingelogde bijlagen-RPC HTTP 200, lege lijst. Er zijn geen productie-PDF’s, dus dit is geen bewijs van een echte documentdownload.
 - Video-leespositie HTTP 200 met positie 0 voor een eerste bezoek; de bestaande speler wordt weer gerenderd.
+- Gecontroleerde ongeldige PDF-request in de hosted preview: HTTP 404 én ontvangen live serverlog `pdf.http.failed` met tijdstip, pad, methode, status en stacktrace (19 oktober 2026 07:48:47 UTC). Geen productiecontent gewijzigd.
 - Mechanische designcontrole van de gewijzigde fout-/statuscomponenten: geen bevindingen.
 
 Bewust niet uitgevoerd: upload/download van nieuwe PDF’s of contentwijzigingen op productie, betaalcutover, Toolbox-uitrol, volledige platformaudit of integrale browser-/screenreaderacceptatie. Technische foutmeldingen zijn niet vervangen door een onjuiste aankoopmelding.
