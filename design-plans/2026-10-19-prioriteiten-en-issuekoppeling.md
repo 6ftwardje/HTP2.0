@@ -1,6 +1,6 @@
 # HTP — prioriteiten en bouwplan na de livebevindingen van 19 oktober 2026
 
-Status: **goedgekeurd door Ward op 19 oktober 2026; uitvoering gestart met issuekoppeling en launchhercontrole.**
+Status: **goedgekeurd door Ward op 19 oktober 2026; eerste bouwpakket lokaal geleverd, in review.**
 Peildatum: 19 oktober 2026, Europe/Brussels.
 Geschreven tegen actuele GitHub-main **`169e6ddfadb34b1cf4d2ca59d6bf546e52cded08`**.
 
@@ -10,7 +10,7 @@ De drie gemelde launchproblemen zijn inmiddels gericht behandeld in **[Q2.0 / #9
 
 Dit is een reconciliatie van de aangeleverde lijst met actuele issues, projectkaarten en broncode. Het is **geen nieuwe eigen livegebruikersproef of productie-data-audit**. Waar livebewijs wordt genoemd, komt dat uit PR #96 en het bijbehorende herstelverslag. De oorzaak van ontbrekende namen en de herkomst van achtergelaten herstelaccounts zijn nog niet bewezen.
 
-## 1. Waar staan we vandaag?
+## 1. Planningbaseline vóór groen licht
 
 Rechtstreeks uit GitHub gelezen:
 
@@ -243,3 +243,20 @@ Binnen de UI-afwerking eerst Q2.4: dezelfde beheerbestemming krijgt overal één
 - Q2.10: [#107](https://github.com/6ftwardje/HTP2.0/issues/107)
 
 #32 en #34 zijn bijgewerkt met de goedgekeurde scopeverdeling. #95 blijft gesloten/Done en is als bestaande herstelkaart aan Project 3 toegevoegd.
+
+## Eerste uitvoeringspakket — 19 oktober 2026
+
+| Onderdeel | Issue / PR | Resultaat / grens |
+| --- | --- | --- |
+| Issuekoppelingen en besluiten | #97 / PR #108 | Bestaande HTP-48-kaart behouden; Q2.1–Q2.10 gekoppeld; #32/#34 bestaande eigenaren; productbordprioriteiten bijgewerkt. |
+| Launchhercontrole | #95 / vervolg #110, PR #111 | Live overzicht en vijf details werken; 404 licht/donker gecontroleerd; productie-schema-preflight groen. Aanvullende pre-billing weigering was nog een 404: afzonderlijke duidelijke toegangsmelding lokaal gebouwd/getest. |
+| Naam en telefoon | #99 / PR #109 | Trigger leest nu full_name/name correct; eigen metadataherstel, verplichte telefoon, eenmalig aanvulscherm, server-/API-gates en veilige terugkeer. 317 tests, SQL, 11 browsergroepen en echte lokale private PDF-proef. |
+| Testaccounts | #100 / PR #112 | Service-beheerde markering, serverfilter vóór paginering/telling/export, lead-/mailuitsluiting, normale en afgebroken herstelproef met geverifieerde cleanup. 321 tests, productie-vormige trigger-/SQL- en browserproeven. PR gestapeld op #109. |
+
+Productiediagnose: de Auth-trigger las alleen `name`, terwijl registratie `full_name` schrijft. 61 onvolledige profielen hadden naammetadata; productieprofielen zijn niet aangepast. De twee recoveryvermeldingen zijn orphan studentprofielen zonder Auth-identiteit en zonder aangetroffen leerling-/betaal-/gespreksreferenties. Ze zijn niet verwijderd of geclassificeerd.
+
+De profiel- en testaccountmigraties zitten bij hun eigen code; hun rollback-SQL-proeven draaien verplicht in verse-database-CI. De oorspronkelijke lijst-/bijlagenfout is niet teruggekeerd. Een private synthetische PDF is lokaal wel echt geüpload en met persoonlijke bytes uitgeleverd; geen productie-upload.
+
+Alle vier PR's zijn ter review; niets gemerged of op productie uitgerold. Vereiste review, gerichte schema-uitrol en een releaseopdracht blijven afzonderlijke stappen. Externe al bestaande n8n-queued acties zijn niet ingezien/ongedaan gemaakt. Overige Q2-taken, #32/#34, F6 en de lokale e-mail-MVP zijn niet in dit eerste bouwpakket meegenomen.
+
+Volgorde voor een eventuele release: governance #108, launchvervolg #111, profiel #109, daarna de op #109 gestapelde testaccount-PR #112. Productie-schema eerst gecontroleerd en gericht; classificatie van exact twee beoordeelde orphanprofielen pas na afzonderlijke vrijgave/readback, zonder bulkdelete.
