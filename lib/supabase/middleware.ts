@@ -1,9 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { profileIsComplete, profileCompletionUrl } from "@/lib/profile";
+import { logError } from "@/lib/logger";
 import { logDuration } from "@/lib/performance";
 
 const SUPABASE_COOKIE_PREFIX = "sb-";
 const PROTECTED_PREFIXES = [
+  "/profile-completion",
   "/admin",
   "/dashboard",
   "/lessons",
@@ -50,9 +53,10 @@ function routeLabel(pathname: string) {
 }
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  const requestHeaders = new Headers(request.headers);
+  // Always overwrite a caller-provided value; this header only preserves a safe return path.
+  requestHeaders.set("x-htp-return-to", request.nextUrl.pathname + request.nextUrl.search);
+  let supabaseResponse = NextResponse.next({request:{headers:requestHeaders}});
   const pathname = request.nextUrl.pathname;
 
   // In test environment mogen we niet terugvallen naar `/`.
@@ -106,6 +110,20 @@ export async function updateSession(request: NextRequest) {
     route: routeLabel(pathname),
     user: Boolean(user),
   });
+
+  // API routes which use Auth/RPC directly must not bypass the page/action gate.
+  if (user && pathname.startsWith("/api/")) {
+    const {data:profile,error} = await supabase.from("students").select("name,phone").eq("auth_user_id",user.id).maybeSingle();
+    if(error) {
+      logError("profile.api_gate.failed", {code:error.code,message:"Profile gate lookup failed"}, {route:routeLabel(pathname)});
+      return NextResponse.json({error:"Profielgegevens konden niet worden gecontroleerd."},{status:503});
+    }
+    if(!profile || !profileIsComplete(profile)) {
+      const response=NextResponse.json({error:"profile_required",completionUrl:profileCompletionUrl(null)},{status:403});
+      for(const cookie of supabaseResponse.cookies.getAll())response.cookies.set(cookie);
+      return response;
+    }
+  }
 
   if (pathname === "/" && user) {
     const url = request.nextUrl.clone();

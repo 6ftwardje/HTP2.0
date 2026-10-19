@@ -38,7 +38,7 @@ async function main() {
       const email = `verification-${randomUUID()}@example.invalid`; const password = randomUUID();
       const { data, error } = await service.auth.admin.createUser({ email, password, email_confirm: true });
       assert.equal(error, null); assert.ok(data.user);
-      const profile = await service.from("students").insert({ auth_user_id: data.user.id, email, name: index === 3 ? "Verificatie Admin" : `Verificatie Lid ${index + 1}`, access_level: level }).select("id").single();
+      const profile = await service.from("students").insert({ auth_user_id: data.user.id, email, name: index === 3 ? "Verificatie Admin" : `Verificatie Lid ${index + 1}`, phone: "+32470123456", access_level: level }).select("id").single();
       assert.equal(profile.error, null);
       const cookies = new Map<string, string>();
       const db = createServerClient(url, values.ANON_KEY, { cookies: { getAll: () => [...cookies].map(([name, value]) => ({ name, value })), setAll: (changes: Array<{ name: string; value: string }>) => changes.forEach(({ name, value }) => cookies.set(name, value)) } });

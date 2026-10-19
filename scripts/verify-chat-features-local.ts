@@ -70,7 +70,7 @@ async function main() {
       const created = ok(await service.auth.admin.createUser({ email, password, email_confirm: true }), "create local fixture account").data.user!;
       const fixture: Fixture = { userId: created.id, studentId: randomUUID(), name, email, password, cookie: "" };
       state.users.push(fixture); save();
-      ok(await service.from("students").insert({ id: fixture.studentId, auth_user_id: fixture.userId, email, name, access_level: index === 4 ? 3 : 1 }), "create real fixture profile");
+      ok(await service.from("students").insert({ id: fixture.studentId, auth_user_id: fixture.userId, email, name, phone: "+32470123456", access_level: index === 4 ? 3 : 1 }), "create real fixture profile");
       if (index === 3 || index === 4) ok(await service.from("user_roles").insert({ student_id: fixture.studentId, role: index === 3 ? "mentor" : "admin" }), "assign explicit staff role");
       const jar = new Map<string, string>();
       const db = createServerClient(env.API_URL, env.ANON_KEY, { cookies: {

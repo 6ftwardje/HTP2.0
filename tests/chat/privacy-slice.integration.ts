@@ -30,7 +30,7 @@ async function main() {
       const email = `chat-compatibility-${randomUUID()}@example.invalid`; const password = randomUUID();
       const account = ok(await service.auth.admin.createUser({ email, password, email_confirm: true }), "create real account").data.user!;
       authUserIds.push(account.id);
-      const profile = ok(await service.from("students").insert({ auth_user_id: account.id, email, name: index === 2 ? "Rousso" : `Compatibility fixture ${index}`, access_level: level }).select("id").single(), "create profile").data!;
+      const profile = ok(await service.from("students").insert({ auth_user_id: account.id, email, name: index === 2 ? "Rousso" : `Compatibility fixture ${index}`, phone: "+32470123456", access_level: level }).select("id").single(), "create profile").data!;
       const db = createClient(env.API_URL, env.ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
       ok(await db.auth.signInWithPassword({ email, password }), "authenticate fixture");
       users.push({ userId: account.id, studentId: profile.id, db });

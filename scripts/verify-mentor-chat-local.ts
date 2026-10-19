@@ -109,7 +109,7 @@ async function main() {
       // Persist partial cleanup state before creating a profile or signing in.
       const placeholder = { userId, studentId: randomUUID(), email, password, cookie: "" };
       state.users.push(placeholder);
-      const student = ok(await service.from("students").insert({ id: placeholder.studentId, auth_user_id: userId, email, name: ["Verificatie gratis lid A", "Verificatie gratis lid B", "Rousso", "Andere beheerder"][index], access_level: accessLevel }).select("id").single(), "create free/admin profile");
+      const student = ok(await service.from("students").insert({ id: placeholder.studentId, auth_user_id: userId, email, name: ["Verificatie gratis lid A", "Verificatie gratis lid B", "Rousso", "Andere beheerder"][index], phone: "+32470123456", access_level: accessLevel }).select("id").single(), "create free/admin profile");
       assert.equal(student.data!.id, placeholder.studentId);
       const cookies = new Map<string, string>();
       const db = createServerClient(env.API_URL, env.ANON_KEY, { cookies: { getAll: () => [...cookies].map(([name, value]) => ({ name, value })), setAll: (changes: Array<{ name: string; value: string }>) => changes.forEach(({ name, value }) => cookies.set(name, value)) } });
