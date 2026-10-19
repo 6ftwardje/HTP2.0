@@ -16,8 +16,11 @@ async function rpc<T>(db: DB, name: string, args: Record<string, unknown> = {}):
 export function chatEmailRepository(db: DB): ChatEmailRepository {
   return {
     claim: async () => (await rpc<ChatEmailJob[]>(db, "claim_chat_email_notification"))[0] ?? null,
-    snapshot: (job) => rpc<ChatEmailSnapshot>(db, "chat_email_recipient_snapshot", { p_id: job.id }),
-    prepare: (job, payload) => rpc<EmailPayload | null>(db, "prepare_chat_email_send", { p_id: job.id, p_lease: job.lease_token, p_payload: payload }),
+    snapshot: async (job) => await rpc<boolean>(db,"test_account_chat_email_allowed",{p_job_id:job.id})
+      ? rpc<ChatEmailSnapshot>(db, "chat_email_recipient_snapshot", { p_id: job.id })
+      : {allowed:false,reason:"synthetic_account"},
+    prepare: async (job, payload) => await rpc<boolean>(db,"test_account_chat_email_allowed",{p_job_id:job.id})
+      ? rpc<EmailPayload | null>(db, "prepare_chat_email_send", { p_id: job.id, p_lease: job.lease_token, p_payload: payload }) : null,
     async finish(job, status, reason, dueAt, providerId) {
       const finished = await rpc<boolean>(db, "finish_chat_email_notification", {
         p_id: job.id, p_lease: job.lease_token, p_status: status, p_reason: reason,

@@ -1,3 +1,4 @@
+import {verifyTestAccountSchema} from "./verify-test-account-schema.mjs";
 /** Explicitly authorized production acceptance with temporary synthetic accounts only.
  * HTP_PRODUCTION_ENV_FILE=/private/production.env \
  * HTP_CHAT_PRODUCTION_VERIFICATION=hettradeplatform.be \
@@ -221,10 +222,12 @@ async function main() {
     await page.keyboard.press("Escape"); await dialog.waitFor({ state: "hidden" });
     assert.ok(await button.evaluate((element) => element === document.activeElement), "Profile Escape restores the trigger focus.");
   }
+  await verifyTestAccountSchema(service);
   try {
     for (const [index, kind] of (prepublish ? ["student"] : ["student", "student", "mentor", "mentor"]).entries()) {
       const email = `chat-production-${runId}-${index}@example.invalid`, password = `Htp-${randomUUID()}-Aa9!`;
-      const created = ok(await service.auth.admin.createUser({ email, password, email_confirm: true }), "create a temporary synthetic Auth account").data.user;
+      state.syntheticRunId ??= randomUUID(); save();
+      const created = ok(await service.auth.admin.createUser({ email, password, email_confirm: true, app_metadata: {synthetic_test_run_id: state.syntheticRunId} }), "create a temporary synthetic Auth account").data.user;
       assert.ok(created);
       const fixture = { index, kind, userId: created.id, studentId: randomUUID(), email, password, cookie: "", name: `Tijdelijke controle ${kind === "mentor" ? "mentor" : "student"} ${index % 2 === 0 ? "A" : "B"} ${runId.slice(0, 6)}` };
       state.users.push(fixture); save();
@@ -232,9 +235,9 @@ async function main() {
       if (automatic) {
         assert.equal(automatic.auth_user_id, fixture.userId, "Only this Auth account's automatic student profile may be adopted.");
         fixture.studentId = automatic.id; save();
-        ok(await service.from("students").update({ name: fixture.name, access_level: 1 }).eq("id", fixture.studentId).eq("auth_user_id", fixture.userId), "name own automatic synthetic profile");
+        ok(await service.from("students").update({ name: fixture.name, phone: "+32470123456", access_level: 1 }).eq("id", fixture.studentId).eq("auth_user_id", fixture.userId), "name own automatic synthetic profile");
       } else {
-        ok(await service.from("students").insert({ id: fixture.studentId, auth_user_id: fixture.userId, email, name: fixture.name, access_level: 1 }), "create own synthetic student identity");
+        ok(await service.from("students").insert({ id: fixture.studentId, auth_user_id: fixture.userId, email, name: fixture.name, phone: "+32470123456", access_level: 1 }), "create own synthetic student identity");
       }
       ok(await service.from("chat_email_preferences").insert({ student_id: fixture.studentId, enabled: false }), "disable emails for this synthetic account before any sends");
       const jar = new Map();
