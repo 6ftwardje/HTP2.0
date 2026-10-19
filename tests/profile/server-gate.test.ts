@@ -14,9 +14,10 @@ test("existing metadata repairs only the current owner before completeness is as
  const existing=reader({id:"student",name:"Chosen name",phone:"+32470123456"},{full_name:"Other"});
  assert.equal((await existing.module.getCurrentStudent()).student.name,"Chosen name");assert.equal(existing.repairs(),0);
 });
-test("failed repair cannot masquerade as a complete user",async()=>{
+test("failed optional repair keeps manual completion available without exposing content or a login loop",async()=>{
  const r=reader({name:"Onbekend",phone:null},{full_name:"Élodie"},{code:"PGRST202"});
- const result=await r.module.getCurrentStudent();assert.equal(result.student,null);assert.ok(result.error);
+ const form=await r.module.getStudentForProfileCompletion();assert.equal(form.student.name,"Onbekend");assert.equal(form.error,null);
+ await assert.rejects(r.module.getCurrentStudent(),/REDIRECT \/profile-completion/);
 });
 
 test("profile save validates before RPC and uses no target ID or submitted access level",async()=>{

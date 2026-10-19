@@ -58,7 +58,10 @@ export const getStudentForProfileCompletion = cache(async function getStudentFor
       const {data, error:repairError} = await db.rpc("repair_own_student_profile");
       if (repairError) {
         logError("profile.repair.failed", {code:repairError.code,message:"Own metadata repair failed"}, {operation:"repair_own_student_profile"});
-        return {student:null,error:new Error("Profielgegevens konden niet worden opgehaald.")};
+        // Optional repair must not turn an authenticated incomplete profile into
+        // a login/dashboard redirect loop. The normal gate still blocks content;
+        // the dedicated form can save the user's own fields independently.
+        return {student,error:null};
       }
       if(data?.[0])return {student:data[0] as Student,error:null};
     }
