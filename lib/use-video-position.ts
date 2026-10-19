@@ -1,4 +1,5 @@
 "use client";
+import {logError} from "@/lib/logger";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useVideoProgress } from "@/components/VideoProgressProvider";
 import { videoSaveInterval, shouldOfferResume, type VideoPosition, type VideoRef } from "@/lib/video-position";
@@ -23,7 +24,7 @@ export function useVideoPosition(videoInput:VideoRef|undefined,videoVersion:stri
      if(!response.ok)throw Error('storage');
      if(data.viewerId!==viewerId||data.videoVersion!==videoVersion){blocked.current=true;snapshot.current=null;safeMessage('De video of je account is gewijzigd. Vernieuw de pagina.');return;}
      if(data.accepted){snapshot.current=data;lastSaved.current=payload.positionSeconds;pending.current=null;blocked.current=false;safeMessage(null);if(video)publish?.(video,data);}return;
-    }catch{if(keepalive||attempt===2||!mounted.current){blocked.current=true;pending.current=payload;safeMessage('Je voortgang kon niet worden opgeslagen. Probeer opnieuw zodra je verbinding hersteld is.');return;}await new Promise(resolve=>setTimeout(resolve,1000*2**attempt));if(!mounted.current)return;}
+    }catch(error){logError("market.video_position.save_failed",error,{video,viewerId,videoVersion,attempt,keepalive});if(keepalive||attempt===2||!mounted.current){blocked.current=true;pending.current=payload;safeMessage('Je voortgang kon niet worden opgeslagen. Probeer opnieuw zodra je verbinding hersteld is.');return;}await new Promise(resolve=>setTimeout(resolve,1000*2**attempt));if(!mounted.current)return;}
    }
   }finally{busy.current=false;if(queued.current){queued.current=false;if(mounted.current)api.current.save();}}
  },[viewerId,videoVersion,video,publish,safeMessage]);
@@ -36,10 +37,11 @@ export function useVideoPosition(videoInput:VideoRef|undefined,videoVersion:stri
  const api=useRef({save,send});api.current={save,send};
  const load=useCallback(async(signal?:AbortSignal)=>{
   if(!video||!viewerId)return null;
-  const response=await fetch(`/api/video-position?kind=${video.kind}&id=${video.id}`,{cache:'no-store',signal});const data=await response.json();if(signal?.aborted||!mounted.current)return null;
+  try{const response=await fetch(`/api/video-position?kind=${video.kind}&id=${video.id}`,{cache:'no-store',signal});const data=await response.json();if(signal?.aborted||!mounted.current)return null;
   if(!response.ok){blocked.current=true;safeMessage(data.error??'Hervatten is tijdelijk niet beschikbaar.');return null;}
   if(data.viewerId!==viewerId||data.videoVersion!==videoVersion){blocked.current=true;safeMessage('De video of je account is gewijzigd. Vernieuw de pagina.');return null;}
   snapshot.current=data;publish?.(video,data);return data as VideoPosition;
+  }catch(error){if(!signal?.aborted)logError("market.video_position.load_failed",error,{video,viewerId,videoVersion});throw error;}
  },[video,viewerId,videoVersion,publish,safeMessage]);
  useEffect(()=>{
   mounted.current=true;session.current=crypto.randomUUID();const abort=new AbortController();

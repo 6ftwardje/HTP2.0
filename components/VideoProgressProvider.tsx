@@ -1,4 +1,5 @@
 "use client";
+import {logError} from "@/lib/logger";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { videoPositionKey, type VideoPosition, type VideoRef } from "@/lib/video-position";
@@ -10,7 +11,7 @@ export function VideoProgressProvider({viewerId,children}:{viewerId:string;child
  const publish=useCallback((video:VideoRef,position:VideoPosition)=>{if(position.viewerId!==viewerId)return;setPositions(previous=>({...previous,[videoPositionKey(video)]:position}));window.dispatchEvent(new CustomEvent("htp-video-position",{detail:{video,position}}));},[viewerId]);
  useEffect(()=>{
   const abort=new AbortController();
-  async function load(){try{const response=await fetch('/api/video-position?list=1',{signal:abort.signal,cache:'no-store'});if(!response.ok)return;const data=await response.json();if(data.viewerId!==viewerId||abort.signal.aborted)return;const next:Record<string,VideoPosition>={};for(const row of data.positions){const video:VideoRef=row.lesson_id?{kind:'lesson',id:row.lesson_id}:{kind:'update',id:row.weekly_update_id};next[videoPositionKey(video)]={viewerId,videoVersion:row.video_version,revision:row.revision,positionSeconds:row.position_seconds,durationSeconds:row.duration_seconds,maxPositionSeconds:row.max_position_seconds,completed:row.completed};}setPositions(next);}catch{/* The player exposes storage errors; cards remain usable. */}}
+  async function load(){try{const response=await fetch('/api/video-position?list=1',{signal:abort.signal,cache:'no-store'});if(!response.ok){logError("market.video_positions.load_failed",await response.json(),{status:response.status,viewerId});return;}const data=await response.json();if(data.viewerId!==viewerId||abort.signal.aborted)return;const next:Record<string,VideoPosition>={};for(const row of data.positions){const video:VideoRef=row.lesson_id?{kind:'lesson',id:row.lesson_id}:{kind:'update',id:row.weekly_update_id};next[videoPositionKey(video)]={viewerId,videoVersion:row.video_version,revision:row.revision,positionSeconds:row.position_seconds,durationSeconds:row.duration_seconds,maxPositionSeconds:row.max_position_seconds,completed:row.completed};}setPositions(next);}catch(error){if(!abort.signal.aborted)logError("market.video_positions.request_failed",error,{viewerId});}}
   void load();const visible=()=>{if(document.visibilityState==='visible')void load();};document.addEventListener('visibilitychange',visible);
   return()=>{abort.abort();document.removeEventListener('visibilitychange',visible);};
  },[viewerId,pathname]);

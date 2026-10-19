@@ -1,4 +1,5 @@
 "use client";
+import {logError} from "@/lib/logger";
 import Link from 'next/link';
 import {usePdfPosition} from '@/lib/use-pdf-position';
 import {useCallback,useEffect,useRef,useState} from 'react';
@@ -30,18 +31,18 @@ export function ProtectedPdfViewer({documentId,viewerId,label='Open document',ha
    const dimensions:Size[]=[];for(let n=1;n<=document.numPages;n++){if(abort.signal.aborted)return;const page=await document.getPage(n);const box=page.getViewport({scale:1});dimensions.push({width:box.width,height:box.height});page.cleanup();}
    if(abort.signal.aborted)return;setMetadata(meta);setWatermark(decodeURIComponent(opened.headers.get('X-PDF-Watermark')??''));setSizes(dimensions);setStatus('ready');
   }
-  void load().catch(reason=>{if(!abort.signal.aborted){clear();void loadingTask.current?.destroy();pdf.current=null;setStatus('error');setError(reason instanceof PdfViewError?reason.message:'Het document kon niet worden geladen. Controleer je verbinding of vraag de beheerder om herstel.');}});
+  void load().catch(reason=>{if(!abort.signal.aborted){logError('pdf.viewer.load_failed',reason,{documentId,viewerId});clear();void loadingTask.current?.destroy();pdf.current=null;setStatus('error');setError(reason instanceof PdfViewError?reason.message:'Het document kon niet worden geladen. Controleer je verbinding of vraag de beheerder om herstel.');}});
   return()=>{abort.abort();clear();void loadingTask.current?.destroy();loadingTask.current=null;pdf.current=null;};
  },[open,attempt,documentId,viewerId,clear]);
  useEffect(()=>{if(!open||!viewport.current)return;const node=viewport.current;const observer=new ResizeObserver(()=>setWidth(node.clientWidth));observer.observe(node);setWidth(node.clientWidth);return()=>observer.disconnect();},[open]);
  useEffect(()=>{
   if(!open||status!=='ready')return;const abort=new AbortController();
-  async function check(){if(document.visibilityState!=='visible')return;try{const response=await fetch(`/api/documents/${documentId}`,{cache:'no-store',signal:abort.signal});const data=await response.json();if(!response.ok||data.viewerId!==viewerId||data.version!==metadata?.version){clear();void loadingTask.current?.destroy();pdf.current=null;setStatus('error');setError('Je toegang, account of document is gewijzigd. Vernieuw de pagina.');}}catch{/* A temporary network failure is retried on the next explicit open. */}}
+  async function check(){if(document.visibilityState!=='visible')return;try{const response=await fetch(`/api/documents/${documentId}`,{cache:'no-store',signal:abort.signal});const data=await response.json();if(!response.ok||data.viewerId!==viewerId||data.version!==metadata?.version){clear();void loadingTask.current?.destroy();pdf.current=null;setStatus('error');setError('Je toegang, account of document is gewijzigd. Vernieuw de pagina.');}}catch(error){if(!abort.signal.aborted)logError('pdf.viewer.recheck_failed',error,{documentId,viewerId});}}
   window.addEventListener('focus',check);document.addEventListener('visibilitychange',check);return()=>{abort.abort();window.removeEventListener('focus',check);document.removeEventListener('visibilitychange',check);};
  },[open,status,documentId,viewerId,metadata?.version,clear]);
  useEffect(()=>{
   if(!open||status!=='ready'||mode!=='canvas')return;let cancelled=false;clear();setRendering(true);
-  chain.current=chain.current.catch(()=>{}).then(async()=>{
+  chain.current=chain.current.catch(error=>{logError('pdf.viewer.previous_render_failed',error,{documentId,viewerId});}).then(async()=>{
    const pdfDoc=pdf.current;if(cancelled||!pdfDoc)return;
    for(let n=Math.max(1,current-1);n<=Math.min(pdfDoc.numPages,current+1);n++){
     const page=await pdfDoc.getPage(n);if(cancelled||!pdf.current){page.cleanup();return;}const host=slots.current[n-1];if(!host)return;
@@ -50,9 +51,9 @@ export function ProtectedPdfViewer({documentId,viewerId,label='Open document',ha
     const task=page.render({canvas,viewport:box,transform:ratio===1?undefined:[ratio,0,0,ratio,0,0],annotationMode:0});tasks.current.add(task);try{await task.promise;}finally{tasks.current.delete(task);page.cleanup();}
    }
    if(!cancelled)setRendering(false);
-  }).catch(reason=>{if(!cancelled&&reason?.name!=='RenderingCancelledException'){setError('Deze pagina kon niet worden weergegeven. Probeer opnieuw of vraag de beheerder om herstel.');setStatus('error');}});
+  }).catch(reason=>{if(!cancelled&&reason?.name!=='RenderingCancelledException'){logError('pdf.viewer.render_failed',reason,{documentId,viewerId});setError('Deze pagina kon niet worden weergegeven. Probeer opnieuw of vraag de beheerder om herstel.');setStatus('error');}});
   return()=>{cancelled=true;clear();};
- },[open,status,mode,current,width,zoom,sizes,clear]);
+ },[open,status,mode,current,width,zoom,sizes,clear,documentId,viewerId]);
  useEffect(()=>setPageInput(String(current)),[current]);
  function go(page:number){const next=Math.max(1,Math.min(sizes.length,page));setCurrent(next);setPageInput(String(next));slots.current[next-1]?.scrollIntoView({block:'start'});}
  function rescale(value:number){setZoom(Math.max(.5,Math.min(2,value)));requestAnimationFrame(()=>slots.current[current-1]?.scrollIntoView({block:'start'}));}

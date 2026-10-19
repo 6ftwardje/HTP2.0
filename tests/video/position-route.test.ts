@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';import test from 'node:test';import{readFileSync}from'node:fs';import{runInNewContext}from'node:vm';import ts from'typescript';import*as policy from'../../lib/video-position';
 function route({signedIn=true,error=null,result={accepted:true,revision:1}}:{signedIn?:boolean;error?:{code:string;message?:string}|null;result?:Record<string,unknown>}={}){
- const calls:any[]=[];const exports:any={};const dependencies:Record<string,unknown>={'next/server':{NextResponse:{json:(data:unknown,options:ResponseInit)=>new Response(JSON.stringify(data),options)}},'@/lib/students':{ensureCurrentStudent:async()=>({student:signedIn?{id:'owner'}:null})},'@/lib/video-position':policy,'@/lib/supabase/server':{createClient:async()=>({rpc:async(name:string,args:unknown)=>{calls.push({name,args});return{data:result,error};}})}};
+ const calls:any[]=[],logs:any[]=[];const exports:any={};const dependencies:Record<string,unknown>={'@/lib/logger':{logError:(...args:unknown[])=>logs.push(args)},'next/server':{NextResponse:{json:(data:unknown,options:ResponseInit)=>new Response(JSON.stringify(data),options)}},'@/lib/students':{ensureCurrentStudent:async()=>({student:signedIn?{id:'owner'}:null})},'@/lib/video-position':policy,'@/lib/supabase/server':{createClient:async()=>({rpc:async(name:string,args:unknown)=>{calls.push({name,args});return{data:result,error};}})}};
  const code=ts.transpileModule(readFileSync('app/api/video-position/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
- runInNewContext(code,{exports,URL,JSON,Number,require:(name:string)=>{assert.ok(name in dependencies,name);return dependencies[name];}});return{exports,calls};
+ runInNewContext(code,{exports,URL,JSON,Number,require:(name:string)=>{assert.ok(name in dependencies,name);return dependencies[name];}});return{exports,calls,logs};
 }
 const body={kind:'update',id:42,viewerId:'owner',videoVersion:'mux:FixedPlayback',revision:0,sessionId:'f4000000-0000-4000-8000-000000000001',sequence:1,positionSeconds:30,durationSeconds:100};
 const request=(value:unknown=body,origin='http://localhost')=>new Request('http://localhost/api/video-position',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(value)});
@@ -13,7 +13,7 @@ test('the write forwards the signed-in owner and exact CAS/session/version value
  const r=route();const response=await r.exports.POST(request());assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'private, no-store, max-age=0');assert.equal(r.calls[0].name,'save_video_position');assert.equal(r.calls[0].args.p_viewer_id,'owner');assert.equal(r.calls[0].args.p_expected_revision,0);assert.equal(r.calls[0].args.p_client_sequence,1);
 });
 test('conflict, revoked access, changed media and unavailable storage remain recoverable without exposing SQL errors',async()=>{
- for(const [code,status]of[['42501',403],['22023',422],['42P01',503]]as const){const r=route({error:{code,message:'private SQL detail'}});const response=await r.exports.POST(request());assert.equal(response.status,status);assert.ok(!(await response.text()).includes('private SQL detail'));}
+ for(const [code,status]of[['42501',403],['22023',422],['42P01',503]]as const){const r=route({error:{code,message:'private SQL detail'}});const response=await r.exports.POST(request());assert.equal(response.status,status);assert.ok(!(await response.text()).includes('private SQL detail'));assert.equal(r.logs[0][0],'market.video_position.failed');assert.equal(r.logs[0][1].code,code);assert.equal(r.logs[0][2].contentId,42);}
  const r=route({result:{accepted:false,conflict:true,revision:3}});assert.equal((await r.exports.POST(request())).status,409);
 });
 test('read requires a valid parent and authentication and returns only the guarded RPC result',async()=>{

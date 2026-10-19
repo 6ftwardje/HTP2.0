@@ -2,6 +2,9 @@
   command = "npm run build"
   publish = ".next"
 
+[context.production]
+  command = "npm run verify:market-schema && npm run build"
+
 [build.environment]
   NEXT_PUBLIC_SITE_URL = "https://hettradeplatform.be"
   # Next.js/Netlify can inline public env values and middleware metadata into

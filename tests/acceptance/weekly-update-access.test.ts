@@ -35,6 +35,7 @@ const sharedDependencies: Record<string, unknown> = {
   "@/lib/market-chapters": marketChapters,
   "@/lib/market-update-editing": marketEditing,
   "@/lib/supabase/service": {},
+  "@/lib/logger": { logError: () => {} },
 };
 
 // Execute the real server modules with synthetic auth, data and provider
@@ -68,6 +69,7 @@ function billing(paid: boolean) {
   const loadedModule = loadModule("lib/billing.ts", {
     "@/lib/supabase/server": {},
     "@/lib/supabase/service": {},
+  "@/lib/logger": { logError: () => {} },
     "@/lib/billing-notifications": {},
     "@/lib/stripe": {},
   }, { PAID_PRODUCTS_ENABLED: paid ? "1" : "0" });
@@ -359,3 +361,24 @@ for (const path of [
     assert.notEqual(result.type, Paywall);
   });
 }
+
+
+test("detail query errors are logged and thrown instead of masquerading as missing content or an access gate", async () => {
+  const original = {code:"PGRST202",message:"Synthetic query failure"};
+  let error: typeof original | null = original;
+  const logs: unknown[][] = [];
+  const query: any = {select:()=>query,eq:()=>query,maybeSingle:async()=>({data:null,error})};
+  const queries = loadModule("lib/weekly-updates.ts", {
+    "@/lib/supabase/server": {createClient:async()=>({from:()=>query})},
+    "@/lib/supabase/service": {createServiceClient:()=>({from:()=>query})},
+    "@/lib/billing": {paidProductsEnabled:()=>true},
+    "@/lib/transcription/public-enrichment": {},
+    "@/lib/logger": {logError:(...args:unknown[])=>logs.push(args)},
+  });
+  await assert.rejects(queries.getPublishedWeeklyUpdateBySlug("example"), (failure: any)=>failure.cause===original);
+  assert.equal(logs[0][0],"market.detail.query_failed"); assert.equal(logs[0][1],original);
+  assert.equal((logs[0][2] as {slug:string}).slug,"example");
+  error=null;
+  assert.equal(await queries.getPublishedWeeklyUpdateBySlug("does-not-exist"),null);
+  assert.equal(logs.length,1);
+});

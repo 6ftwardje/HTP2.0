@@ -1,3 +1,4 @@
+import { logError } from "@/lib/logger";
 import { createClient } from "@/lib/supabase/server";
 import type { FeedUpdate } from "@/lib/market-feed";
 import { marketUpdateAuthorName } from "@/lib/market-update-author";
@@ -16,7 +17,8 @@ export async function getMarketFeedAuthors(updates: readonly FeedUpdate[]): Prom
   }
   const authors: FeedAuthors = {};
   await Promise.all([...groups.values()].map(async (group) => {
-    const { data } = await db.rpc("market_post_author", { p_post_id: group[0].id });
+    const { data, error } = await db.rpc("market_post_author", { p_post_id: group[0].id });
+    if (error) logError("market.feed_author.rpc_failed", error, { postIds: group.map((update) => update.id) });
     const author = data?.[0] as FeedAuthor | undefined;
     for (const update of group) authors[update.id] = {
       name: (update.content_format !== "video" || update.content_kind === "article") && update.published_by_display_name?.trim() || author?.name || marketUpdateAuthorName(update),

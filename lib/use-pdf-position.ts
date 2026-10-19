@@ -1,4 +1,5 @@
 "use client";
+import {logError} from "@/lib/logger";
 import {useEffect,useRef,useState} from 'react';
 type Position={viewerId:string;version:string;page:number;revision:number;conflict?:boolean};
 type Body={viewerId:string;version:string;page:number;revision:number;sessionId:string;sequence:number};
@@ -17,14 +18,14 @@ export function usePdfPosition({documentId,viewerId,version,active,page,onRestor
    if(!r.ok){if([401,403,409,400].includes(r.status)){s.blocked=true;s.retry=null;feedback(s,'fatal',data.error??'Je toegang of het document is gewijzigd. Open opnieuw.');return;}throw Error('network');}
    if(data.viewerId!==s.viewerId||data.version!==s.version)throw Error('identity');
    s.revision=data.revision;s.saved=data.page;s.retry=null;feedback(s,'idle','');
-  }catch{s.blocked=true;s.retry=body;feedback(s,'error','Je leespositie is niet bevestigd opgeslagen. Controleer je verbinding en probeer opnieuw.');}
+  }catch(error){logError('pdf.position.save_failed',error,{documentId:s.id,viewerId:s.viewerId,version:s.version});s.blocked=true;s.retry=body;feedback(s,'error','Je leespositie is niet bevestigd opgeslagen. Controleer je verbinding en probeer opnieuw.');}
   finally{s.busy=false;if(s.loaded&&!s.blocked&&s.page!==s.saved)void send(s);}
  }
  async function load(s:Session,signal?:AbortSignal){
   const openedPage=s.page;s.loaded=false;s.blocked=true;feedback(s,'loading','Leespositie laden…');
   try{const r=await fetch(`/api/documents/${s.id}/position?version=${s.version}`,{cache:'no-store',signal}),data=await r.json();if(!r.ok||data.viewerId!==s.viewerId||data.version!==s.version)throw Error('load');if(session.current!==s)return;
    const target=s.page!==openedPage?s.page:data.page;s.revision=data.revision;s.saved=data.page;s.page=target;s.retry=null;s.conflict=null;s.loaded=true;s.blocked=false;restore.current(target);feedback(s,'idle',target>1?`Hervat op pagina ${target}.`:'');
-  }catch{if(!signal?.aborted)feedback(s,'error','De leespositie kon niet worden geladen. Herlaad de positie om opslaan te activeren.');}
+  }catch(error){if(!signal?.aborted){logError('pdf.position.load_failed',error,{documentId:s.id,viewerId:s.viewerId,version:s.version});feedback(s,'error','De leespositie kon niet worden geladen. Herlaad de positie om opslaan te activeren.');}}
  }
  useEffect(()=>{
   if(!active||!version){setState('idle');setMessage('');return;}

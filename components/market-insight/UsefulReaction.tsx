@@ -1,5 +1,6 @@
 "use client";
 
+import { logError } from "@/lib/logger";
 import { useRef, useState } from "react";
 import { setMarketPostReaction } from "@/app/actions/market-post-reactions";
 
@@ -15,7 +16,7 @@ export function UsefulReaction({ postId, initial }: { postId: number; initial: {
       const result = await setMarketPostReaction(postId, !state.active);
       if (result.error || !result.state) throw new Error(result.error);
       setState(result.state);
-    } catch { setError("Je reactie kon niet worden opgeslagen. Probeer opnieuw."); }
+    } catch (error) { logError("market.reaction.client_failed", error, { postId }); setError("Je reactie kon niet worden opgeslagen. Probeer opnieuw."); }
     finally { inFlight.current = false; setBusy(false); }
   }
   return <div>
