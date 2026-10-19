@@ -6,6 +6,7 @@ function serializeError(error: unknown, depth = 0): Record<string, unknown> {
       name: error.name,
       message: error.message,
       stack: error.stack,
+      ...Object.fromEntries(["code", "details", "hint"].filter((key) => key in error).map((key) => [key, (error as unknown as Record<string, unknown>)[key]])),
       ...("digest" in error ? { digest: error.digest } : {}),
       ...(error.cause && depth < 4 ? { cause: serializeError(error.cause, depth + 1) } : {}),
     };

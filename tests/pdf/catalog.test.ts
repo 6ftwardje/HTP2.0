@@ -46,6 +46,8 @@ test("thrown transport failures and nested causes retain diagnostic context", as
   logError("market.detail.render_failed",boundary,{pathname:"/market-analysis/example"});
   const entry=JSON.parse(output.mock.calls[1].arguments[0]);
   assert.equal(entry.error.cause.code,"PGRST202");assert.equal(entry.error.digest,"418920492");
+  logError("extended.error",Object.assign(new Error("Missing function"),{code:"PGRST202",details:"Schema cache"}));
+  assert.equal(JSON.parse(output.mock.calls[2].arguments[0]).error.code,"PGRST202");
   const cyclic=new Error("Cycle");cyclic.cause=cyclic;
   assert.doesNotThrow(()=>logError("cycle",cyclic));
 });
