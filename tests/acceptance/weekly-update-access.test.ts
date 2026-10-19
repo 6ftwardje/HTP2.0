@@ -214,7 +214,12 @@ for (const path of [
     test(`${path}: restricted video never issues tokens or reads enrichment (billing=${paid})`, async () => {
       const { render, calls } = detailPage(path, { paid, update: videoFixture("subscription") });
       if (paid) assert.equal((await render()).type, Paywall);
-      else await assert.rejects(render, (error) => error === NOT_FOUND);
+      else {
+        const result = await render();
+        assert.equal(result.type, "section");
+        assert.equal(result.props["aria-label"], "Toegang nodig");
+        assert.ok(!JSON.stringify(result).includes(videoFixture("subscription").title), "denial discloses no protected title");
+      }
       assert.equal(calls.tokens, 0);
       assert.equal(calls.enrichment, 0);
       assert.equal(calls.following, 0);

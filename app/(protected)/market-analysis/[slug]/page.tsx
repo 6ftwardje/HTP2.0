@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {visibleDocuments,withUpdateDocuments} from "@/lib/pdf/catalog";
 import {PdfAttachments} from "@/components/PdfAttachments";
 import { MarketFollowing } from "@/components/market-insight/MarketFollowing";
@@ -34,7 +35,14 @@ export default async function MarketAnalysisDetailPage({ params, searchParams }:
     (!update && !hasSubscriberAccess) ||
     (update && !canStudentAccessWeeklyUpdate(update.access_tier, student, hasSubscriberAccess))
   ) {
-    if (!paidProductsEnabled()) notFound();
+    if (!paidProductsEnabled()) {
+      if (!update) notFound();
+      return <section className="cb-panel mx-auto max-w-2xl p-7 sm:p-10" aria-label="Toegang nodig">
+        <h1 className="cb-h1">Voor dit marktinzicht heb je toegang nodig</h1>
+        <p className="cb-body mt-4">Je huidige account heeft geen toegang tot dit marktinzicht. Bekijk je account of neem contact op met het team als je toegang verwacht.</p>
+        <div className="mt-6 flex flex-wrap gap-3"><Link href="/market-analysis" className="cb-btn cb-btn-secondary">Alle marktinzichten</Link><Link href="/account" className="cb-btn cb-btn-secondary">Bekijk je account</Link></div>
+      </section>;
+    }
     return <SubscriptionPaywall overview={billingOverview} title="Ontgrendel deze analyse" />;
   }
   if (!update) notFound();
