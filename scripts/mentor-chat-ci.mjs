@@ -158,7 +158,7 @@ async function app() {
 }
 
 function sql(file) {
-  assert.ok(["tests/sql/mentor-chat-privacy-routing.sql", "tests/sql/mentor-chat-email.sql", "tests/sql/mentor-chat-profiles-presence.sql"].includes(file), "Only rollback chat SQL suites are allowed.");
+  assert.ok(["tests/sql/mentor-chat-privacy-routing.sql", "tests/sql/mentor-chat-email.sql", "tests/sql/mentor-chat-profiles-presence.sql", "tests/sql/q2-required-profile.sql"].includes(file), "Only rollback chat SQL suites are allowed.");
   const env = readCredentials();
   const result = spawnSync("psql", ["-v", "ON_ERROR_STOP=1", "-f", path.join(root, file)], { cwd: root, stdio: "inherit", env: localPostgresEnvironment(env), timeout: 120_000 });
   assert.equal(result.status, 0, `Rollback SQL suite failed: ${file}`);
