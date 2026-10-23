@@ -1,3 +1,4 @@
+import { getAuthOrigin } from "@/lib/auth-origin";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { logDuration } from "@/lib/performance";
@@ -76,7 +77,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (protectedPath && !hasAuthCookies) {
-    const url = request.nextUrl.clone();
+    const url = new URL(request.nextUrl.pathname + request.nextUrl.search, getAuthOrigin(request.url));
     url.pathname = "/";
     url.searchParams.set("redirectedFrom", pathname);
     const response = NextResponse.redirect(url);
@@ -115,14 +116,14 @@ export async function updateSession(request: NextRequest) {
   });
 
   if (pathname === "/" && user) {
-    const url = request.nextUrl.clone();
+    const url = new URL(request.nextUrl.pathname + request.nextUrl.search, getAuthOrigin(request.url));
     url.pathname = "/dashboard";
     url.search = "";
     return NextResponse.redirect(url);
   }
 
   if (protectedPath && !user) {
-    const url = request.nextUrl.clone();
+    const url = new URL(request.nextUrl.pathname + request.nextUrl.search, getAuthOrigin(request.url));
     url.pathname = "/";
     url.searchParams.set("redirectedFrom", pathname);
     const response = NextResponse.redirect(url);

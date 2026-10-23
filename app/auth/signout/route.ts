@@ -1,9 +1,9 @@
+import { getAuthOrigin } from "@/lib/auth-origin";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  const url = new URL(request.url);
-  return NextResponse.redirect(new URL("/", url.origin), { status: 302 });
+  return NextResponse.redirect(new URL("/", getAuthOrigin(request.url)), { status: 302 });
 }

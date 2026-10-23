@@ -232,3 +232,33 @@ test("protected routes retain the existing production login entry point", () => 
   assert.equal(location(response).searchParams.get("redirectedFrom"), "/modules");
   assert.equal((await updateSession(new NextRequest(`${ORIGIN}/`))).headers.get("location"), null);
 }, false));
+
+
+test("Netlify runtime aliases keep confirmation and session redirects on the public domain", async (context) => {
+  await withAuthService(async () => {
+    const previousSite = process.env.NEXT_PUBLIC_SITE_URL;
+    const canonical = "https://platform.example.test";
+    const internal = "https://main--sample.netlify.app";
+    process.env.NEXT_PUBLIC_SITE_URL = canonical;
+    context.mock.method(globalThis, "fetch", async (input: RequestInfo | URL) =>
+      Response.json(String(input).endsWith("/user") ? session().user : session())
+    );
+    try {
+      const opened = await openLink(new NextRequest(`${internal}/auth/confirm?type=signup&token_hash=local-token`));
+      assert.equal(location(opened).origin, canonical);
+      const confirmed = await confirm(new NextRequest(`${internal}/auth/confirm`, {
+        method: "POST", headers: { origin: canonical },
+        body: new URLSearchParams({ type: "signup", token_hash: "local-token" }),
+      }));
+      assert.equal(location(confirmed).href, `${canonical}/dashboard`);
+      const cookie = confirmed.cookies.getAll().map(({ name, value }) => `${name}=${value}`).join("; ");
+      const resumed = await updateSession(new NextRequest(`${internal}/`, { headers: { cookie } }));
+      assert.equal(location(resumed).href, `${canonical}/dashboard`);
+      const guest = await updateSession(new NextRequest(`${internal}/modules`));
+      assert.equal(location(guest).origin, canonical);
+    } finally {
+      if (previousSite === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+      else process.env.NEXT_PUBLIC_SITE_URL = previousSite;
+    }
+  });
+});
