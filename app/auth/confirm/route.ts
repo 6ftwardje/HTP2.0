@@ -1,3 +1,4 @@
+import { getAuthOrigin } from "@/lib/auth-origin";
 import { createHash } from "node:crypto";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
@@ -14,7 +15,8 @@ function redirect(url: URL | string) {
 // Mail scanners and browser prefetches may follow every GET redirect.
 // Neither GET nor HEAD may verify or consume a one-time authentication token.
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = getAuthOrigin(request.url);
   const type = getEmailOtpType(searchParams.get("type"));
   const tokenHash = searchParams.get("token_hash");
   const next = getSafeAuthNext(searchParams.get("next"));
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { origin } = new URL(request.url);
+  const origin = getAuthOrigin(request.url);
   // Referrer-Policy: no-referrer makes native form POSTs send Origin: null.
   // Browser-controlled Fetch Metadata still identifies an actual same-origin
   // navigation. Cross-site/same-site forms must never use this fallback.
