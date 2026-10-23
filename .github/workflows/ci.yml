@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, codex/staging]
 
 permissions:
   contents: read
@@ -23,6 +23,8 @@ jobs:
         run: node scripts/sync-transcription-backlog.mjs --check
       - name: Tests
         run: npm test --if-present
+      - name: Release and environment guards
+        run: npm run test:release
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Lint

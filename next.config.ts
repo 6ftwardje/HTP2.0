@@ -33,7 +33,14 @@ const supabaseImageHostnames = Array.from(
 );
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return process.env.HTP_ENVIRONMENT === "staging" ? [{ source: "/:path*", headers: [
+      { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+      { key: "Cache-Control", value: "no-store" },
+    ] }] : [];
+  },
   env: {
+    HTP_RELEASE_SHA: process.env.HTP_RELEASE_SHA ?? process.env.COMMIT_REF ?? "unknown",
     PROJECT_SPEED_DASHBOARD_HERO_PRIORITY: dashboardHeroPriorityEnabled
       ? "1"
       : "0",

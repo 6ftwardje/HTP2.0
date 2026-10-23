@@ -1,0 +1,58 @@
+name: Staging deployment
+on:
+  push:
+    branches: [codex/staging]
+permissions:
+  contents: read
+concurrency:
+  group: htp-staging-deployment
+  cancel-in-progress: false
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment:
+      name: staging
+      url: https://htp-staging.netlify.app
+    env:
+      HTP_ENVIRONMENT: staging
+      SITE_ID: d798281b-ff2a-48bb-9ecf-3b9dea2a7c21
+      HTP_STAGING_SUPABASE_PROJECT_REF: pxxpciwnvfkxnkpttajp
+      NEXT_PUBLIC_SITE_URL: https://htp-staging.netlify.app
+      NEXT_PUBLIC_SUPABASE_URL: https://pxxpciwnvfkxnkpttajp.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      HTP_STAGING_TEST_PASSWORD: ${{ secrets.HTP_STAGING_TEST_PASSWORD }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      HTP_RELEASE_SHA: ${{ github.sha }}
+      EMAIL_MODE: disabled
+      CHAT_EMAIL_MODE: disabled
+      EMAIL_CAPTURE_ENABLED: 'false'
+      EMAIL_MARKETING_ENABLED: 'false'
+      EMAIL_PURCHASE_ENABLED: 'false'
+      EMAIL_EXPIRY_ENABLED: 'false'
+      EMAIL_MENTOR_ENABLED: 'false'
+      CHAT_MAINTENANCE_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:release
+      - run: npx tsc --noEmit --incremental false
+      - run: npm run lint
+      - name: Migrate, draft deploy, test real roles, then publish
+        run: node scripts/release/deploy.mjs --apply
+      - name: Publish acceptance receipt without credentials
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-release-receipt
+          path: .netlify/release/receipt.json
+          retention-days: 30
+          if-no-files-found: error

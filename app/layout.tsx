@@ -13,6 +13,7 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Het Trade Platform",
   description: "Leer traden via de academy van Het Trade Platform",
+  ...(process.env.HTP_ENVIRONMENT === "staging" ? { robots: { index: false, follow: false, nocache: true } } : {}),
   icons: {
     icon: "/assets/brand/logo-icon.png",
     shortcut: "/assets/brand/logo-icon.png",
@@ -31,6 +32,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className={`${manrope.variable} font-sans antialiased`}>
+        {process.env.HTP_ENVIRONMENT === "staging" && (
+          <aside aria-label="Stagingomgeving" data-testid="staging-label" className="pointer-events-none fixed bottom-3 left-3 z-[100] rounded-md border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm">
+            STAGING · uitsluitend testgegevens
+          </aside>
+        )}
         <Suspense fallback={null}>
           <TopLoadingBar />
         </Suspense>
