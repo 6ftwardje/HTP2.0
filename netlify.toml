@@ -11,3 +11,12 @@
   # generated build output. Keep secrets scanning enabled, but omit these known
   # deployment keys that Netlify reported as expected build-time matches.
   SECRETS_SCAN_OMIT_KEYS = "MUX_TOKEN_ID,MUX_TOKEN_SECRET,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_SUPABASE_URL,linked_ref"
+
+# Only the dedicated staging branch uses this build and public origin.
+# Runtime values are configured on the separate staging site as well.
+[context."codex/staging"]
+  command = "node scripts/staging-build.mjs"
+
+[context."codex/staging".environment]
+  HTP_ENVIRONMENT = "staging"
+  NEXT_PUBLIC_SITE_URL = "https://htp-staging.netlify.app"

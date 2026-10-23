@@ -1,50 +1,26 @@
-import fs from "node:fs";
+import { assertStagingSupabaseTarget, stagingAdminHeaders } from "./lib/staging-target.mjs";
 
-const LIVE_PROJECT_REF = "trogwrgxxhsvixzglzpn";
-
-function loadLocalEnv() {
-  if (!fs.existsSync(".env.local")) return {};
-
-  return Object.fromEntries(
-    fs
-      .readFileSync(".env.local", "utf8")
-      .split(/\r?\n/)
-      .filter((line) => line && !line.startsWith("#") && line.includes("="))
-      .map((line) => {
-        const separator = line.indexOf("=");
-        return [line.slice(0, separator), line.slice(separator + 1)];
-      })
-  );
-}
-
-const env = { ...loadLocalEnv(), ...process.env };
-const url = env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!url || !serviceRoleKey) {
-  throw new Error(
-    "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required."
-  );
-}
-
-const projectRef = new URL(url).hostname.split(".")[0];
-const headers = {
-  apikey: serviceRoleKey,
-  Authorization: `Bearer ${serviceRoleKey}`,
-};
+// Never implicitly load .env.local: it can contain production credentials.
+// For local staging use node --env-file=.env.staging.local <this-script>.
+const env = process.env;
+const { url, projectRef } = assertStagingSupabaseTarget({
+  url: env.NEXT_PUBLIC_SUPABASE_URL,
+  expectedProjectRef: env.HTP_STAGING_SUPABASE_PROJECT_REF,
+});
+const headers = stagingAdminHeaders(env.SUPABASE_SERVICE_ROLE_KEY, projectRef);
 
 async function getRows(table, query = "select=*") {
-  const response = await fetch(`${url}/rest/v1/${table}?${query}`, { headers });
+  const response = await fetch(`${url}/rest/v1/${table}?${query}`, { headers, redirect: "error", signal: AbortSignal.timeout(15000) });
   if (!response.ok) {
-    throw new Error(`${table}: ${response.status} ${await response.text()}`);
+    throw new Error(`${table}: HTTP ${response.status}`);
   }
   return response.json();
 }
 
 async function getApiSchema() {
-  const response = await fetch(`${url}/rest/v1/`, { headers });
+  const response = await fetch(`${url}/rest/v1/`, { headers, redirect: "error", signal: AbortSignal.timeout(15000) });
   if (!response.ok) {
-    throw new Error(`schema: ${response.status} ${await response.text()}`);
+    throw new Error(`schema: HTTP ${response.status}`);
   }
   return response.json();
 }
@@ -52,10 +28,12 @@ async function getApiSchema() {
 async function getCount(table) {
   const response = await fetch(`${url}/rest/v1/${table}?select=*&limit=0`, {
     headers: { ...headers, Prefer: "count=exact", Range: "0-0" },
+    redirect: "error",
+    signal: AbortSignal.timeout(15000),
   });
   if (response.status === 404) return "missing";
   if (!response.ok) {
-    throw new Error(`${table}: ${response.status} ${await response.text()}`);
+    throw new Error(`${table}: HTTP ${response.status}`);
   }
   return response.headers.get("content-range")?.split("/")[1] ?? "?";
 }
@@ -71,11 +49,7 @@ function findDuplicateKeys(rows, keyForRow) {
 }
 
 console.log(`Supabase project-ref: ${projectRef}`);
-console.log(
-  projectRef === LIVE_PROJECT_REF
-    ? "Target status: LIVE LEGACY PROJECT - do not run clone migrations here."
-    : "Target status: non-live target."
-);
+console.log("Target status: explicitly verified staging target (read-only check).");
 
 const schema = await getApiSchema();
 const definitions = schema.definitions ?? {};

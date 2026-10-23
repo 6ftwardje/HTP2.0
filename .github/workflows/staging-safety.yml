@@ -1,0 +1,28 @@
+name: Staging target safety
+
+on:
+  push:
+    branches: [codex/staging]
+  pull_request:
+    paths:
+      - scripts/lib/staging-target.mjs
+      - scripts/staging-build.mjs
+      - scripts/verify-supabase-target.mjs
+      - tests/staging/**
+      - netlify/staging-target.json
+      - netlify.toml
+      - .github/workflows/staging-safety.yml
+
+permissions:
+  contents: read
+
+jobs:
+  target-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/staging/*.test.mjs
