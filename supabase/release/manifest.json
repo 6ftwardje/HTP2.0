@@ -3,7 +3,7 @@
   "sourceCommit": "4f07cf37b7d97cbd67ddacadc51cc8488c802a85",
   "capturedAt": "2026-10-23",
   "file": "20261023000000-production-schema.sql",
-  "sha256": "cfed14911905c2c3c505690e4cbd792c65236ea4b33a7e92e4bb169f3d0564b8",
+  "sha256": "131fe618b53024afae6d6b04cf26ca2235fba7863043994645ac978c608262d2",
   "extrasFile": "20261023000000-auth-storage.sql",
   "extrasSha256": "d7d9a8854894e3b0700e473dc47c8aa3b70ee149af5bd8823b0fd5c68a1f22ca",
   "schemaFingerprint": "15b771a8810c763c953a1b6dc98df91f8e5af0db18d733b7e5123b774a9dc8df",
