@@ -1,6 +1,6 @@
 # Bericht voor Dylan
 
-Hey Dylan, staging en de releaseflow staan klaar. In de repo staat nu een `developer-kit` met setup, werkafspraken, AI-startprompt en een template per taak.
+Hey Dylan, staging en de releaseflow staan klaar. Na review en merge van de startkit-PR staat op `codex/staging` ook een `developer-kit` met setup, werkafspraken, AI-startprompt en een template per taak.
 
 Clone `https://github.com/6ftwardje/HTP2.0` met branch `codex/staging`, open de volledige repo in je AI-tool en begin bij `developer-kit/README.md`. Gebruik daarna de prompt uit `developer-kit/AI_START.md`. Ik deel stagingkeys en testlogins apart via een wachtwoordmanager.
 

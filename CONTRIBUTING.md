@@ -68,7 +68,7 @@ Teamafspraak: de andere ontwikkelaar leest diff en testbewijs vóór samenvoegen
 
 Merge na vervulde criteria, review, actuele base en groene checks. Feature-PR's mogen met squash naar staging; productie-release-PR's vereisen een merge commit. Wacht op een geslaagde **`Staging deployment`** en controleer de feature op staging. Groene PR-checks alleen bewijzen geen geslaagde uitrol.
 
-Leg staginglink, broncommit en bewijs vast in PR/issue. `Closes #...` is verplicht, maar GitHub sluit het issue normaal pas wanneer de code defaultbranch `main` bereikt. Onderscheid “getest op staging” en “live op productie”.
+Leg staginglink, broncommit en bewijs vast in PR/issue. `Closes #...` blijft verplicht voor onze policy, maar GitHub negeert zulke PR-bodykeywords wanneer de doelbranch staging is. Vertrouw dus niet op automatisch sluiten: controleer de gerelateerde issues na de productierelease en sluit ze dan zo nodig handmatig. Onderscheid “getest op staging” en “live op productie”. Zie [GitHubs uitleg over issuelinks](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue).
 
 ## Productie en herstel
 
