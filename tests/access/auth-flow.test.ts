@@ -163,6 +163,31 @@ test("untrusted or missing form origins are rejected before consuming a token", 
   }
 });
 
+test("native no-referrer form posts use same-origin Fetch Metadata when Origin is null", async (context) => {
+  await withAuthService(async () => {
+    context.mock.method(globalThis, "fetch", async () => Response.json(session()));
+    for (const origin of ["null", ""]) {
+      const request = submit({}, "", origin);
+      request.headers.set("sec-fetch-site", "same-origin");
+      const response = await confirm(request);
+      assert.equal(location(response).pathname, "/dashboard");
+      assert.ok(response.cookies.getAll().some(cookie => cookie.name.startsWith("sb-") && cookie.value));
+    }
+  });
+});
+
+test("Fetch Metadata never authorizes cross-site forms or an explicit foreign Origin", async (context) => {
+  context.mock.method(globalThis, "fetch", async () => { assert.fail("untrusted forms must not contact Auth"); });
+  for (const site of ["cross-site", "same-site", "none"]) {
+    const request = submit({}, "", "null");
+    request.headers.set("sec-fetch-site", site);
+    assert.equal((await confirm(request)).status, 403);
+  }
+  const forged = submit({}, "", "https://attacker.invalid");
+  forged.headers.set("sec-fetch-site", "same-origin");
+  assert.equal((await confirm(forged)).status, 403);
+});
+
 test("reopening a completed link resumes only the same authenticated account", async (context) => {
   await withAuthService(async () => {
     let verificationRequests = 0;

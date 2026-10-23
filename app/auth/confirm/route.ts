@@ -27,8 +27,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const { origin } = new URL(request.url);
-  // A form submitted by another website must not change the signed-in account.
-  if (request.headers.get("origin") !== origin) {
+  // Referrer-Policy: no-referrer makes native form POSTs send Origin: null.
+  // Browser-controlled Fetch Metadata still identifies an actual same-origin
+  // navigation. Cross-site/same-site forms must never use this fallback.
+  const formOrigin = request.headers.get("origin");
+  const sameOriginForm = (formOrigin === null || formOrigin === "null" || formOrigin === "") &&
+    request.headers.get("sec-fetch-site") === "same-origin";
+  if (formOrigin !== origin && !sameOriginForm) {
     return new NextResponse("Open de link uit je e-mail opnieuw en bevestig op deze website.", {
       status: 403, headers: AUTH_LINK_HEADERS,
     });
