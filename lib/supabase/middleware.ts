@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { logDuration } from "@/lib/performance";
+import { AUTH_LINK_HEADERS } from "@/lib/auth-confirmation";
 
 const SUPABASE_COOKIE_PREFIX = "sb-";
 const PROTECTED_PREFIXES = [
@@ -54,6 +55,12 @@ export async function updateSession(request: NextRequest) {
     request,
   });
   const pathname = request.nextUrl.pathname;
+
+  // Auth handlers own cookies. Do not refresh or cache bearer-link responses here.
+  if (pathname.startsWith("/auth/")) {
+    for (const [name, value] of Object.entries(AUTH_LINK_HEADERS)) supabaseResponse.headers.set(name, value);
+    return supabaseResponse;
+  }
 
   // In test environment mogen we niet terugvallen naar `/`.
   // Zo kunnen we de UI/flow testen zonder echte Supabase sessies.
