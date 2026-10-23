@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { writeFileSync,readFileSync,mkdirSync } from 'node:fs';
-import { releaseTarget,assertSafeStagingIntegrations } from './targets.mjs';
+import { writeFileSync,readFileSync,mkdirSync,existsSync } from 'node:fs';
+import { releaseTarget,assertSafeStagingIntegrations,assertNetlifyLink } from './targets.mjs';
 import { acceptance } from './acceptance.mjs';
 import { main as database, schemaFingerprint } from './database.mjs';
 import { databaseEnvironment } from './targets.mjs';
@@ -15,6 +15,13 @@ database(env,['migrate','--apply']);database(env,['verify']);
 mkdirSync('.netlify/release',{recursive:true,mode:0o700});
 const command=env.GITHUB_ACTIONS==='true'?'npx':'netlify';
 const prefix=env.GITHUB_ACTIONS==='true'?['--yes','netlify-cli@26.2.0']:[];
+// Netlify env/build resolution still requires a local site link, even with --site.
+if(existsSync('.netlify/state.json'))assertNetlifyLink(JSON.parse(readFileSync('.netlify/state.json')),target);
+else {
+  const linked=spawnSync(command,[...prefix,'link','--id',target.siteId],{env,encoding:'utf8',timeout:120000});
+  assert.equal(linked.status,0,'Could not link the isolated checkout to its explicit deployment target.');
+  assertNetlifyLink(JSON.parse(readFileSync('.netlify/state.json')),target);
+}
 const result=spawnSync(command,[...prefix,'deploy','--site',target.siteId,'--context',target.name==='staging'?'branch:codex/staging':'production',
   '--message',`HTP ${target.name} ${env.HTP_RELEASE_SHA}`,'--json'],{
   env:{...env,BRANCH:target.branch,SITE_ID:target.siteId,COMMIT_REF:env.HTP_RELEASE_SHA,NEXT_TELEMETRY_DISABLED:'1'},encoding:'utf8',timeout:20*60*1000,maxBuffer:32*1024*1024,

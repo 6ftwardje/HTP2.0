@@ -43,6 +43,14 @@ export async function acceptance(env=process.env) {
   const access=await actors.mentor.db.rpc('get_my_chat_access');assert.ifError(access.error);assert.equal(access.data.isMentor,true);
   const unrelatedAdmin=await actors.admin.db.rpc('get_my_chat_access');assert.ifError(unrelatedAdmin.error);assert.equal(unrelatedAdmin.data.isMentor,false);
   const opened=await actors.member.db.rpc('open_chat_thread',{p_mentor_student_id:byEmail.get('mentor@staging.htp.test')});assert.ifError(opened.error);
+  const threadId=opened.data.threadId;
+  assert.ok(threadId,'Opening the chat did not return its canonical thread.');
+  const send=()=>actors.member.db.rpc('send_chat_message',{p_thread_id:threadId,p_body:'Fictieve vraag voor de stagingacceptatie.',p_client_message_id:'40000000-0000-4000-8000-000000000001',p_is_internal:false});
+  const sent=await send();assert.ifError(sent.error);const retried=await send();assert.ifError(retried.error);
+  assert.equal(sent.data.message.id,retried.data.message.id,'Retry created a duplicate chat message.');
+  const reply=await actors.mentor.db.rpc('send_chat_message',{p_thread_id:threadId,p_body:'Fictief mentorantwoord: de stagingchat werkt.',p_client_message_id:'40000000-0000-4000-8000-000000000002',p_is_internal:false});assert.ifError(reply.error);
+  for(const name of ['member2','admin']){const foreign=await actors[name].db.from('conversation_messages').select('id').eq('thread_id',threadId);
+    assert.ok(foreign.error||!foreign.data.length,`${name} read a private mentor conversation.`);}
   console.log('PASS: explicit mentor routing works and the unrelated admin is not a mentor.');
   const healthResponse=await fetch(new URL('/api/health',base),{redirect:'error',signal:AbortSignal.timeout(15000)});
   assert.equal(healthResponse.status,200);const health=await healthResponse.json();assert.equal(health.environment,'staging');

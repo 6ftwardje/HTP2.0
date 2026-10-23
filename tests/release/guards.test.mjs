@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { releaseTarget, databaseEnvironment, assertSafeStagingIntegrations, assertReleaseCandidate, TARGETS } from '../../scripts/release/targets.mjs';
+import { releaseTarget, databaseEnvironment, assertSafeStagingIntegrations, assertReleaseCandidate, assertNetlifyLink, TARGETS } from '../../scripts/release/targets.mjs';
 import { assertHistory, sha256 } from '../../scripts/release/database.mjs';
 
 const staging = { HTP_ENVIRONMENT:'staging', SITE_ID:TARGETS.staging.siteId, NEXT_PUBLIC_SITE_URL:TARGETS.staging.siteUrl,
   NEXT_PUBLIC_SUPABASE_URL:`https://${TARGETS.staging.projectRef}.supabase.co`,HTP_STAGING_SUPABASE_PROJECT_REF:TARGETS.staging.projectRef };
+test('an explicit deployment flag cannot hide a checkout linked to the other site',()=>{
+  assert.doesNotThrow(()=>assertNetlifyLink({siteId:TARGETS.staging.siteId},TARGETS.staging));
+  assert.throws(()=>assertNetlifyLink({siteId:TARGETS.production.siteId},TARGETS.staging));
+  assert.throws(()=>assertNetlifyLink({},TARGETS.staging));
+});
 test('staging mutations reject production, legacy, lookalike URLs and a wrong site before opening Postgres',()=>{
   for(const patch of [{NEXT_PUBLIC_SUPABASE_URL:'https://swohtycdqbydqrtjzwwf.supabase.co'},
     {NEXT_PUBLIC_SUPABASE_URL:'https://trogwrgxxhsvixzglzpn.supabase.co'},

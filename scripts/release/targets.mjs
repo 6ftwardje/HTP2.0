@@ -41,3 +41,7 @@ export function assertReleaseCandidate({ candidate, deployed, tested, mainIsAnce
   assert.equal(tested,candidate,'The candidate must have a successful staging acceptance receipt.');
   assert.equal(mainIsAncestor,true,'Production history must be an ancestor; synchronize staging before promotion.');
 }
+
+export function assertNetlifyLink(state,target) {
+  assert.equal(state?.siteId,target.siteId,'This checkout is linked to a different Netlify site.');
+}
