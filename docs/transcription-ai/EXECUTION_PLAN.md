@@ -61,7 +61,7 @@ S2.2 en S4.0 en bevat geen vertaalstap.
 
 ## Git-flow
 
-De verplichte flow staat in `/CONTRIBUTING.md`. Eén issue is de bron van waarheid, iedere PR sluit exact één issue, en `main` blijft deploybaar. Branch protection moet buiten Git worden geconfigureerd: vereiste CI, minimaal één approving review, Code Owner-review voor kritieke paden en squash-only merges.
+De actuele verplichte flow staat in [CONTRIBUTING.md](../../CONTRIBUTING.md): feature-PR's gaan naar staging, productiereleases via een aparte staging→main-PR en beschermde vrijgave. Dit historische transcriptieplan schrijft geen afwijkende merge- of branchbeveiliging voor.
 
 ## Backlogsynchronisatie
 

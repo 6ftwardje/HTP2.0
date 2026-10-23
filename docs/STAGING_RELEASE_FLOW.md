@@ -17,6 +17,8 @@ Een stagingoverride schakelt de bestaande ClickUp-leadtrigger uit. E-mailworkers
 
 ## Dagelijks werken
 
+Nieuwe ontwikkelaars beginnen in [developer-kit](../developer-kit/README.md). De actuele teamafspraken over taakbranches, parallelle checkouts, review, tests en releasecoördinatie staan centraal in [CONTRIBUTING.md](../CONTRIBUTING.md).
+
 1. Begin een featurebranch vanaf actuele `origin/codex/staging`. Gebruik het taakcodepatroon uit de repository, bijvoorbeeld `feat/S1.1-onderwerp` of `codex/S1.1-onderwerp`.
 2. Voeg code en eventuele **nieuwe** SQL-migraties toe. Pas een al uitgevoerde migratie nooit aan.
 3. Open een PR naar `codex/staging`, met één bestaand backlogissue en het verplichte testbewijs. PR-tests hebben uitsluitend synthetische, lokale credentials.

@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:check": "node scripts/dev/start.mjs --check",
+    "dev:safe": "node scripts/dev/start.mjs",
     "build": "next build",
     "backlog:check": "node scripts/sync-transcription-backlog.mjs --check",
     "product-board:sync": "tsx scripts/sync-product-board.ts",
@@ -12,7 +14,7 @@
     "perf:verify-boundaries": "node scripts/verify-performance-boundaries.mjs",
     "start": "next start",
     "test": "tsx --test tests/**/*.test.ts",
-    "test:release": "node --test tests/staging/*.test.mjs tests/release/*.test.mjs",
+    "test:release": "node --test tests/staging/*.test.mjs tests/release/*.test.mjs tests/dev/*.test.mjs",
     "release:verify": "node scripts/release/database.mjs verify",
     "release:plan": "node scripts/release/database.mjs plan",
     "release:acceptance": "node scripts/release/acceptance.mjs",
