@@ -3,7 +3,10 @@ import UpdatePasswordForm from "@/components/auth/UpdatePasswordForm";
 import { createClient } from "@/lib/supabase/server";
 import { BrandLogo } from "@/components/ui/Brand";
 
-export default async function UpdatePasswordPage() {
+export default async function UpdatePasswordPage({ searchParams }: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
+  const invite = (await searchParams).mode === "invite";
   const supabase = await createClient();
   const {
     data: { user },
@@ -21,13 +24,13 @@ export default async function UpdatePasswordPage() {
           logoClassName="h-auto w-[220px]"
         />
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-stone-400">
-          Account herstellen
+          {invite ? "Account activeren" : "Account herstellen"}
         </p>
         <h1 className="text-3xl font-extrabold tracking-[-0.035em] text-white">
-          Kies een nieuw wachtwoord
+          {invite ? "Kies je wachtwoord" : "Kies een nieuw wachtwoord"}
         </h1>
         <p className="mt-3 text-sm leading-6 text-stone-400">
-          Deze pagina werkt alleen via de beveiligde link uit je resetmail. Kies een nieuw wachtwoord van minimaal 8 tekens; daarna kun je direct verder in het platform.
+          {invite ? "Kies een wachtwoord van minimaal 8 tekens om je uitgenodigde account te gebruiken." : "Kies een nieuw wachtwoord van minimaal 8 tekens; daarna kun je direct verder in het platform."}
         </p>
         <UpdatePasswordForm />
       </section>

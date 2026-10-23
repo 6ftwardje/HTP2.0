@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { BrandLogo } from "@/components/ui/Brand";
+import { getSafeAuthNext } from "@/lib/auth-redirect";
 
-type AuthMode = "login" | "register" | "reset";
+type AuthMode = "login" | "register" | "reset" | "confirm";
 type FormStatus = "idle" | "loading" | "success" | "error";
 type AuthFailure = {
   status?: number;
@@ -24,19 +25,8 @@ function getEmailAuthErrorMessage(error: AuthFailure, fallback: string) {
   return fallback;
 }
 
-function getSafeRedirect(redirectedFrom: string | null) {
-  if (
-    !redirectedFrom?.startsWith("/") ||
-    redirectedFrom.startsWith("//") ||
-    redirectedFrom.includes("\\")
-  ) {
-    return "/dashboard";
-  }
-
-  return redirectedFrom;
-}
-
 function getSiteOrigin() {
+  if (["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)) return window.location.origin;
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 
   if (!configuredSiteUrl) return window.location.origin;
@@ -56,10 +46,10 @@ function getSiteOrigin() {
 
 function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFactory }) {
   const searchParams = useSearchParams();
-  const redirectedFrom = getSafeRedirect(searchParams.get("redirectedFrom"));
+  const redirectedFrom = getSafeAuthNext(searchParams.get("redirectedFrom") ?? searchParams.get("next"));
   const callbackFailed = searchParams.get("error") === "auth";
   const initialMode: AuthMode =
-    searchParams.get("mode") === "reset" ? "reset" : "login";
+    searchParams.get("mode") === "reset" ? "reset" : searchParams.get("mode") === "confirm" ? "confirm" : searchParams.get("mode") === "register" ? "register" : "login";
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [fullName, setFullName] = useState("");
@@ -69,9 +59,57 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
   const [acceptedLegalTerms, setAcceptedLegalTerms] = useState(false);
   const [status, setStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
+  const [resendSeconds, setResendSeconds] = useState(0);
+  const [confirmationRequested, setConfirmationRequested] = useState(false);
+  const submitting = useRef(false);
+  const needsPassword = mode === "login" || mode === "register";
+  const waitingForConfirmation = confirmationRequested && (mode === "register" || mode === "confirm");
+  const formLocked = status === "loading" || status === "success" || waitingForConfirmation;
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => setResendSeconds(seconds => Math.max(0, seconds - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
+
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const type = hash.get("type") ?? searchParams.get("type");
+    if (hash.has("error") || hash.has("error_code") || hash.has("error_description")) {
+      const params = new URLSearchParams({ reason: "invalid_link" });
+      if (type) params.set("flow", type);
+      window.location.replace(`/auth/error?${params}`);
+      return;
+    }
+    const accessToken = hash.get("access_token");
+    const refreshToken = hash.get("refresh_token");
+    if (!accessToken || !refreshToken) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const supabase = await getSupabaseClient();
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (cancelled) return;
+        if (error) {
+          window.location.replace("/auth/error?reason=invalid_link");
+          return;
+        }
+        window.location.replace(type === "recovery" ? "/account/update-password" : type === "invite" ? "/account/update-password?mode=invite" : redirectedFrom);
+      } catch {
+        if (!cancelled) {
+          setStatus("error");
+          setMessage("Deze beveiligde link kon niet worden geopend. Vraag een nieuwe link aan.");
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getSupabaseClient, redirectedFrom, searchParams]);
+
 
   function selectMode(nextMode: AuthMode) {
+    if (submitting.current) return;
     setMode(nextMode);
+    setConfirmationRequested(false);
     setStatus("idle");
     setMessage("");
     setPassword("");
@@ -81,11 +119,17 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
 
-    if (!trimmedEmail) return;
+    if (!trimmedEmail || submitting.current || waitingForConfirmation || (mode === "confirm" && resendSeconds > 0)) return;
 
-    if (mode !== "reset" && password.length < 8) {
+    if (mode === "register" && !fullName.trim()) {
+      setStatus("error");
+      setMessage("Vul je voor- en achternaam in.");
+      return;
+    }
+
+    if (mode === "register" && password.length < 8) {
       setStatus("error");
       setMessage("Gebruik een wachtwoord van minimaal 8 tekens.");
       return;
@@ -97,7 +141,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
       return;
     }
 
-    if (mode !== "reset" && !acceptedLegalTerms) {
+    if (needsPassword && !acceptedLegalTerms) {
       setStatus("error");
       setMessage(
         "Lees en aanvaard eerst de voorwaarden en risicowaarschuwing."
@@ -105,73 +149,127 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
       return;
     }
 
+    submitting.current = true;
     setStatus("loading");
     setMessage("");
 
-    const supabase = await getSupabaseClient();
+    try {
+      const supabase = await getSupabaseClient();
 
-    if (mode === "login") {
-      const acceptedAt = new Date().toISOString();
-      const { error } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password,
-      });
-
-      if (error) {
-        console.error("[auth.login_failed]", {
-          status: error.status,
-          code: error.code,
+      if (mode === "login") {
+        const acceptedAt = new Date().toISOString();
+        const { error } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
         });
-        setStatus("error");
-        setMessage("Inloggen lukt niet. Controleer je e-mailadres en wachtwoord.");
+
+        if (error) {
+          console.error("[auth.login_failed]", {
+            status: error.status,
+            code: error.code,
+          });
+          setStatus("error");
+          setMessage(error.code === "email_not_confirmed"
+            ? "Bevestig eerst je e-mailadres. Je kunt hieronder een nieuwe bevestigingsmail aanvragen."
+            : "Inloggen lukt niet. Controleer je e-mailadres en wachtwoord.");
+          return;
+        }
+
+        const { error: acceptanceError } = await supabase.auth.updateUser({
+          data: {
+            legal_acceptance_version: LEGAL_ACCEPTANCE_VERSION,
+            legal_acceptance_accepted_at: acceptedAt,
+            legal_acceptance_scope: LEGAL_ACCEPTANCE_SCOPE,
+            legal_acceptance_source: "login",
+          },
+        });
+
+        if (acceptanceError) {
+          console.error("[auth.legal_acceptance_save_failed]", {
+            status: acceptanceError.status,
+            code: acceptanceError.code,
+          });
+          await supabase.auth.signOut();
+          setStatus("error");
+          setMessage(
+            "Je akkoord kon niet veilig worden geregistreerd. Probeer opnieuw."
+          );
+          return;
+        }
+
+        window.location.assign(redirectedFrom);
         return;
       }
 
-      const { error: acceptanceError } = await supabase.auth.updateUser({
-        data: {
-          legal_acceptance_version: LEGAL_ACCEPTANCE_VERSION,
-          legal_acceptance_accepted_at: acceptedAt,
-          legal_acceptance_scope: LEGAL_ACCEPTANCE_SCOPE,
-          legal_acceptance_source: "login",
-        },
-      });
-
-      if (acceptanceError) {
-        console.error("[auth.legal_acceptance_save_failed]", {
-          status: acceptanceError.status,
-          code: acceptanceError.code,
+      if (mode === "register") {
+        const acceptedAt = new Date().toISOString();
+        const { data, error } = await supabase.auth.signUp({
+          email: trimmedEmail,
+          password,
+          options: {
+            data: {
+              full_name: fullName.trim(),
+              legal_acceptance_version: LEGAL_ACCEPTANCE_VERSION,
+              legal_acceptance_accepted_at: acceptedAt,
+              legal_acceptance_scope: LEGAL_ACCEPTANCE_SCOPE,
+              legal_acceptance_source: "registration",
+            },
+            emailRedirectTo: getSiteOrigin(),
+          },
         });
-        await supabase.auth.signOut();
-        setStatus("error");
+
+        if (error) {
+          console.error("[auth.registration_failed]", {
+            status: error.status,
+            code: error.code,
+          });
+          setStatus("error");
+          setMessage(
+            getEmailAuthErrorMessage(
+              error,
+              "Registreren lukt momenteel niet. Probeer het later opnieuw."
+            )
+          );
+          return;
+        }
+
+        if (data.session) {
+            window.location.assign(redirectedFrom);
+          return;
+        }
+
+        setStatus("success");
+        setConfirmationRequested(true);
+        setResendSeconds(60);
         setMessage(
-          "Je akkoord kon niet veilig worden geregistreerd. Probeer opnieuw."
+          "Controleer je mailbox en je spammap. Open de bevestigingsmail en klik daarna op ‘Account bevestigen’. Heb je al een account? Log dan in met je bestaande wachtwoord."
         );
         return;
       }
 
-      window.location.assign(redirectedFrom);
-      return;
-    }
+      if (mode === "confirm") {
+        const { error } = await supabase.auth.resend({
+          type: "signup", email: trimmedEmail, options: { emailRedirectTo: getSiteOrigin() },
+        });
+        if (error) {
+          setStatus("error");
+          if (error.status === 429) setResendSeconds(60);
+          setMessage(getEmailAuthErrorMessage(error, "De bevestigingsmail kon niet worden verstuurd. Probeer het later opnieuw."));
+          return;
+        }
+        setStatus("success");
+        setConfirmationRequested(true);
+        setResendSeconds(60);
+        setMessage("Als dit e-mailadres nog bevestigd moet worden, ontvang je een nieuwe bevestigingsmail. Gebruik de nieuwste mail. Is je account al bevestigd? Dan kun je direct inloggen.");
+        return;
+      }
 
-    if (mode === "register") {
-      const acceptedAt = new Date().toISOString();
-      const { data, error } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            legal_acceptance_version: LEGAL_ACCEPTANCE_VERSION,
-            legal_acceptance_accepted_at: acceptedAt,
-            legal_acceptance_scope: LEGAL_ACCEPTANCE_SCOPE,
-            legal_acceptance_source: "registration",
-          },
-          emailRedirectTo: getSiteOrigin(),
-        },
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: `${getSiteOrigin()}/auth/callback?type=recovery&next=/account/update-password`,
       });
 
       if (error) {
-        console.error("[auth.registration_failed]", {
+        console.error("[auth.password_reset_failed]", {
           status: error.status,
           code: error.code,
         });
@@ -179,47 +277,46 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
         setMessage(
           getEmailAuthErrorMessage(
             error,
-            "Registreren lukt momenteel niet. Probeer het later opnieuw."
+            "De resetmail kon niet worden verstuurd. Probeer het later opnieuw."
           )
         );
         return;
       }
 
-      if (data.session) {
-        window.location.assign(redirectedFrom);
-        return;
-      }
-
       setStatus("success");
+      setResendSeconds(60);
       setMessage(
-        "Je account is aangemaakt. Controleer je mailbox en bevestig je e-mailadres."
+        "Als dit e-mailadres bij ons bekend is, ontvang je zo een link om je wachtwoord te wijzigen."
       );
-      return;
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-      redirectTo: getSiteOrigin(),
-    });
-
-    if (error) {
-      console.error("[auth.password_reset_failed]", {
-        status: error.status,
-        code: error.code,
-      });
+    } catch {
       setStatus("error");
-      setMessage(
-        getEmailAuthErrorMessage(
-          error,
-          "De resetmail kon niet worden verstuurd. Probeer het later opnieuw."
-        )
-      );
-      return;
+      setMessage("De verbinding werd onderbroken. Controleer je internetverbinding en probeer opnieuw.");
+    } finally {
+      submitting.current = false;
     }
+  }
 
-    setStatus("success");
-    setMessage(
-      "Als dit e-mailadres bij ons bekend is, ontvang je zo een link om je wachtwoord te wijzigen."
-    );
+  async function resendConfirmation() {
+    if (submitting.current || resendSeconds > 0) return;
+    submitting.current = true;
+    setStatus("loading");
+    setMessage("");
+    try {
+      const supabase = await getSupabaseClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup", email: email.trim().toLowerCase(), options: { emailRedirectTo: getSiteOrigin() },
+      });
+      setResendSeconds(60);
+      setStatus(error ? "error" : "success");
+      setMessage(error
+        ? getEmailAuthErrorMessage(error, "De bevestigingsmail kon niet worden verstuurd. Probeer het later opnieuw.")
+        : "Als je e-mailadres nog bevestigd moet worden, ontvang je een nieuwe mail. Gebruik alleen de nieuwste bevestigingsmail.");
+    } catch {
+      setStatus("error");
+      setMessage("De verbinding werd onderbroken. Probeer het opnieuw.");
+    } finally {
+      submitting.current = false;
+    }
   }
 
   const displayMessage =
@@ -265,17 +362,17 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                 ? "Welkom terug"
                 : mode === "register"
                   ? "Maak je account aan"
-                  : "Nieuw wachtwoord aanvragen"}
+                  : mode === "confirm" ? "Bevestig je e-mailadres" : "Nieuw wachtwoord aanvragen"}
             </h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
               {mode === "login"
                 ? "Gebruik het e-mailadres en wachtwoord waarmee je je hebt geregistreerd."
                 : mode === "register"
                   ? "Registreer je eenmalig om toegang te krijgen tot de academy."
-                  : "We sturen je een beveiligde link om een nieuw wachtwoord te kiezen."}
+                  : mode === "confirm" ? "Vraag een nieuwe bevestigingsmail aan. Een nieuw account aanmaken is niet nodig." : "We sturen je een beveiligde link om een nieuw wachtwoord te kiezen."}
             </p>
 
-            {mode !== "reset" && (
+            {needsPassword && (
               <div className="mt-8 grid grid-cols-2 border-b border-[var(--border)]">
                 <button
                   type="button"
@@ -315,7 +412,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                     onChange={(event) => setFullName(event.target.value)}
                     placeholder="Voor- en achternaam"
                     required
-                    disabled={status === "loading" || status === "success"}
+                    disabled={formLocked}
                     autoComplete="name"
                     className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--foreground)_35%,transparent)] disabled:opacity-60"
                   />
@@ -333,13 +430,13 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="jij@voorbeeld.be"
                   required
-                  disabled={status === "loading" || status === "success"}
+                  disabled={formLocked}
                   autoComplete="email"
                   className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--foreground)_35%,transparent)] disabled:opacity-60"
                 />
               </div>
 
-              {mode !== "reset" && (
+              {needsPassword && (
                 <div>
                   <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">
                     Wachtwoord
@@ -349,10 +446,10 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                     type="password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    placeholder="Minimaal 8 tekens"
+                    placeholder={mode === "login" ? "Je wachtwoord" : "Minimaal 8 tekens"}
                     required
-                    minLength={8}
-                    disabled={status === "loading" || status === "success"}
+                    minLength={mode === "register" ? 8 : undefined}
+                    disabled={formLocked}
                     autoComplete={mode === "login" ? "current-password" : "new-password"}
                     className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--foreground)_35%,transparent)] disabled:opacity-60"
                   />
@@ -372,14 +469,14 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                     placeholder="Herhaal je wachtwoord"
                     required
                     minLength={8}
-                    disabled={status === "loading" || status === "success"}
+                    disabled={formLocked}
                     autoComplete="new-password"
                     className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--foreground)_35%,transparent)] disabled:opacity-60"
                   />
                 </div>
               )}
 
-              {mode !== "reset" && (
+              {needsPassword && (
                 <div className="flex items-start gap-3 py-1 text-sm leading-6">
                   <label className="flex shrink-0 items-start">
                     <input
@@ -389,7 +486,7 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
                       required
                       aria-label="Ik aanvaard de risicowaarschuwing"
                       aria-describedby="legal-risk-link"
-                      disabled={status === "loading" || status === "success"}
+                      disabled={formLocked}
                       className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--border)] accent-[var(--foreground)] disabled:opacity-60"
                     />
                   </label>
@@ -418,18 +515,23 @@ function AuthForm({ getSupabaseClient }: { getSupabaseClient: SupabaseClientFact
 
               <button
                 type="submit"
-                disabled={status === "loading" || status === "success"}
+                disabled={formLocked || (mode === "confirm" && resendSeconds > 0)}
                 className="cb-btn cb-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {status === "loading"
-                  ? "Even geduld..."
-                  : mode === "login"
-                    ? "Inloggen"
-                    : mode === "register"
-                      ? "Account aanmaken"
-                      : "Stuur resetlink"}
+                {status === "loading" ? "Even geduld..." : waitingForConfirmation ? "Bevestigingsmail aangevraagd" : status === "success" && mode === "reset" ? "Resetmail aangevraagd" : mode === "login" ? "Inloggen" : mode === "register" ? "Account aanmaken" : mode === "confirm" ? "Stuur bevestigingsmail" : "Stuur resetlink"}
               </button>
             </form>
+
+            {waitingForConfirmation && (
+              <button type="button" disabled={resendSeconds > 0 || status === "loading"} onClick={resendConfirmation} className="mt-5 block min-h-11 text-sm font-semibold text-[var(--muted)] disabled:opacity-60">
+                {resendSeconds > 0 ? `Opnieuw versturen over ${resendSeconds} s` : "Bevestigingsmail opnieuw versturen"}
+              </button>
+            )}
+            {mode !== "reset" && (
+              <button type="button" disabled={status === "loading"} onClick={() => selectMode(mode === "confirm" || waitingForConfirmation ? "login" : "confirm")} className="mt-5 block min-h-11 text-sm font-semibold text-[var(--muted)] hover:text-[var(--foreground)]">
+                {mode === "confirm" || waitingForConfirmation ? "Terug naar inloggen" : "Geen bevestigingsmail ontvangen?"}
+              </button>
+            )}
 
             <button
               type="button"
