@@ -6,6 +6,8 @@ try {
   const target = JSON.parse(readFileSync(new URL("../netlify/staging-target.json", import.meta.url), "utf8"));
   const database = assertStagingBuildEnvironment(process.env, target);
   console.log(`Verified staging site ${target.siteId}, database ${database.projectRef}.`);
+  const schema = spawnSync(process.execPath, ["scripts/release/database.mjs", "verify"], { stdio: "inherit" });
+  if (schema.status !== 0) process.exit(schema.status ?? 1);
   for (const script of ["verify:market-schema", "build"]) {
     const result = spawnSync("npm", ["run", script], { stdio: "inherit" });
     if (result.error) throw result.error;

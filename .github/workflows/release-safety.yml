@@ -1,0 +1,33 @@
+name: Release safety
+on:
+  pull_request:
+  push:
+    branches: [codex/staging]
+permissions:
+  contents: read
+jobs:
+  release-guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run test:release
+  schema-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.116.0
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends postgresql-client
+      - name: Replay audited baseline and migrations in a fresh local database
+        run: node scripts/release/rehearse.mjs

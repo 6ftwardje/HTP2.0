@@ -1,0 +1,89 @@
+name: Production promotion
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: htp-production-promotion
+  cancel-in-progress: false
+jobs:
+  verify-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Only staging can propose a production release
+        if: github.event_name == 'pull_request'
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: test "$SOURCE_BRANCH" = codex/staging
+      - name: Verify deployed staging source and acceptance receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HTP_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+          HTP_PROMOTION_MODE: ${{ github.event_name == 'push' && 'production' || 'candidate' }}
+        run: node scripts/release/promotion.mjs
+  publish-production:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify-candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment:
+      name: production
+      url: https://hettradeplatform.be
+    env:
+      HTP_ENVIRONMENT: production
+      SITE_ID: 8c1e7273-8140-4a47-88e7-9dbd11241229
+      NEXT_PUBLIC_SITE_URL: https://hettradeplatform.be
+      NEXT_PUBLIC_SUPABASE_URL: https://swohtycdqbydqrtjzwwf.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      HTP_BACKUP_KEY: ${{ secrets.HTP_BACKUP_KEY }}
+      HTP_RELEASE_SHA: ${{ github.sha }}
+      HTP_PRODUCTION_APPROVED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Recheck staging immediately before database changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HTP_PROMOTION_MODE: production
+        run: node scripts/release/promotion.mjs
+      - name: Additive migrations, draft build, smoke test, publication
+        run: node scripts/release/backup.mjs
+      - name: Migrate, build and publish the approved release
+        run: node scripts/release/deploy.mjs --apply
+      - name: Keep only the encrypted pre-migration backup
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-encrypted-backup
+          path: |
+            .netlify/release/production-before.dump.enc
+            .netlify/release/production-backup.json
+          retention-days: 30
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-release-receipt
+          path: .netlify/release/receipt.json
+          retention-days: 90
+          if-no-files-found: error
