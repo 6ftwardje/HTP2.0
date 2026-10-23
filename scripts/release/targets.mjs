@@ -45,3 +45,5 @@ export function assertReleaseCandidate({ candidate, deployed, tested, mainIsAnce
 export function assertNetlifyLink(state,target) {
   assert.equal(state?.siteId,target.siteId,'This checkout is linked to a different Netlify site.');
 }
+
+export function releaseCandidate(env,deployed) { return env.HTP_CANDIDATE_SHA || deployed; }

@@ -67,7 +67,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HTP_PROMOTION_MODE: production
         run: node scripts/release/promotion.mjs
-      - name: Additive migrations, draft build, smoke test, publication
+      - name: Create and authenticate an encrypted pre-migration backup
         run: node scripts/release/backup.mjs
       - name: Migrate, build and publish the approved release
         run: node scripts/release/deploy.mjs --apply

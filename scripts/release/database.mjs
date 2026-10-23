@@ -62,13 +62,19 @@ export function main(env=process.env,args=process.argv.slice(2)) {
     if(!args.includes('--apply')){console.log('PASS: current schema matches the release baseline; ledger adoption pending.');return;}
     postgres(`begin; select pg_advisory_xact_lock(7160231023);
       create schema if not exists supabase_migrations;
+      create table if not exists supabase_migrations.schema_migrations(version text primary key,statements text[],name text);
       create table if not exists supabase_migrations.htp_release_baseline(version text primary key,sha256 text not null,schema_fingerprint text not null,created_at timestamptz not null default now());
       create table if not exists supabase_migrations.htp_release_checksums(version text primary key,name text not null,sha256 text not null,applied_at timestamptz not null default now());
       insert into supabase_migrations.htp_release_baseline(version,sha256,schema_fingerprint) values (${sqlLiteral(manifest.version)},${sqlLiteral(manifest.sha256)},${sqlLiteral(manifest.schemaFingerprint)}) on conflict do nothing;
+      insert into supabase_migrations.schema_migrations(version,name,statements) values(${sqlLiteral(manifest.version)},'audited_production_baseline',array['Schema-only baseline adopted after exact fingerprint verification. Historical migration records preserved.']) on conflict do nothing;
       revoke all on supabase_migrations.htp_release_baseline,supabase_migrations.htp_release_checksums from public,anon,authenticated;
       commit;`,dbEnv);
   }
   if(args.includes('--apply')) postgres(`begin;
+    create table if not exists supabase_migrations.schema_migrations(version text primary key,statements text[],name text);
+    insert into supabase_migrations.schema_migrations(version,name,statements) values(${sqlLiteral(manifest.version)},'audited_production_baseline',array['Schema-only baseline adopted after exact fingerprint verification. Historical migration records preserved.']) on conflict do nothing;
+    insert into supabase_migrations.schema_migrations(version,name,statements)
+      select version,name,array['Previously verified HTP release; immutable SQL checksum: '||sha256] from supabase_migrations.htp_release_checksums on conflict do nothing;
     create table if not exists supabase_migrations.htp_release_environment(environment text primary key,project_ref text not null);
     do $$ begin if exists(select 1 from supabase_migrations.htp_release_environment where environment<>${sqlLiteral(target.name)} or project_ref<>${sqlLiteral(target.projectRef)}) then raise exception 'Wrong database environment marker';end if;end $$;
     insert into supabase_migrations.htp_release_environment values(${sqlLiteral(target.name)},${sqlLiteral(target.projectRef)}) on conflict do nothing;
@@ -93,6 +99,7 @@ export function main(env=process.env,args=process.argv.slice(2)) {
       do $$ begin if exists(select 1 from supabase_migrations.htp_release_checksums where version=${sqlLiteral(file.version)}) then raise exception 'Concurrent migration completed; rerun the release'; end if; end $$;
       ${file.sql}
       insert into supabase_migrations.htp_release_checksums(version,name,sha256) values(${sqlLiteral(file.version)},${sqlLiteral(file.name)},${sqlLiteral(sha256(file.sql))});
+      insert into supabase_migrations.schema_migrations(version,name,statements) values(${sqlLiteral(file.version)},${sqlLiteral(file.name)},array[${sqlLiteral(file.sql)}]) on conflict do nothing;
       commit;`,dbEnv);
     console.log(`PASS: ${file.name}`);
     assert.equal(schemaFingerprint(dbEnv),locks[file.version][fingerprintKey],`Schema after ${file.name} differs from the rehearsed schema.`);

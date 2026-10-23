@@ -24,6 +24,10 @@ select jsonb_build_object(
     select relname,relrowsecurity,relforcerowsecurity from pg_class
     where relnamespace='public'::regnamespace and relkind in ('r','p')
   ) r),
+  'views', (select coalesce(jsonb_agg(to_jsonb(v) order by v.relname),'[]') from (
+    select c.relname,pg_get_viewdef(c.oid,true) as definition,c.reloptions
+    from pg_class c where c.relnamespace='public'::regnamespace and c.relkind in ('v','m')
+  ) v),
   'table_acl', (select coalesce(jsonb_agg(to_jsonb(t) order by t.relname),'[]') from (
     select c.relname,(select array_agg(a::text order by a::text) from unnest(coalesce(c.relacl,acldefault('r',c.relowner))) a) as acl
     from pg_class c where c.relnamespace='public'::regnamespace and c.relkind in ('r','p','v')

@@ -6,8 +6,8 @@
   "sha256": "131fe618b53024afae6d6b04cf26ca2235fba7863043994645ac978c608262d2",
   "extrasFile": "20261023000000-auth-storage.sql",
   "extrasSha256": "d7d9a8854894e3b0700e473dc47c8aa3b70ee149af5bd8823b0fd5c68a1f22ca",
-  "schemaFingerprint": "15b771a8810c763c953a1b6dc98df91f8e5af0db18d733b7e5123b774a9dc8df",
+  "schemaFingerprint": "9581b544897dd78932e7bf5c570858e6c54bb4bfef38b7741ffb36b3bd1e1438",
   "historyPolicy": "Files at or before the baseline are historical. Never replay them into production; preserve the existing Supabase migration history.",
-  "stagingSchemaFingerprint": "3beab1fb8fad1d0cf2c064c158a08168170d3a8ca435e7b53960a664e9614d53",
+  "stagingSchemaFingerprint": "30bef9afb8be1605a9653ac02d516c65804357ca640249b5fa329cac39494c9f",
   "isolationSha256": "7efb702ee48cb80d63a67451a9867506764f96c1e0f62984c8a088ee5cf3bcb6"
 }

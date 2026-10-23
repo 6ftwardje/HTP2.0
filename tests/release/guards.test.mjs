@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { releaseTarget, databaseEnvironment, assertSafeStagingIntegrations, assertReleaseCandidate, assertNetlifyLink, TARGETS } from '../../scripts/release/targets.mjs';
+import { releaseTarget, databaseEnvironment, assertSafeStagingIntegrations, assertReleaseCandidate, assertNetlifyLink, releaseCandidate, TARGETS } from '../../scripts/release/targets.mjs';
 import { assertHistory, sha256 } from '../../scripts/release/database.mjs';
+import { safePostgresError } from '../../scripts/release/postgres.mjs';
 
 const staging = { HTP_ENVIRONMENT:'staging', SITE_ID:TARGETS.staging.siteId, NEXT_PUBLIC_SITE_URL:TARGETS.staging.siteUrl,
   NEXT_PUBLIC_SUPABASE_URL:`https://${TARGETS.staging.projectRef}.supabase.co`,HTP_STAGING_SUPABASE_PROJECT_REF:TARGETS.staging.projectRef };
@@ -9,6 +10,16 @@ test('an explicit deployment flag cannot hide a checkout linked to the other sit
   assert.doesNotThrow(()=>assertNetlifyLink({siteId:TARGETS.staging.siteId},TARGETS.staging));
   assert.throws(()=>assertNetlifyLink({siteId:TARGETS.production.siteId},TARGETS.staging));
   assert.throws(()=>assertNetlifyLink({},TARGETS.staging));
+});
+test('an empty pull-request SHA on a main push resolves to the actual deployed candidate',()=>{
+  const sha='a'.repeat(40);
+  assert.equal(releaseCandidate({},sha),sha);
+  assert.equal(releaseCandidate({HTP_CANDIDATE_SHA:''},sha),sha);
+});
+test('database failures never expose production row details or statement contexts in public CI logs',()=>{
+  const message=safePostgresError('ERROR: check failed\nDETAIL: failing row contains confidential-person@example.test\nCONTEXT: secret SQL statement','synthetic-secret');
+  assert.equal(message,'ERROR: check failed');
+  assert.doesNotMatch(safePostgresError('ERROR: synthetic-secret for person@example.test','synthetic-secret'),/synthetic-secret|person@example/);
 });
 test('staging mutations reject production, legacy, lookalike URLs and a wrong site before opening Postgres',()=>{
   for(const patch of [{NEXT_PUBLIC_SUPABASE_URL:'https://swohtycdqbydqrtjzwwf.supabase.co'},

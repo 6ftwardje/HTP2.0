@@ -9,6 +9,9 @@ import { databaseEnvironment } from './targets.mjs';
 const env=process.env,target=releaseTarget(env);
 assert.ok(process.argv.includes('--apply'),'Deployment requires --apply.');
 assert.match(env.HTP_RELEASE_SHA ?? '',/^[a-f0-9]{40}$/,'Set the exact release commit.');
+const git=args=>{const r=spawnSync('git',args,{encoding:'utf8'});assert.equal(r.status,0);return r.stdout.trim();};
+const checkSource=()=>{assert.equal(git(['rev-parse','HEAD']),env.HTP_RELEASE_SHA,'Checkout differs from the selected release commit.');assert.equal(git(['status','--porcelain']),'','Commit every source change before building a release.');};
+checkSource();const sourceTree=git(['rev-parse','HEAD^{tree}']);
 if(target.name==='staging')assertSafeStagingIntegrations(env);
 if(target.name==='production')assert.equal(env.HTP_PRODUCTION_APPROVED,'true','Production is released only by the approved GitHub environment job.');
 database(env,['migrate','--apply']);database(env,['verify']);
@@ -44,6 +47,7 @@ const netlify=(operation,data)=>{
 };
 const site=netlify('getSite',{site_id:target.siteId});
 assert.equal(site.id,target.siteId);
+checkSource();
 const previous=site.published_deploy?.id;
 netlify('restoreSiteDeploy',{site_id:target.siteId,deploy_id:deploy.deploy_id});
 const verified=netlify('getSite',{site_id:target.siteId});assert.equal(verified.published_deploy.id,deploy.deploy_id);
@@ -55,7 +59,7 @@ try {
     assert.equal(netlify('getSite',{site_id:target.siteId}).published_deploy.id,previous);}
   throw new Error('Published health check failed; the previous website deployment was restored. Database migrations remain applied.');
 }
-const receipt={environment:target.name,sha:env.HTP_RELEASE_SHA,tree:spawnSync('git',['rev-parse','HEAD^{tree}'],{encoding:'utf8'}).stdout.trim(),
+const receipt={environment:target.name,sha:env.HTP_RELEASE_SHA,tree:sourceTree,
   deployId:deploy.deploy_id,previousDeployId:previous,url:target.siteUrl,checkedAt:new Date().toISOString(),schemaFingerprint:schemaFingerprint(databaseEnvironment(env,target,{readOnly:true}))};
 writeFileSync('.netlify/release/receipt.json',JSON.stringify(receipt,null,2)+'\n',{mode:0o600});
 console.log(`PASS: tested ${target.name} release ${receipt.sha} published at ${receipt.url}. Previous deploy: ${previous}`);

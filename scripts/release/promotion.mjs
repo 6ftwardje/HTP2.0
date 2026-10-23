@@ -3,13 +3,13 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync,mkdtempSync,rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { TARGETS,assertReleaseCandidate } from './targets.mjs';
+import { TARGETS,assertReleaseCandidate,releaseCandidate } from './targets.mjs';
 
 const repo=process.env.GITHUB_REPOSITORY ?? '6ftwardje/HTP2.0';assert.equal(repo,'6ftwardje/HTP2.0');
 const run=(cmd,args)=>{const r=spawnSync(cmd,args,{encoding:'utf8',maxBuffer:4*1024*1024});assert.equal(r.status,0,`${cmd} failed during release verification.`);return r.stdout.trim();};
 const health=await(await fetch(TARGETS.staging.siteUrl+'/api/health',{redirect:'error',signal:AbortSignal.timeout(15000)})).json();
 assert.equal(health.environment,'staging');
-const candidate=process.env.HTP_CANDIDATE_SHA ?? health.commit;
+const candidate=releaseCandidate(process.env,health.commit);
 assert.match(candidate,/^[a-f0-9]{40}$/);
 const runs=JSON.parse(run('gh',['api',`repos/${repo}/actions/workflows/staging-deploy.yml/runs?branch=codex%2Fstaging&status=success&per_page=50`]));
 const verified=runs.workflow_runs.find(r=>r.head_sha===candidate&&r.event==='push');assert.ok(verified,'No successful staging deployment workflow for this commit.');

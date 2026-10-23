@@ -1,65 +1,46 @@
-# Status van de Netlify stagingomgeving
+# Staging: ingericht en online getest
 
 Bijgewerkt op 23 oktober 2026, Europe/Brussels.
 
-De aparte Netlify-staging is aangemaakt en gekoppeld aan de stagingbranch. Er staat een statische wachtpagina online. De volledige applicatie wacht op Dylans Supabase-project, de inrichting van het bijbehorende schema en de stagingcredentials.
+De applicatie is online op **https://htp-staging.netlify.app** met de aparte Supabase-database **pxxpciwnvfkxnkpttajp** in Dylans organisatie Het Trade Platform Staging. De statische wachtpagina is vervangen na een geslaagde draftdeploy en online acceptatie. De initiële geteste applicatiecommit is `89f5bb15976fd317cd886ee866d7c1b52ab7048b`; volgende stagingmerges worden afzonderlijk getest en krijgen een receipt.
 
-## Aangemaakt en gecontroleerd
+## Inrichting
 
-| Onderdeel | Waarde |
-| --- | --- |
-| Stagingwebsite | https://htp-staging.netlify.app |
-| Netlify-beheer | https://app.netlify.com/projects/htp-staging |
-| Staging-site-ID | d798281b-ff2a-48bb-9ecf-3b9dea2a7c21 |
-| Repository | 6ftwardje/HTP2.0 |
-| Hoofdbranch van de stagingsite | codex/staging |
-| Uitgangscommit van de applicatie | 4f07cf37b7d97cbd67ddacadc51cc8488c802a85, de gepubliceerde productieversie bij aanvang |
-| Codecommit met de stagingvoorbereiding | 65a1bfe8c6daf1c252451c2041b3ab6a2b84d5d4 |
-| Gepubliceerde wachtpagina | Deploy 6adb65dd6d74db39550a0675 |
-| Automatische Netlify-builds | Gestopt tot Supabase en het schema gereed zijn |
-| Buildcommand voor de stagingbranch | node scripts/staging-build.mjs |
-| Supabase, betalingen en mailproviders op staging | Nog niet gekoppeld |
+- Netlify-site: `d798281b-ff2a-48bb-9ecf-3b9dea2a7c21`, branch `codex/staging`.
+- Productieschema read-only vastgelegd en zonder gebruikers of applicatierijen naar staging overgenomen. De schemafingerprint controleert ook functies, ACL, RLS, views/security-opties en ingeschakelde triggers.
+- Auth-triggers, storagebeleid, lege bucketconfiguratie en Realtime-tabellen zijn meegenomen. Productieuploads, cronjobs, providercredentials en productiegebruikers zijn niet gekopieerd.
+- De oude ClickUp-leadtrigger is uitsluitend op staging uitgeschakeld vóór het opslaan van dummygegevens. Testaccounts starten geen externe lead-automatisering.
+- `student_next_steps` en `toolbox_resources`, die wel in Git maar niet in het live schema stonden, zijn met een nieuwe expliciete schema-only migratie toegevoegd.
+- Supabase Site URL en vier exacte Auth-redirects wijzen naar staging. Bevestigingsinstellingen zijn behouden.
+- Staging heeft eigen API-keys, een zichtbaar staginglabel, noindex/noarchive en robotsuitsluiting. Mailworkers zijn uit; Stripe, AI en Mux hebben nog geen livecredentials op staging.
+- De afzonderlijke werkcheckout is aan de stagingsite gekoppeld. De oorspronkelijke werkmap met andere lokale wijzigingen is behouden.
 
-De wachtpagina bevat uitsluitend HTML en CSS. Er zijn geen applicatiefuncties of geplande workers mee gedeployd. De pagina en robots.txt antwoorden met HTTP 200. De responses bevatten noindex, nofollow, noarchive en Cache-Control: no-store.
+## Dummygegevens
 
-De bestaande productieconfiguratie in netlify.toml is behouden. Alleen de context voor codex/staging heeft een eigen buildcommand en website-URL. Netlify heeft bij een lokale configuratiecontrole bevestigd dat deze branch de staging-buildcommand kiest.
+Vijf accounts onder `@staging.htp.test`: admin, mentor, member, free en member2. De aparte mentorrol is getest; de beheerder wordt niet automatisch mentor. Het wachtwoord staat uitsluitend in `.env.staging.accounts.local` in de uitvoercheckout en het beschermde GitHub-stagingsecret.
 
-## Bescherming van de doelen
+Aanwezig: drie modules waarvan één concept, zes lessen, een examen met twaalf vragen en antwoordopties, voorbeeldvoortgang, zes analyses waarvan een concept en een archiefitem, drie fictieve livesessies, een melding en een testgesprek met mentorantwoord. Opnieuw seeden maakt geen dubbele accounts of inhoud.
 
-scripts/verify-supabase-target.mjs stopt vóór een netwerkverzoek wanneer de URL naar het huidige HTP2-productieproject of het oudere legacyproject wijst. Een onbekend project wordt alleen geaccepteerd als de URL exact overeenkomt met de expliciet opgegeven HTP_STAGING_SUPABASE_PROJECT_REF.
+Lessen en livesessies zijn duidelijk fictief en hebben geen productievideo of echte webinar gekoppeld. Echte media-, betaal- en mailbezorgingstests vereisen eigen testintegraties.
 
-De controle accepteert uitsluitend de HTTPS-project-URL onder supabase.co, zonder credentials, extra pad, queryparameters of afwijkende poort. Er wordt geen .env.local automatisch geladen. Requests volgen geen redirects. De bestaande controle van schema en dubbele sleutels blijft read-only.
+## Testbewijs
 
-De staging-build controleert daarnaast de vaste Netlify-site-ID, branch, stagingmarkering en website-URL. Ontbrekende Supabase-instellingen, een Stripe-livekey of live applicatiemail blokkeren de build. De controle is bedoeld voor de stagingworkflow; de huidige productie-buildcommand is niet aangepast.
+- 335 applicatietests, typecheck en lint geslaagd.
+- Gerichte tests voor doelscheiding, productieblokkering van bootstrap/seed, onveranderlijke migraties, Netlify-koppeling, promotiebron, logredactie en versleutelde-backupintegriteit.
+- De oorspronkelijke 57 migraties zijn op een verse lokale Supabase toegepast.
+- De vastgelegde productiebaseline is onafhankelijk hersteld en vergeleken, inclusief rechten. Nieuwe migratie en herhaald seeden zijn eveneens beproefd.
+- De nieuwe GitHub-schema-repetitie start een verse lokale Supabase zonder cloudcredentials, vergelijkt de exacte stagingstructuur, seedt tweemaal en logt met alle vijf rollen in.
+- Online acceptatie: vijf echte staginglogins, conceptafscherming, privacy van voortgang/chat, afgeschermde examen-antwoorden en providersecrets, mentorchat met antwoord en idempotente retry, student-/beheerpagina's, weigering van beheer voor een lid, noindex, robots en de ingebouwde release-SHA.
+- De eerste draft met ontbrekende runtimeconfiguratie is niet gepubliceerd. Na herstel is dezelfde volledige online acceptatie geslaagd.
 
-Er zijn acht gerichte tests geslaagd, zowel lokaal als in [GitHub Actions](https://github.com/6ftwardje/HTP2.0/actions/runs/39964766423). De tests gebruiken synthetische gegevens en een nagemaakte fetchfunctie; er zijn geen Supabase-projecten aangeroepen. Ook het behouden read-only auditgedrag en de ontbrekende-configuratieblokkering zijn getest. Er is nog geen volledige app-build met de toekomstige stagingdatabase uitgevoerd.
+Invoering via [PR #122](https://github.com/6ftwardje/HTP2.0/pull/122). De kleine voorbereidende [PR #120](https://github.com/6ftwardje/HTP2.0/pull/120) heeft de bestaande PR-policy op main geschikt gemaakt voor samengestelde, gecontroleerde stagingreleases.
 
-## Wat op de stagingsite is ingesteld
+## Git- en releaseflow
 
-HTP_ENVIRONMENT is staging, NEXT_PUBLIC_SITE_URL is https://htp-staging.netlify.app en NODE_VERSION is 22. De mailmodi EMAIL_MODE en CHAT_EMAIL_MODE staan op disabled. De capture-, campagne-, aankoop-, afloop- en mentormailvlaggen staan uit. CHAT_MAINTENANCE_ENABLED staat op false. Ook de overige mailgoedkeuringsvlaggen staan uit.
+Feature-PR → beschermde `codex/staging` → automatische GitHub-deployflow met migratiecontrole, draftdeploy en acceptatie → publicatie naar staging → release-PR naar beschermde `main` → controle op de geteste stagingbron → Wards GitHub Environment-vrijgave → versleutelde backup → migraties → productie-drafttest → publicatie.
 
-De nieuwe site had geen bestaande omgevingsvariabelen voordat deze waarden werden toegevoegd. Er zijn geen productiecredentials gekopieerd en geen fictieve Supabase-keys ingevuld.
+Directe automatische Netlify-builds zijn op beide sites gestopt; de GitHub-workflows regelen publicatie. De vaste Netlify-sites, databases, branches en origins worden expliciet gecontroleerd. Main vereist ook de promotiecheck. Force-pushes en branchverwijdering zijn geblokkeerd, ook voor beheerders.
 
-## Aansluiten zodra Dylan klaar is
+Productie gebruikt een aparte beschermde Environment met Ward als vereiste vrijgever en uitsluitend main als toegestane branch. Er is geen productie-apprelease of productiedatamigratie uitgevoerd bij deze inrichting. De bestaande live-deploy `6adb6393c6db32424f31f83f`, applicatiecommit `4f07cf37b7d97cbd67ddacadc51cc8488c802a85`, is behouden.
 
-1. Accepteer de uitnodiging voor Dylans stagingorganisatie en controleer de projectref.
-2. Richt een gecontroleerde databasebasis in voor de geselecteerde applicatieversie. Controleer eerst de actuele schema- en migratiehistorie; voer de oude migratiemap niet blind uit.
-3. Stel uitsluitend op de Netlify-stagingsite HTP_STAGING_SUPABASE_PROJECT_REF, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY en SUPABASE_SERVICE_ROLE_KEY in met gegevens van hetzelfde stagingproject.
-4. Configureer Supabase Auth, redirect-URL's en de bijbehorende auth-e-mailtemplates voor https://htp-staging.netlify.app. Test registratie en herstel eerst met teamadressen.
-5. Voer de read-only doelcontrole uit vanuit de stagingcheckout. Een lokale kopie van .env.staging.example heet .env.staging.local en blijft buiten Git:
-
-   node --env-file=.env.staging.local scripts/verify-supabase-target.mjs
-
-6. Controleer het benodigde marktschema en voer de app-build en de bestaande applicatietests uit. Voeg bij het aansluiten van de app de herkenbare stagingaanduiding en uitsluiting van zoekmachines toe; de huidige noindex geldt voor de wachtpagina.
-7. Zet pas daarna op de stagingsite Build status op Active builds en start een build van codex/staging. Heractiveren alleen start niet direct een build; gebruik daarna Trigger deploy of een nieuwe push.
-8. Test de app online. Richt Stripe-sandbox, testmedia en eventuele andere integraties afzonderlijk in. Applicatiemail blijft disabled of dry_run totdat een bezorgtest apart wordt ingericht.
-
-Het eigen subdomein staging.hettradeplatform.be en de DNS-koppeling zijn nog niet ingesteld. Het Netlify-adres is al bruikbaar als vast stagingadres; een later domein vereist ook aanpassing van de staging-URL in configuratie, tests en Supabase Auth.
-
-## Productiecontrole
-
-De productiesite, hoofdbranch, buildinstellingen, domeinkoppeling, publicatievergrendeling en gepubliceerde deploy waren bij de controle na de inrichting gelijk aan de vastgelegde beginwaarden. Productie staat nog op deploy 6adb6393c6db32424f31f83f, commit 4f07cf37b7d97cbd67ddacadc51cc8488c802a85.
-
-Ook de bestanden .netlify/state.json, .env.local, de bestaande Supabase-projectkoppeling en netlify.toml in de oorspronkelijke werkmap zijn met bestandshashes vergeleken en behouden. Er is geen productiedeploy, databasewijziging, DNS-wijziging of wijziging van productiepublicatie uitgevoerd.
-
-De productie-vrijgavestap uit het eerdere plan is uitsluitend een latere vervolgstap onder Wards beheer. De huidige stagingvoorbereiding heeft die instellingen niet geactiveerd.
+De volledige bediening, migratieregels, backupbeperkingen en herstelstappen staan in [STAGING_RELEASE_FLOW.md](STAGING_RELEASE_FLOW.md). Bewaar de privéherstelsleutel uit `.env.production-backup.local` buiten de checkout voordat deze ooit wordt gearchiveerd. Een echte productiebackup wordt pas gemaakt na vrijgave van een toekomstige productierelease; er is bij deze inrichting geen productiedata-export gemaakt.
